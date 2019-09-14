@@ -381,8 +381,8 @@ let write_file = (image: Image, directory: string, ed: string): void => {
 
 let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): void }): void => {
   let jobid = libcrypto.randomBytes(16).toString('hex');
-  libfs.mkdirSync(libpath.join('../temp/', jobid, 'raw'), { recursive: true });
-  libfs.mkdirSync(libpath.join('../temp/', jobid, 'bmp'), { recursive: true });
+  libfs.mkdirSync(libpath.join('./private/temp/', jobid, 'raw'), { recursive: true });
+  libfs.mkdirSync(libpath.join('./private/temp/', jobid, 'bmp'), { recursive: true });
   let cp = libcp.spawn('ffmpeg', [
     '-i', filename,
     '-map', `0:s:${subn}`,
@@ -390,7 +390,7 @@ let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): voi
     '-an',
     '-c:s', 'copy',
     '-frame_pts', '1',
-    `../temp/${jobid}/raw/%08d.raw`
+    `./private/temp/${jobid}/raw/%08d.raw`
   ]);
   cp.stdout.pipe(process.stdout);
   cp.stderr.pipe(process.stderr);
@@ -401,11 +401,11 @@ let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): voi
 };
 
 let convert_to_bmp = (jobid: string, ed: string, tb: string, codec: string, cb: { (code: number): void }): void => {
-  let node = libpath.join('../temp/', jobid, 'raw');
+  let node = libpath.join('./private/temp/', jobid, 'raw');
   libfs.readdirSync(node).map((subnode) => {
     let innode = libpath.join(node, subnode);
     let name = subnode.split('.').slice(0, -1).join('.');
-	let outnode = libpath.join('../temp/', jobid, 'bmp');
+	let outnode = libpath.join('./private/temp/', jobid, 'bmp');
 	if (codec === 'hdmv_pgs_subtitle') {
 		let buffer = libfs.readFileSync(innode);
 		let bitmap = pgssub.parse_pgssub_as_bmp(buffer);
@@ -427,7 +427,7 @@ type Subtitle = { pts_start: number, pts_end: number, text: string, lines: strin
 
 let ocr = (jobid: string, lang: string, duration: number, postprocess: boolean, cb: { (st: Subtitle[]): void }): void => {
   process.stdout.write(`Recognizing "${lang}" subtitles... postprocessing:${postprocess}\n`);
-  let node = libpath.join('../temp/', jobid, 'bmp');
+  let node = libpath.join('./private/temp/', jobid, 'bmp');
   let subtitles: Array<Subtitle> = [];
   try {
     libfs.readdirSync(node).map((subnode) => {
@@ -618,7 +618,7 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
               libfs.writeSync(fd, webvtt);
               libfs.closeSync(fd);
               outputs.push(outfile);
-              delete_tree_async(libpath.join('../temp/', jobid), () => {
+              delete_tree_async(libpath.join('./private/temp/', jobid), () => {
                 handle_next();
               });
             });

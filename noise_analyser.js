@@ -19,7 +19,7 @@ let generate_queue = (files, node) => {
   return files;
 };
 
-let stats = require('../store/quality_metadata.json');
+let stats = require('./private/db/quality_metadata.json');
 
 let pick_from_queue = () => {
   if (queue.length > 0) {
@@ -56,7 +56,7 @@ let pick_from_queue = () => {
         sorted.forEach((entry) => {
           out[entry.key] = entry.value;
         });
-        let fd = libfs.openSync('../store/quality_metadata.json', 'w');
+        let fd = libfs.openSync('./private/db/quality_metadata.json', 'w');
         libfs.writeSync(fd, JSON.stringify(out, null, 2));
         libfs.closeSync(fd);
         if (queue.length > 0) {
@@ -68,7 +68,7 @@ let pick_from_queue = () => {
     }
   } else {
     setTimeout(() => {
-      queue = generate_queue([], '../queue/');
+      queue = generate_queue([], './private/queue/');
       pick_from_queue();
     }, 1000*10);
   }

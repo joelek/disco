@@ -5,14 +5,14 @@ let libfs = require('fs');
 let queue = [];
 
 let archive_file = (filename) => {
-  let paths = ['..', 'archive', ...filename.split(libpath.sep).slice(2) ];
+  let paths = ['.', 'private', 'archive', ...filename.split(libpath.sep).slice(2) ];
   let file = paths.pop();
   libfs.mkdirSync(libpath.join(...paths), { recursive: true });
   libfs.renameSync(filename, libpath.join(...paths, file));
 };
 
 let move_file = (filename) => {
-  let paths = ['..', 'media', ...filename.split(libpath.sep).slice(2) ];
+  let paths = ['.', 'private', 'media', ...filename.split(libpath.sep).slice(2) ];
   let file = paths.pop();
   libfs.mkdirSync(libpath.join(...paths), { recursive: true });
   libfs.renameSync(filename, libpath.join(...paths, file));
@@ -36,7 +36,7 @@ let transcode = (filename, size, cb) => {
   let path = filename.split(libpath.sep);
   let file = path.pop();
   let name = file.split('.').slice(0, -1).join('.');
-  let outdir = ['..', 'temp', ...path.slice(2)];
+  let outdir = ['.', 'private', 'temp', ...path.slice(2)];
   let outfile = libpath.join(...outdir, `${name}.${size}.jpg`);
   libfs.mkdirSync(libpath.join(...outdir), { recursive: true });
   let cp = libcp.spawn('ffmpeg', [
@@ -78,7 +78,7 @@ let pick_from_queue = () => {
     });
   } else {
     setTimeout(() => {
-      queue = generate_queue([], '../queue/image/');
+      queue = generate_queue([], './private/queue/');
       pick_from_queue();
     }, 1000*10);
   }

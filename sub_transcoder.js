@@ -7,14 +7,14 @@ let vobsub = require('./vobsub');
 let queue = [];
 
 let archive_file = (filename) => {
-  let paths = ['..', 'queue', ...filename.split(libpath.sep).slice(2) ];
+  let paths = ['.', 'private', 'queue', ...filename.split(libpath.sep).slice(2) ];
   let file = paths.pop();
   libfs.mkdirSync(libpath.join(...paths), { recursive: true });
   libfs.renameSync(filename, libpath.join(...paths, file));
 };
 
 let move_file = (filename) => {
-  let paths = ['..', 'media', ...filename.split(libpath.sep).slice(2) ];
+  let paths = ['.', 'private', 'media', ...filename.split(libpath.sep).slice(2) ];
   let file = paths.pop();
   libfs.mkdirSync(libpath.join(...paths), { recursive: true });
   libfs.renameSync(filename, libpath.join(...paths, file));
@@ -47,7 +47,7 @@ let pick_from_queue = () => {
     });
   } else {
     setTimeout(() => {
-      queue = generate_queue([], '../nosubs/');
+      queue = generate_queue([], './private/queue/');
       pick_from_queue();
     }, 1000*10);
   }

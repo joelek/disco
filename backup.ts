@@ -98,7 +98,7 @@ let compute_hash = (root: string, cb: { (h: string): void }): void => {
 	});
 };
 
-let db = require('../store/discdb.json');
+let db = require('./private/db/discdb.json');
 
 let save_db = (filename: string, db: Record<string, any>, cb: { (): void }) => {
   let sorted = [];
@@ -309,7 +309,7 @@ let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): v
 					type: type,
 					content: content
 				};
-				save_db('../store/discdb.json', db, () => {
+				save_db('./private/db/discdb.json', db, () => {
 					cb(hash, type, content);
 				});
 			});
@@ -325,14 +325,14 @@ let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
 		'all',
 		`--manual=${selector}`,
 		'--minlength=0',
-		'../temp/'
+		'./private/temp/'
 	]);
 	cp.stdout.pipe(process.stdout);
 	process.stdin.pipe(process.stdin);
 	cp.on('close', () => {
 		for (let i = 0; i < content.length; i++) {
 			let dvdtitle = content[i].selector.split(':')[0];
-			libfs.renameSync(`../temp/${content[i].filename}_t${('00' + i).slice(-2)}.mkv`, `../temp/${hash}.${('000' + dvdtitle).slice(-3)}.mkv`);
+			libfs.renameSync(`./private/temp/${content[i].filename}_t${('00' + i).slice(-2)}.mkv`, `./private/temp/${hash}.${('000' + dvdtitle).slice(-3)}.mkv`);
 		}
 		cb();
 	});
@@ -348,7 +348,7 @@ let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) =>
 				`disc:0`,
 				`${ct.selector}`,
 				'--minlength=0',
-				'../temp/'
+				'./private/temp/'
 			]);
 			cp.stdout.pipe(process.stdout);
 			process.stdin.pipe(process.stdin);
@@ -358,7 +358,7 @@ let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) =>
 		} else {
 			for (let i = 0; i < content.length; i++) {
 				let dvdtitle = content[i].selector.split(':')[0];
-				libfs.renameSync(`../temp/${content[i].filename}_t${('00' + dvdtitle).slice(-2)}.mkv`, `../temp/${hash}.${('000' + dvdtitle).slice(-3)}.mkv`);
+				libfs.renameSync(`./private/temp/${content[i].filename}_t${('00' + dvdtitle).slice(-2)}.mkv`, `./private/temp/${hash}.${('000' + dvdtitle).slice(-3)}.mkv`);
 			}
 			cb();
 		}

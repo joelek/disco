@@ -2,10 +2,10 @@ let libcp = require('child_process');
 let libcrypto = require('crypto');
 let libpath = require('path');
 let libfs = require('fs');
-let queue_metadata = require('../store/queue_metadata.json');
-let quality_metadata = require('../store/quality_metadata.json');
+let queue_metadata = require('./private/db/queue_metadata.json');
+let quality_metadata = require('./private/db/quality_metadata.json');
 let libdt = require('./delete_tree');
-let config = require('../store/config.json');
+let config = require('./private/db/config.json');
 
 let gcd = (a, b) => {
   if (!b) {
@@ -36,7 +36,7 @@ let save_queue_metadata = (cb) => {
   sorted.forEach((entry) => {
     out[entry.key] = entry.value;
   });
-  let fd = libfs.openSync('../store/queue_metadata.json', 'w');
+  let fd = libfs.openSync('./private/db/queue_metadata.json', 'w');
   libfs.writeSync(fd, JSON.stringify(out, null, 2));
   libfs.closeSync(fd);
   cb();
@@ -64,7 +64,7 @@ let save_quality_metadata = (cb) => {
   sorted.forEach((entry) => {
     out[entry.key] = entry.value;
   });
-  let fd = libfs.openSync('../store/quality_metadata.json', 'w');
+  let fd = libfs.openSync('./private/db/quality_metadata.json', 'w');
   libfs.writeSync(fd, JSON.stringify(out, null, 2));
   libfs.closeSync(fd);
   cb();
@@ -249,7 +249,7 @@ let crop_detect = (path, picture, cb) => {
 
 let create_temp_dir = (cb) => {
   let id = libcrypto.randomBytes(16).toString('hex');
-  let wd = libpath.join('../temp/', id);
+  let wd = libpath.join('./private/temp/', id);
   libfs.mkdirSync(wd, { recursive: true });
   cb(wd, id);
 };

@@ -4,7 +4,7 @@ import * as librl from 'readline';
 import * as libhttp from 'http';
 import * as libhttps from 'https';
 import * as libfs from 'fs';
-import * as utils from './source/utils';
+import * as utils from './utils';
 
 interface Callback<T> {
 	(value: T): void;
@@ -50,15 +50,15 @@ function log(string: string): void {
 }
 
 function save_disc_to_db(disc_id: string, disc: DiscMetadata, cb: Callback<void>): void {
-	let cddb = require(`../store/cddb.json`);
+	let cddb = require(`./private/db/cddb.json`);
 	cddb[disc_id] = disc;
-	libfs.writeFile(`../store/cddb.json`, JSON.stringify(cddb, null, `\t`), (error) => {
+	libfs.writeFile(`./private/db/cddb.json`, JSON.stringify(cddb, null, `\t`), (error) => {
 		cb();
 	});
 }
 
 function get_disc_from_db(disc_id: string): DiscMetadata | null {
-	let cddb = require(`../store/cddb.json`);
+	let cddb = require(`./private/db/cddb.json`);
 	let disc = cddb[disc_id];
 	if (disc != undefined) {
 		return disc;
@@ -487,7 +487,7 @@ function backup_disc(disc: DiscMetadata, cb: Callback<void>): void {
 				let tid = hash.digest('hex');
 				log(`Track id: ${tid}`);
 				log(`Basename: ${get_basename(disc, index)}`);
-				return libfs.writeFile(`../jobs/queue/${disc.id}.${('00' + disc.tracks[index].number).slice(-2)}.raw`, data, (error) => {
+				return libfs.writeFile(`./private/temp/${disc.id}.${('00' + disc.tracks[index].number).slice(-2)}.raw`, data, (error) => {
 					return iterator(index + 1);
 				});
 			});
