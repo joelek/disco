@@ -48,14 +48,11 @@ process.argv.slice(2).forEach((arg) => {
 	}
 });
 
-let compute_hash = (root: string, cb: { (h: string, h2: string): void }): void => {
+let compute_hash = (root: string, cb: { (h: string): void }): void => {
 	let hash = libcrypto.createHash('sha256');
-	let h2 = libcrypto.createHash('sha256');
-	function update(string: string, string2: string): void {
+	function update(string: string): void {
 		console.log(`Disc id updated with "${string}"`);
-		console.log(`Disc id updated with "${string2}"`);
 		hash.update(string);
-		h2.update(string2);
 	}
 	function async(root: string, cb: { (): void }): void {
 		libfs.stat(root, (error, stats) => {
@@ -79,7 +76,7 @@ let compute_hash = (root: string, cb: { (h: string, h2: string): void }): void =
 							let name = node.split(libpath.sep).slice(1).join(':');
 							let ct = stats.ctimeMs;
 							let mt = stats.mtimeMs;
-							update(`${name}\0${ct}\0{mt}\0`, `${name}\0${ct}\0${mt}\0`);
+							update(`${name}\0${ct}\0${mt}\0`);
 							async(node, () => {
 								pick_next();
 							});
@@ -97,7 +94,7 @@ let compute_hash = (root: string, cb: { (h: string, h2: string): void }): void =
 		});
 	};
 	async(root, () => {
-		cb(hash.digest('hex'), h2.digest('hex'));
+		cb(hash.digest('hex'));
 	});
 };
 
@@ -301,9 +298,8 @@ interface Content {
 }
 
 let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): void }): void => {
-	compute_hash(dir, (hash, h2) => {
-		process.stdout.write(`Determined old disc id as "${hash}".\n`);
-		process.stdout.write(`Determined new disc id as "${h2}".\n`);
+	compute_hash(dir, (hash) => {
+		process.stdout.write(`Determined disc id as "${hash}".\n`);
 		let val = db[hash] as undefined | { type: string, content: Array<Content> };
 		if (val) {
 			cb(hash, val.type, val.content);
