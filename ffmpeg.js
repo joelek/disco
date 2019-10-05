@@ -362,7 +362,7 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
   let ref = (32768 / mbx / mby) | 0;
   ref = (ref > 16) ? 16 : ref;
   let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.8:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
-  let cpx = libcp.spawn('filter', [`${wh}`, `${hh}`, `${den}`]);
+  let cpx = libcp.spawn('denice', [`${wh}`, `${hh}`, `${den}`]);
   let cp2 = libcp.spawn('ffmpeg', [
     '-f', 'rawvideo',
     '-pix_fmt', 'yuv420p16le',
