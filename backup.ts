@@ -332,7 +332,7 @@ let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
 	cp.on('close', () => {
 		for (let i = 0; i < content.length; i++) {
 			let dvdtitle = content[i].selector.split(':')[0];
-			libfs.renameSync(`./private/temp/${content[i].filename}_t${('00' + i).slice(-2)}.mkv`, `./private/temp/${hash}.${('000' + dvdtitle).slice(-3)}.mkv`);
+			libfs.renameSync(`./private/temp/${content[i].filename}_t${('00' + i).slice(-2)}.mkv`, `./private/queue/${hash}.${('000' + dvdtitle).slice(-3)}.mkv`);
 		}
 		cb();
 	});

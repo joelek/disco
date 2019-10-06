@@ -337,6 +337,7 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
   }
   let den = (((1 - q)/0.2)*5 + 0.5) | 0;
   den = bm/100.0;
+  den = Math.min(Math.max(0, den), 1);
   let hh = (fh >> 1);
   let wh = ((fh*farx/fary) >> 1);
   let w = (wh << 1);
@@ -362,7 +363,7 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
   let ref = (32768 / mbx / mby) | 0;
   ref = (ref > 16) ? 16 : ref;
   let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.8:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
-  let cpx = libcp.spawn('denice', [`${wh}`, `${hh}`, `${den}`]);
+  let cpx = libcp.spawn('denice', ['yuv420p16le', `${w}`, `${h}`, `${den}`], { cwd: '../denice/build/' });
   let cp2 = libcp.spawn('ffmpeg', [
     '-f', 'rawvideo',
     '-pix_fmt', 'yuv420p16le',
@@ -607,8 +608,8 @@ let get_metadata = (filename, cb, basename = null) => {
 	if (basename == null) {
 		basename = filename;
 	}
-  let key = basename.split(libpath.sep).slice(2).join(':');
-	process.stdout.write(`Database key: ${key}\n`);
+  let key = basename.split(libpath.sep).join(':');
+	process.stderr.write(`Database key: ${key}\n`);
   let md = queue_metadata[key];
   if (md) {
     cb(md.picture, md.rect, md.imode);
@@ -626,7 +627,8 @@ let get_qmetadata = (filename, cb, basename = null) => {
 	if (basename == null) {
 		basename = filename;
 	}
-  let key = basename.split(libpath.sep).slice(2).join(':');
+  let key = basename.split(libpath.sep).join(':');
+	process.stderr.write(`Database key: ${key}\n`);
   let md = quality_metadata[key];
   if (md) {
     cb(md.quality);
