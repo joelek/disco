@@ -1,8 +1,5 @@
-import * as libcp from 'child_process';
 import * as libfs from 'fs';
 import * as libpath from 'path';
-import * as libcrypto from 'crypto';
-import * as librl from 'readline';
 import * as vobsub from './vobsub';
 import * as ffmpeg from './ffmpeg';
 import * as utils from './utils';
@@ -89,12 +86,12 @@ let get_media_info = (path: string): { type: string, content: Content } | undefi
 		return {
 			type: entry.type,
 			content: mi
-		}
+		};
 	} else {
 		return {
 			type: "unknown",
 			content: null
-		}
+		};
 	}
 };
 

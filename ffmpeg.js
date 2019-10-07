@@ -110,13 +110,13 @@ let format_detect = (path, cb) => {
 
 let interlace_detect = (path, cb) => {
 	libcp.execFile('ffmpeg', [
-			'-i', path,
-			'-vf', `select='between(mod(n\\,15000)\\,0\\,1499)',idet`,
-			'-vsync', '0',
-			'-an',
-			'-f', 'null',
-			'-'
-		], (error, stdout, stderr) => {
+		'-i', path,
+		'-vf', `select='between(mod(n\\,15000)\\,0\\,1499)',idet`,
+		'-vsync', '0',
+		'-an',
+		'-f', 'null',
+		'-'
+	], (error, stdout, stderr) => {
 		let re;
 		let parts;
 		let imode = 'unknown';
@@ -142,12 +142,12 @@ let interlace_detect = (path, cb) => {
 
 let crop_detect = (path, picture, cb) => {
 	libcp.execFile('ffmpeg', [
-			'-i', `${path}`,
-			'-vf', 'framestep=250,crop=iw-4:ih-4,bbox=24',
-			'-an',
-			'-f', 'null',
-			'-'
-		], (error, stdout, stderr) => {
+		'-i', `${path}`,
+		'-vf', 'framestep=250,crop=iw-4:ih-4,bbox=24',
+		'-an',
+		'-f', 'null',
+		'-'
+	], (error, stdout, stderr) => {
 		let re;
 		let parts;
 		let x1s = new Array(picture.dimx - 4).fill(0);
@@ -260,14 +260,14 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
 	let is_dvd_ntsc = picture.dimx === 720 && picture.dimy === 480 && picture.fpsx === 30000 && picture.fpsy === 1001;
 	let is_fhd = picture.dimx === 1920 && picture.dimy === 1080;
 	if (is_dvd_pal) {
-		picture.color_space = 'bt470bg'; // kr = 0.299, kb = 0.114 [bt709 is 0.2126, 0.0722]
-		picture.color_transfer = 'bt470bg'; // gamma 2.8 (often too dark) bt470m is 2.2
-		picture.color_primaries = 'bt470bg'; // 0.29 0.60 0.15 0.06 0.64 0.33       0.3127 0.3290   almost identicla to bt709 (0.30...)
+		picture.color_space = 'bt470bg';
+		picture.color_transfer = 'bt470bg';
+		picture.color_primaries = 'bt470bg';
 		picture.color_range = 'tv';
 	} else if (is_dvd_ntsc) {
-		picture.color_space = 'smpte170m'; // kr = 0.299, kb = 0.114
-		picture.color_transfer = 'smpte170m'; // 4.5l (l < 0.018), 1.099l^0.45 - 0.099 (else) [identical to bt709]
-		picture.color_primaries = 'smpte170m'; // 0.310 0.595 0.155 0.070 0.630 0.340      0.3127 0.3290
+		picture.color_space = 'smpte170m';
+		picture.color_transfer = 'smpte170m';
+		picture.color_primaries = 'smpte170m';
 		picture.color_range = 'tv';
 	} else {
 		picture.color_space = 'bt709';
@@ -411,27 +411,25 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
 	});
 };
 
-
 let encode = (filename, outfile, picture, rect, imode, bm, cb, frameselection = '', extraopts = [], overrides = [], q = 1) => {
 	picture = {...picture};
-
 	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
 	let is_dvd_ntsc = picture.dimx === 720 && picture.dimy === 480 && picture.fpsx === 30000 && picture.fpsy === 1001;
 	if (is_dvd_pal) {
-		picture.color_space = 'bt470bg'; // kr = 0.299, kb = 0.114 [bt709 is 0.2126, 0.0722]
-		picture.color_transfer = 'bt470bg'; // gamma 2.8 (often too dark) bt470m is 2.2
-		picture.color_primaries = 'bt470bg'; // 0.29 0.60 0.15 0.06 0.64 0.33 0.3127 0.3290
+		picture.color_space = 'bt470bg';
+		picture.color_transfer = 'bt470bg';
+		picture.color_primaries = 'bt470bg';
 		picture.color_range = 'tv';
 	} else if (is_dvd_ntsc) {
-		picture.color_space = 'smpte170m'; // kr = 0.299, kb = 0.114
-		picture.color_transfer = 'smpte170m'; // 4.5l (l < 0.018), 1.099l^0.45 - 0.099 (else) [identical to bt709]
-		picture.color_primaries = 'smpte170m'; // 0.310 0.595 0.155 0.070 0.630 0.340 0.3127 0.3290
+		picture.color_space = 'smpte170m';
+		picture.color_transfer = 'smpte170m';
+		picture.color_primaries = 'smpte170m';
 		picture.color_range = 'tv';
-	}  else {
-	picture.color_space = 'bt709';
-	picture.color_transfer = 'bt709';
-	picture.color_primaries = 'bt709';
-	picture.color_range = 'tv';
+	} else {
+		picture.color_space = 'bt709';
+		picture.color_transfer = 'bt709';
+		picture.color_primaries = 'bt709';
+		picture.color_range = 'tv';
 	}
 	let path = filename.split(libpath.sep);
 	let file = path.pop();
@@ -534,48 +532,6 @@ let encode = (filename, outfile, picture, rect, imode, bm, cb, frameselection = 
 	});
 };
 
-let get_x264_quality = (filename, picture, rect, imode, cb) => {
-	let fh = 540;
-	let fw = fh*rect.darx/rect.dary;
-	let deinterlace = '';
-	if (imode === 'tff') {
-		deinterlace = 'yadif=0:0:0,';
-	} else if (imode === 'bff') {
-		deinterlace = 'yadif=0:1:0,';
-	}
-	let mbx = ((fw + 16 - 1) / 16) | 0;
-	let mby = ((fh + 16 - 1) / 16) | 0;
-	let ref = (32768 / mbx / mby) | 0;
-	ref = (ref > 16) ? 16 : ref;
-	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.8:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
-	let filter = `format=yuv420p16le,${deinterlace}select='between(mod(n\\,15000)\\,0\\,249)',crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${fw}:${fh},gradfun=1:16`;
-	let cp = libcp.execFile('ffmpeg', [
-		'-i', filename,
-		'-f', 'null',
-		'-vf', filter,
-		'-vsync', '0',
-		'-c:v', 'libx264',
-		'-preset', 'veryslow',
-		'-x264-params', x264,
-		'-an',
-		'-'
-	], (error, stdout, stderr) => {
-		let re = /\[libx264\s+@\s+[0-9a-fA-F]{16}\]\s+coded\s+y,uvDC,uvAC\s+intra:\s+([0-9]+\.[0-9]+)%\s+([0-9]+\.[0-9]+)%\s+([0-9]+\.[0-9]+)%\s+inter:\s+([0-9]+\.[0-9]+)%\s+([0-9]+\.[0-9]+)%\s+([0-9]+\.[0-9]+)%/
-		let parts = re.exec(stderr);
-		let val = 0;
-		if (parts !== null) {
-			val = parseFloat(parts[4]);
-		}
-		cb(val);
-	});
-};
-
-let determine_quality2 = (filename, cb) => {
-	get_metadata(filename, (picture, rect, imode) => {
-		get_x264_quality(filename, picture, rect, imode, cb)
-	});
-};
-
 let determine_quality = (filename, cb, basename = null) => {
 	let id1 = libcrypto.randomBytes(16).toString('hex');
 	let id2 = libcrypto.randomBytes(16).toString('hex');
@@ -588,8 +544,8 @@ let determine_quality = (filename, cb, basename = null) => {
 					libdt.async(wd, () => {
 						cb({ quality: s1/s2 });
 					});
-				}, `select='between(mod(n\\,250)\\,0\\,1)',`, [ '-vsync', '0' ], ['-an']);
-			}, `select='between(mod(n\\,250)\\,0\\,0)',`, [ '-vsync', '0' ], ['-an']);
+				}, `select='between(mod(n\\,250)\\,0\\,1)',`, [ '-vsync', '0' ], [ '-an' ]);
+			}, `select='between(mod(n\\,250)\\,0\\,0)',`, [ '-vsync', '0' ], [ '-an' ]);
 		}, basename);
 	});
 };

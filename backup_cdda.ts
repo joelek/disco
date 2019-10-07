@@ -1,6 +1,5 @@
 import * as libcp from 'child_process';
 import * as libcrypto from 'crypto';
-import * as librl from 'readline';
 import * as libhttp from 'http';
 import * as libhttps from 'https';
 import * as libfs from 'fs';
@@ -8,10 +7,6 @@ import * as utils from './utils';
 
 interface Callback<T> {
 	(value: T): void;
-}
-
-interface Parser<T> {
-	(string: string): T | null;
 }
 
 type TrackMetadata = {
@@ -152,124 +147,6 @@ function get_disc_id(toc: Buffer): string {
 	hash.update(toc);
 	let disc_id = hash.digest(`hex`);
 	return disc_id;
-}
-
-function get_input<T>(message: string, value: string, parser: Parser<T>, cb: Callback<T>): void {
-	let rl = librl.createInterface({
-		input: process.stdin,
-		output: process.stderr
-	});
-	log(message);
-	rl.on(`line`, (line) => {
-		let parsed = parser(line);
-		if (parsed !== null) {
-			rl.close();
-			return cb(parsed);
-		} else {
-			log(message);
-			rl.write(line);
-		}
-	});
-	rl.write(value);
-	return;
-}
-
-function string_validator(string: string): string | null {
-	if (string.length > 0) {
-		return string;
-	} else {
-		return null;
-	}
-}
-
-function number_validator(string: string): number | null {
-	let number = Number.parseInt(string);
-	if (Number.isInteger(number)) {
-		return number;
-	} else {
-		return null;
-	}
-}
-
-function make_interval_validator(min: number, max: number): Parser<number> {
-	return (string: string) => {
-		let number = number_validator(string);
-		if (number !== null) {
-			if (false) {
-			} else if (number < min) {
-				return null;
-			} else if (number > max) {
-				return null;
-			} else {
-				return number;
-			}
-		} else {
-			return null;
-		}
-	};
-}
-
-function boolean_validator(string: string): boolean | null {
-	if (false) {
-	} else if (/^(t|true|y|yes|1|on)$/i.test(string)) {
-		return true;
-	} else if (/^(f|false|n|no|0|off)$/i.test(string)) {
-		return false;
-	} else {
-		return null;
-	}
-}
-
-function get_track_from_cli(track: CDDA_TRACK, artist: string, cb: Callback<TrackMetadata>): void {
-	log(`Track ${('00' + track.track_number).slice(-2)}: ${duration_from_ms(track.duration_ms)}`);
-	return get_input(`Please specify artist:`, artist, string_validator, (artist) => {
-		return get_input(`Please specify title:`, ``, string_validator, (title) => {
-			return cb({
-				title,
-				artists: [ artist ],
-				duration_ms: track.duration_ms,
-				number: track.track_number,
-				index: track.track_index
-			});
-		});
-	});
-}
-
-function get_tracks_from_cli(toc: CDDA_TOC, artist: string, cb: Callback<Array<TrackMetadata>>): void {
-	log(`Disc has ${toc.tracks.length} audio tracks.`);
-	let tracks = new Array<TrackMetadata>();
-	let iterator = () => {
-		if (tracks.length < toc.tracks.length) {
-			return get_track_from_cli(toc.tracks[tracks.length], artist, (track) => {
-				tracks.push(track);
-				return iterator();
-			});
-		} else {
-			return cb(tracks);
-		}
-	};
-	return iterator();
-}
-
-function get_disc_from_cli(toc: CDDA_TOC, cb: Callback<DiscMetadata>): void {
-	return get_input(`Please specify artist:`, ``, string_validator, (artist) => {
-		return get_input(`Please specify title:`, ``, string_validator, (title) => {
-			return get_input(`Please specify year:`, `2000`, make_interval_validator(0, 9999), (year) => {
-				return get_input(`Please specify number:`, `1`, make_interval_validator(1, 99), (number) => {
-					return get_tracks_from_cli(toc, artist, (tracks) => {
-						return cb({
-							id: toc.disc_id,
-							artists: [ artist ],
-							title,
-							year,
-							number,
-							tracks
-						});
-					});
-				});
-			});
-		});
-	});
 }
 
 function make_form_for_track(track: TrackMetadata): string {
@@ -609,18 +486,6 @@ function get_disc_metadata_from_mb(mb: MB): DiscMetadata | null {
 		tracks
 	};
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 get_disc((disc) => {
 	backup_disc(disc, () => {

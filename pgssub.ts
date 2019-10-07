@@ -1,5 +1,4 @@
 import * as bmp from './bmp';
-import * as libfs from 'fs';
 
 function log(message: any): void {
 	console.log(message);
@@ -270,16 +269,6 @@ function trim_transparent_border(bitmap: bmp.Bitmap): bmp.Bitmap {
 			}
 		}
 	}
-	/*
-	x0 -= 4;
-	x1 += 4;
-	y0 -= 4;
-	y1 += 4;
-	x0 = (x0 > 0) ? x0 : 0;
-	x1 = (x1 < bitmap.w) ? x1 : bitmap.w - 1;
-	y0 = (y0 > 0) ? y0 : 0;
-	y1 = (y1 < bitmap.h) ? y1 : bitmap.h - 1;
-	*/
 	let w = x1 - x0 + 1;
 	let h = y1 - y0 + 1;
 	let buffer = Buffer.alloc(w * h);

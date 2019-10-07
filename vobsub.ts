@@ -322,7 +322,6 @@ let write_file = (image: Image, directory: string, ed: string): void => {
 		let g = palette[i*4+1];
 		let b = palette[i*4+2];
 		let y = (r * 0.3 + g * 0.6 + b * 0.1) | 0;
-		//y = (Math.pow(y/255, 1.5)*255) | 0;
 		y = 255 - y;
 		palette[i*4+0] = y;
 		palette[i*4+1] = y;
@@ -332,18 +331,6 @@ let write_file = (image: Image, directory: string, ed: string): void => {
 	if (hist[0] === image.w*image.h) {
 		return;
 	}
-/*
-	for (let i = 0; i < palette.length / 4; i++) {
-		let r = palette[i*4+0];
-		let g = palette[i*4+1];
-		let b = palette[i*4+2];
-		if (r < 128 && g < 128 && b < 128) {
-			palette[i*4+0] = 0;
-			palette[i*4+1] = 0;
-			palette[i*4+2] = 0;
-		}
-	}
-*/
 	let ts0 = `00000000${image.pts_start}`.slice(-8);
 	let ts1 = `00000000${image.pts_end}`.slice(-8);
 	let filename = `${ts0}_${ts1}.bmp`;
@@ -523,15 +510,6 @@ let get_supported_languages = (cb: { (languages: Array<string>): void }): void =
 	}, []);
 	lines = lines.slice(1, -1);
 	cb(lines);
-};
-
-let find = <T>(array: Array<T>, test: { (value: T): boolean }): number => {
-	for (let i = 0; i < array.length; i++) {
-		if (test(array[i])) {
-			return i;
-		}
-	}
-	return -1;
 };
 
 let extract = (filename: string, cb: { (outputs: string[]): void }): void => {

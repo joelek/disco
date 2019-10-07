@@ -2,9 +2,6 @@ import * as libcp from 'child_process';
 import * as libfs from 'fs';
 import * as libpath from 'path';
 import * as libcrypto from 'crypto';
-import * as librl from 'readline';
-
-// angles?
 
 let a_type = 'unknown';
 let a_show = '';
@@ -168,7 +165,6 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 					process.stdout.write(` unhandled:${line}\n`);
 				}
 			} else if (type === 'SINFO') {
-/*
 				process.stdout.write(`title:${args[0]} stream:${args[1]}`);
 				if (false) {
 				} else if (args[2] === 1) {
@@ -216,7 +212,6 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 				} else {
 					process.stdout.write(` unhandled:${line}\n`);
 				}
-*/
 			} else if (type === 'TINFO') {
 				if (!content[args[0]]) {
 					content[args[0]] = {
