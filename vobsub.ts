@@ -4,6 +4,7 @@ import * as libpath from 'path';
 import * as libcrypto from 'crypto';
 import * as pgssub from './pgssub';
 import * as bmp from './bmp';
+import * as delete_tree from './delete_tree';
 
 type Image = {
 	frame: Buffer,
@@ -500,52 +501,6 @@ let list_subs = (filename: string, cb: { (subs: Array<{ codec: string, lang: str
 	});
 };
 
-let delete_tree = (root: string): void => {
-	let stats = libfs.statSync(root);
-	if (stats.isDirectory()) {
-		let nodes = libfs.readdirSync(root).map((node) => {
-			return libpath.join(root, node);
-		});
-		nodes.forEach(delete_tree);
-		libfs.rmdirSync(root);
-	} else if (stats.isFile()) {
-		libfs.unlinkSync(root);
-	} else {
-		throw new Error();
-	}
-};
-
-let delete_tree_async = (root: string, cb: { (): void }): void => {
-	libfs.stat(root, (error, stats) => {
-		if (stats.isDirectory()) {
-			libfs.readdir(root, (error, nodes) => {
-				nodes = nodes.map((node) => {
-					return libpath.join(root, node);
-				});
-				let pick_next = () => {
-					if (nodes.length > 0) {
-						let node = nodes.pop();
-						delete_tree_async(node, () => {
-							pick_next();
-						});
-					} else {
-						libfs.rmdir(root, (error) => {
-							cb();
-						});
-					}
-				};
-				pick_next();
-			});
-		} else if (stats.isFile()) {
-			libfs.unlink(root, (error) => {
-				cb();
-			});
-		} else {
-			throw new Error();
-		}
-	});
-};
-
 let to_timecode = (ms: number): string => {
 	let s = (ms / 1000) | 0;
 	ms -= s * 1000;
@@ -618,7 +573,7 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 							libfs.writeSync(fd, webvtt);
 							libfs.closeSync(fd);
 							outputs.push(outfile);
-							delete_tree_async(libpath.join('./private/temp/', jobid), () => {
+							delete_tree.async(libpath.join('./private/temp/', jobid), () => {
 								handle_next();
 							});
 						});
