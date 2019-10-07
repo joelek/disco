@@ -8,15 +8,17 @@ import * as ffmpeg from './ffmpeg';
 import * as utils from './utils';
 
 let move_files = (filenames: string[], basename: string): void => {
+	basename = libpath.join(basename); // normalize
+	let target_directory = ['.', 'private', 'media', ...basename.split(libpath.sep)];
+	target_directory.pop();
+	libfs.mkdirSync(target_directory.join(libpath.sep), { recursive: true });
 	filenames.forEach((filename) => {
-	  let dirs = filename.split(libpath.sep);
-	  let file = dirs.pop();
+		filename = libpath.join(filename); // normalize
+		let dirs = filename.split(libpath.sep);
+		let file = dirs.pop();
 		let parts = file.split('.');
 		let ending = parts.slice(2).join('.');
-		let targetdir = ['.', 'private', 'media', ...basename.split(libpath.sep)];
-		targetdir.pop();
-	  libfs.mkdirSync(targetdir.join(libpath.sep), { recursive: true });
-	  libfs.renameSync(filename, basename + '.' + ending);
+		libfs.renameSync(filename, libpath.join('.', 'private', 'media', basename + '.' + ending));
 	});
 };
 
