@@ -23,17 +23,17 @@ let move_files = (filenames: string[], basename: string): void => {
 };
 
 let generate_queue = (files: Array<string>, node: string): Array<string> => {
-  let stat = libfs.statSync(node);
-  if (stat.isDirectory()) {
-    libfs.readdirSync(node).map((subnode) => {
-      return libpath.join(node, subnode);
-    }).map((node) => {
-      return generate_queue(files, node);
-    });
-  } else if (stat.isFile()) {
-    files.push(node);
-  }
-  return files;
+	let stat = libfs.statSync(node);
+	if (stat.isDirectory()) {
+		libfs.readdirSync(node).map((subnode) => {
+			return libpath.join(node, subnode);
+		}).map((node) => {
+			return generate_queue(files, node);
+		});
+	} else if (stat.isFile()) {
+		files.push(node);
+	}
+	return files;
 };
 
 let queue = generate_queue([], './private/queue/');
@@ -58,13 +58,13 @@ interface MovieMetadata extends Metadata {
 }
 
 interface Content {
-  type: string;
-  selector: string;
-  title: string;
-  year: number;
-  show: string;
-  season: number;
-  episode: number;
+	type: string;
+	selector: string;
+	title: string;
+	year: number;
+	show: string;
+	season: number;
+	episode: number;
 }
 
 interface DatabaseEntry {
@@ -99,15 +99,15 @@ let get_media_info = (path: string): { type: string, content: Content } | undefi
 };
 
 let archive_file = (path: string): void => {
-  let dirs = path.split(libpath.sep);
-  let file = dirs.pop();
-  libfs.renameSync(path, libpath.join('./private/archive/', file));
+	let dirs = path.split(libpath.sep);
+	let file = dirs.pop();
+	libfs.renameSync(path, libpath.join('./private/archive/', file));
 };
 
 let pick_from_queue = (): void => {
-  if (queue.length > 0) {
-    let index = (Math.random() * queue.length) | 0;
-    let input = queue.splice(index, 1)[0];
+	if (queue.length > 0) {
+		let index = (Math.random() * queue.length) | 0;
+		let input = queue.splice(index, 1)[0];
 		let mi = get_media_info(input);
 		if (mi) {
 			let basename = null;
@@ -134,9 +134,9 @@ let pick_from_queue = (): void => {
 			return;
 		}
 		pick_from_queue();
-  } else {
-    process.exit(0);
-  }
+	} else {
+		process.exit(0);
+	}
 };
 
 pick_from_queue();

@@ -101,30 +101,30 @@ let compute_hash = (root: string, cb: { (h: string): void }): void => {
 let db = require('./private/db/discdb.json');
 
 let save_db = (filename: string, db: Record<string, any>, cb: { (): void }) => {
-  let sorted = [];
-  for (let key of Object.keys(db)) {
-    sorted.push({
-      key: key,
-      value: db[key]
-    });
-  }
-  sorted = sorted.sort((a, b) => {
-    if (a.key < b.key) {
-      return -1;
-    }
-    if (a.key > b.key) {
-      return 1;
-    }
-    return 0;
-  });
-  let out = {} as Record<string, any>;
-  sorted.forEach((entry) => {
-    out[entry.key] = entry.value;
-  });
-  let fd = libfs.openSync(filename, 'w');
-  libfs.writeSync(fd, JSON.stringify(out, null, 2));
-  libfs.closeSync(fd);
-  cb();
+	let sorted = [];
+	for (let key of Object.keys(db)) {
+		sorted.push({
+			key: key,
+			value: db[key]
+		});
+	}
+	sorted = sorted.sort((a, b) => {
+		if (a.key < b.key) {
+			return -1;
+		}
+		if (a.key > b.key) {
+			return 1;
+		}
+		return 0;
+	});
+	let out = {} as Record<string, any>;
+	sorted.forEach((entry) => {
+		out[entry.key] = entry.value;
+	});
+	let fd = libfs.openSync(filename, 'w');
+	libfs.writeSync(fd, JSON.stringify(out, null, `\t`));
+	libfs.closeSync(fd);
+	cb();
 };
 
 let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void }) => {
