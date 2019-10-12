@@ -71,6 +71,7 @@ let save_quality_metadata = (cb) => {
 };
 
 let format_detect = (path, cb) => {
+	console.log(`Determining format...`);
 	libcp.exec(`ffprobe -v quiet -print_format json -show_streams ${path}`, (error, stdout, stderr) => {
 		let json = JSON.parse(stdout);
 		for (let i = 0; json.streams && i < json.streams.length; i++) {
@@ -101,6 +102,7 @@ let format_detect = (path, cb) => {
 					result.dary = 9;
 					result.aspect_filter = `setsar=${result.parx}/${result.pary},setdar=${result.darx}/${result.dary},`;
 				}
+				console.log(result);
 				cb(result);
 				break;
 			}
@@ -109,6 +111,7 @@ let format_detect = (path, cb) => {
 };
 
 let interlace_detect = (path, cb) => {
+	console.log(`Detecting interlace mode...`);
 	libcp.execFile('ffmpeg', [
 		'-i', path,
 		'-vf', `select='between(mod(n\\,15000)\\,0\\,1499)',idet`,
@@ -136,11 +139,13 @@ let interlace_detect = (path, cb) => {
 				imode = 'progressive';
 			}
 		}
+		console.log(imode);
 		cb(imode);
 	});
 };
 
 let crop_detect = (path, picture, cb) => {
+	console.log(`Detecting crop settings...`);
 	libcp.execFile('ffmpeg', [
 		'-i', `${path}`,
 		'-vf', 'framestep=250,crop=iw-4:ih-4,bbox=24',
@@ -243,6 +248,7 @@ let crop_detect = (path, picture, cb) => {
 			darx,
 			dary
 		};
+		console.log(final);
 		cb(final);
 	});
 };
