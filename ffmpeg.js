@@ -337,10 +337,6 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
 	let farx = rect.darx;
 	let fary = rect.dary;
 	let fh = is_fhd ? picture.dimx*fary/farx : 540;
-	if (rect.darx === 64 && rect.dary === 27) {
-		//farx = 16;
-		//fary = 9;
-	}
 	let den = (((1 - q)/0.2)*5 + 0.5) | 0;
 	den = bm/100.0;
 	den = Math.min(Math.max(0, den), 1);
@@ -421,6 +417,7 @@ let encode = (filename, outfile, picture, rect, imode, bm, cb, frameselection = 
 	picture = {...picture};
 	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
 	let is_dvd_ntsc = picture.dimx === 720 && picture.dimy === 480 && picture.fpsx === 30000 && picture.fpsy === 1001;
+	let is_fhd = picture.dimx === 1920 && picture.dimy === 1080;
 	if (is_dvd_pal) {
 		picture.color_space = 'bt470bg';
 		picture.color_transfer = 'bt470bg';
@@ -465,15 +462,9 @@ let encode = (filename, outfile, picture, rect, imode, bm, cb, frameselection = 
 			];
 		}
 	}
-	let besth = (((rect.h)/108 + 0.5) | 0)*108;
-	let fh = besth;
 	let farx = rect.darx;
 	let fary = rect.dary;
-	fh = 540;
-	if (!(rect.darx === 4 && rect.dary === 3)) {
-		//farx = 16;
-		//fary = 9;
-	}
+	let fh = is_fhd ? picture.dimx*fary/farx : 540;
 	let fw = fh*farx/fary;
 	let interlace = '';
 	if (imode === 'tff') {
