@@ -577,22 +577,28 @@ let get_metadata = (filename, cb, basename = null) => {
 };
 
 let get_qmetadata = (filename, cb, basename = null) => {
-	if (basename == null) {
-		basename = filename;
-	}
-	let key = basename.split(libpath.sep).join(':');
-	process.stderr.write(`Database key: ${key}\n`);
-	let md = quality_metadata[key];
-	if (md) {
-		cb(md.quality);
-	} else {
-		determine_quality(filename, (stats) => {
-			quality_metadata[key] = stats;
-			save_quality_metadata(() => {
-				cb(stats.quality);
-			});
-		}, basename);
-	}
+	get_metadata(filename, (picture, rect, imode) => {
+		if (picture.dimx === 1920 && picture.dimy === 1080) {
+			cb(0.9);
+		} else {
+			if (basename == null) {
+				basename = filename;
+			}
+			let key = basename.split(libpath.sep).join(':');
+			process.stderr.write(`Database key: ${key}\n`);
+			let md = quality_metadata[key];
+			if (md) {
+				cb(md.quality);
+			} else {
+				determine_quality(filename, (stats) => {
+					quality_metadata[key] = stats;
+					save_quality_metadata(() => {
+						cb(stats.quality);
+					});
+				}, basename);
+			}
+		}
+	}, basename);
 };
 
 let transcode = (filename, cb, opt_content_info = null, basename = null) => {
