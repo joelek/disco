@@ -1,20 +1,21 @@
-let libcp = require('child_process');
-let libcrypto = require('crypto');
-let libpath = require('path');
-let libfs = require('fs');
+import * as libcp from 'child_process';
+import * as libcrypto from 'crypto';
+import * as libpath from 'path';
+import * as libfs from 'fs';
 let queue_metadata = require('./private/db/queue_metadata.json');
 let quality_metadata = require('./private/db/quality_metadata.json');
-let libdt = require('./delete_tree');
+import * as libdt from './delete_tree';
 let config = require('./private/db/config.json');
+import * as backup from './backup';
 
-let gcd = (a, b) => {
+let gcd = (a: number, b: number): number => {
 	if (!b) {
 		return a;
 	}
 	return gcd(b, a % b);
 };
 
-let save_queue_metadata = (cb) => {
+let save_queue_metadata = (cb: { (): void }): void => {
 	let stats = queue_metadata;
 	let sorted = [];
 	for (let key of Object.keys(stats)) {
@@ -42,7 +43,7 @@ let save_queue_metadata = (cb) => {
 	cb();
 };
 
-let save_quality_metadata = (cb) => {
+let save_quality_metadata = (cb: { (): void }): void => {
 	let stats = quality_metadata;
 	let sorted = [];
 	for (let key of Object.keys(stats)) {
@@ -70,7 +71,25 @@ let save_quality_metadata = (cb) => {
 	cb();
 };
 
-let format_detect = (path, cb) => {
+type FormatDetectResult = {
+	dimx: number;
+	dimy: number;
+	parx: number;
+	pary: number;
+	darx: number;
+	dary: number;
+	farx: number;
+	fary: number;
+	fpsx: number;
+	fpsy: number;
+	color_range: string | null;
+	color_space: string | null;
+	color_transfer: string | null;
+	color_primaries: string | null;
+	aspect_filter: string;
+};
+
+let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): void => {
 	console.log(`Determining format...`);
 	libcp.exec(`ffprobe -v quiet -print_format json -show_streams ${path}`, (error, stdout, stderr) => {
 		let json = JSON.parse(stdout);
@@ -110,7 +129,7 @@ let format_detect = (path, cb) => {
 	});
 };
 
-let interlace_detect = (path, cb) => {
+let interlace_detect = (path: string, cb: { (imode: string): void }): void => {
 	console.log(`Detecting interlace mode...`);
 	libcp.execFile('ffmpeg', [
 		'-i', path,
@@ -144,7 +163,16 @@ let interlace_detect = (path, cb) => {
 	});
 };
 
-let crop_detect = (path, picture, cb) => {
+type CropResult = {
+	w: number;
+	h: number;
+	x: number;
+	y: number;
+	darx: number;
+	dary: number;
+};
+
+let crop_detect = (path: string, picture: FormatDetectResult, cb: { (result: CropResult): void }): void => {
 	console.log(`Detecting crop settings...`);
 	libcp.execFile('ffmpeg', [
 		'-i', `${path}`,
@@ -253,14 +281,27 @@ let crop_detect = (path, picture, cb) => {
 	});
 };
 
-let create_temp_dir = (cb) => {
+let create_temp_dir = (cb: { (wd: string, id: string): void }): void => {
 	let id = libcrypto.randomBytes(16).toString('hex');
 	let wd = libpath.join('./private/temp/', id);
 	libfs.mkdirSync(wd, { recursive: true });
 	cb(wd, id);
 };
 
-let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, frameselection = '', extraopts = [], overrides = [], q = 1, opt_content = null) => {
+let encode_hardware = (
+	filename: string,
+	outfile: string,
+	picture: FormatDetectResult,
+	rect: CropResult,
+	imode: string,
+	bm: number,
+	cb: { (code: number, outfile: string): void },
+	frameselection: string = '',
+	extraopts: Array<string> = [],
+	overrides: Array<string> = [],
+	q: number = 1,
+	opt_content: backup.Content | null = null
+): void => {
 	picture = {...picture};
 	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
 	let is_dvd_ntsc = picture.dimx === 720 && picture.dimy === 480 && picture.fpsx === 30000 && picture.fpsy === 1001;
@@ -414,7 +455,19 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
 	});
 };
 
-let encode = (filename, outfile, picture, rect, imode, bm, cb, frameselection = '', extraopts = [], overrides = [], q = 1) => {
+let encode = (
+	filename: string,
+	outfile: string,
+	picture: FormatDetectResult,
+	rect: CropResult,
+	imode: string,
+	bm: number,
+	cb: { (code: number, outfile: string): void },
+	frameselection: string = '',
+	extraopts: Array<string> = [],
+	overrides: Array<string> = [],
+	q: number = 1
+): void => {
 	picture = {...picture};
 	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
 	let is_dvd_ntsc = picture.dimx === 720 && picture.dimy === 480 && picture.fpsx === 30000 && picture.fpsy === 1001;
@@ -530,7 +583,7 @@ let encode = (filename, outfile, picture, rect, imode, bm, cb, frameselection = 
 	});
 };
 
-let determine_quality = (filename, cb, basename = null) => {
+let determine_quality = (filename: string, cb: { ({quality: number}): void }, basename: string | null = null): void => {
 	let id1 = libcrypto.randomBytes(16).toString('hex');
 	let id2 = libcrypto.randomBytes(16).toString('hex');
 	create_temp_dir((wd, id) => {
@@ -548,7 +601,7 @@ let determine_quality = (filename, cb, basename = null) => {
 	});
 };
 
-let determine_metadata = (filename, cb) => {
+let determine_metadata = (filename: string, cb: { ({picture: FormatDetectResult, rect: CropResult, imode: string}): void }): void => {
 	format_detect(filename, (picture) => {
 		crop_detect(filename, picture, (rect) => {
 			interlace_detect(filename, (imode) => {
@@ -558,7 +611,7 @@ let determine_metadata = (filename, cb) => {
 	});
 };
 
-let get_metadata = (filename, cb, basename = null) => {
+let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: CropResult, imode: string): void }, basename: string | null = null): void => {
 	if (basename == null) {
 		basename = filename;
 	}
@@ -577,7 +630,7 @@ let get_metadata = (filename, cb, basename = null) => {
 	}
 };
 
-let get_qmetadata = (filename, cb, basename = null) => {
+let get_qmetadata = (filename: string, cb: { (quality: number): void }, basename: string | null = null): void => {
 	get_metadata(filename, (picture, rect, imode) => {
 		if (picture.dimx === 1920 && picture.dimy === 1080) {
 			cb(1.0);
@@ -602,7 +655,7 @@ let get_qmetadata = (filename, cb, basename = null) => {
 	}, basename);
 };
 
-let transcode = (filename, cb, opt_content_info = null, basename = null) => {
+let transcode = (filename: string, cb: { (code: number, outfile: string): void }, opt_content_info: backup.Content | null = null, basename: string | null = null): void => {
 	let path = filename.split(libpath.sep);
 	let file = path.pop();
 	let name = file.split('.').slice(0, -1).join('.');
@@ -610,7 +663,7 @@ let transcode = (filename, cb, opt_content_info = null, basename = null) => {
 	get_metadata(filename, (picture, rect, imode) => {
 		get_qmetadata(filename, (quality) => {
 			let bm = (1 - quality)/0.05;
-			let extraopts = []; // ['-ss', '10:00', '-t', '30'];
+			let extraopts = []; // ['-ss', '2:07:30', '-t', '60'];
 			encode_hardware(filename, outfile, picture, rect, imode, bm, cb, '', extraopts, [], quality, opt_content_info);
 		}, basename);
 	}, basename);
@@ -638,6 +691,8 @@ if (process.argv[2] && process.argv[3]) {
 	}
 }
 
-exports.determine_metadata = determine_metadata;
-exports.determine_quality = determine_quality;
-exports.transcode = transcode;
+export {
+	determine_metadata,
+	determine_quality,
+	transcode
+};

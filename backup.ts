@@ -375,3 +375,7 @@ get_content(dir, (hash, type, content) => {
 		process.stdout.write('bad disc type!\n');
 	}
 });
+
+export {
+	Content
+};
