@@ -347,6 +347,7 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
 	if (picture.color_transfer === 'bt470bg') {
 		picture.color_transfer = 'smpte170m';
 	}
+	let hqdn3d = is_fhd ? `` : `hqdn3d=1:1:5:5,`;
 	let cp = libcp.spawn('ffmpeg', [
 		...extraopts,
 		'-color_range', picture.color_range,
@@ -354,7 +355,7 @@ let encode_hardware = (filename, outfile, picture, rect, imode, bm, cb, framesel
 		'-color_trc', picture.color_transfer,
 		'-colorspace', picture.color_space,
 		'-i', filename,
-		'-vf', `format=yuv420p16le,${interlace}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${w}:${h}`,
+		'-vf', `format=yuv420p16le,${interlace}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},${hqdn3d}scale=${w}:${h}`,
 		'-an',
 		'-v', 'quiet',
 		'-f', 'rawvideo',
@@ -579,7 +580,7 @@ let get_metadata = (filename, cb, basename = null) => {
 let get_qmetadata = (filename, cb, basename = null) => {
 	get_metadata(filename, (picture, rect, imode) => {
 		if (picture.dimx === 1920 && picture.dimy === 1080) {
-			cb(0.9);
+			cb(1.0);
 		} else {
 			if (basename == null) {
 				basename = filename;
