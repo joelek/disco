@@ -2,6 +2,7 @@ import * as libfs from 'fs';
 import * as libpath from 'path';
 import * as vobsub from './vobsub';
 import * as ffmpeg from './ffmpeg';
+import * as backup from './backup';
 import * as utils from './utils';
 
 let move_files = (filenames: string[], basename: string): void => {
@@ -54,26 +55,16 @@ interface MovieMetadata extends Metadata {
 	basename: string;
 }
 
-interface Content {
-	type: string;
-	selector: string;
-	title: string;
-	year: number;
-	show: string;
-	season: number;
-	episode: number;
-}
-
 interface DatabaseEntry {
 	type: string;
-	content: Array<Content>;
+	content: Array<backup.Content>;
 }
 
 interface Database {
 	[key: string]: DatabaseEntry;
 }
 
-let get_media_info = (path: string): { type: string, content: Content } | undefined => {
+let get_media_info = (path: string): { type: string, content: backup.Content } | undefined => {
 	let filename = path.split(libpath.sep).pop();
 	let string = libfs.readFileSync('./private/db/discdb.json', 'utf8');
 	let database = JSON.parse(string) as Database;
@@ -110,7 +101,7 @@ let pick_from_queue = (): void => {
 			let basename = null;
 			let ct = mi.content;
 			if (ct.type === 'episode') {
-				basename = `video/shows/${utils.pathify(ct.show)}-${utils.pathify(utils.config.suffix)}/s${('00' + ct.season).slice(-2)}/${utils.pathify(ct.show)}-s${('00' + ct.season).slice(-2)}e${('00' + ct.episode).slice(-2)}-${utils.pathify(ct.title)}-${utils.pathify(mi.type)}-${utils.pathify(utils.config.suffix)}`;
+				basename = `video/shows/${utils.pathify(ct.show)}/s${('00' + ct.season).slice(-2)}/${utils.pathify(ct.show)}-s${('00' + ct.season).slice(-2)}e${('00' + ct.episode).slice(-2)}-${utils.pathify(ct.title)}-${utils.pathify(mi.type)}-${utils.pathify(utils.config.suffix)}`;
 				basename = libpath.join(basename);
 			} else if (ct.type === 'movie') {
 				basename = `video/movies/${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}-${utils.pathify(utils.config.suffix)}/${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}-${utils.pathify(utils.config.suffix)}`;
