@@ -223,7 +223,7 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 						"year": a_year,
 						"show": a_show,
 						"season": a_season,
-						"episode": a_episode === null ? 0 : a_episode++
+						"episode": 0
 					}
 				}
 				process.stdout.write(`title:${args[0]} attribute:${args[1]}`);
@@ -273,7 +273,13 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 		if (dtype === 'bluray') {
 			content.forEach((ct, index) => ct.selector = '' + index);
 		}
-		content = content.filter((ct) => ct.length <= a_max && ct.length >= a_min);
+		content = content.filter((ct) => ct.length <= a_max && ct.length >= a_min)
+			.map((content) => {
+				return {
+					...content,
+					episode: (a_episode !== null) ? a_episode++ : content.episode
+				};
+			});
 		cb(dtype, content);
 	});
 };
