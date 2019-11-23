@@ -249,7 +249,15 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 					process.stdout.write(` segment_count:${args[3]}\n`);
 				} else if (args[1] === 26) {
 					process.stdout.write(` cells:${args[3]}\n`);
-					let ranges = args[3].split(',').map((run) => run.split('-').map(k => `@${k}`).join('-')).join(',');
+					// Angle blocks are represented with parentheses around blocks.
+					let ranges = args[3]
+						.replace(/[()]/g, "")
+						.split(',')
+						.map((run) => run
+							.split('-')
+							.map(k => `@${k}`)
+							.join('-'))
+						.join(',');
 					content[args[0]].selector += ranges;
 				} else if (args[1] === 27) {
 					process.stdout.write(` filename:${args[3]}\n`);
