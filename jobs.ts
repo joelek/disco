@@ -101,10 +101,12 @@ let pick_from_queue = (): void => {
 			let basename = null;
 			let ct = mi.content;
 			if (ct.type === 'episode') {
-				basename = `video/shows/${utils.pathify(ct.show)}/s${('00' + ct.season).slice(-2)}/${utils.pathify(ct.show)}-s${('00' + ct.season).slice(-2)}e${('00' + ct.episode).slice(-2)}-${utils.pathify(ct.title)}-${utils.pathify(mi.type)}-${utils.pathify(utils.config.suffix)}`;
+				let rn = `${utils.pathify(ct.show)}-s${('00' + ct.season).slice(-2)}e${('00' + ct.episode).slice(-2)}-${utils.pathify(ct.title)}-${utils.pathify(mi.type)}`;
+				basename = `video/shows/${utils.pathify(ct.show)}/s${('00' + ct.season).slice(-2)}/${rn}/${rn}`;
 				basename = libpath.join(basename);
 			} else if (ct.type === 'movie') {
-				basename = `video/movies/${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}-${utils.pathify(utils.config.suffix)}/${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}-${utils.pathify(utils.config.suffix)}`;
+				let rn = `${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}`;
+				basename = `video/movies/${rn}/${rn}`;
 				basename = libpath.join(basename);
 			}
 			process.stdout.write(`Basename set to ${basename}\n`);
