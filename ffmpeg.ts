@@ -385,7 +385,6 @@ let encode_hardware = (
 	if (picture.color_transfer === 'bt470bg') {
 		picture.color_transfer = 'smpte170m';
 	}
-	let hqdn3d = is_fhd ? `` : `hqdn3d=1:1:5:5,`;
 	let cp = libcp.spawn('ffmpeg', [
 		...extraopts,
 		'-color_range', picture.color_range,
@@ -393,7 +392,7 @@ let encode_hardware = (
 		'-color_trc', picture.color_transfer,
 		'-colorspace', picture.color_space,
 		'-i', filename,
-		'-vf', `format=yuv420p16le,${interlace}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},${hqdn3d}scale=${w}:${h}`,
+		'-vf', `format=yuv420p16le,${interlace}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},scale=${w}:${h}`,
 		'-an',
 		'-v', 'quiet',
 		'-f', 'rawvideo',
@@ -535,7 +534,7 @@ let encode = (
 	ref = frameselection ? 16 : ref;
 	let remfilter = frameselection ? '' : `bm3d=${bm}:4:8,`;
 	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.8:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
-	let filter = `format=yuv420p16le,${picture.aspect_filter}${interlace}${frameselection}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${fw}:${fh},${remfilter}gradfun=1:16`;
+	let filter = `format=yuv420p16le,${picture.aspect_filter}${interlace}${frameselection}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},scale=${fw}:${fh},${remfilter}gradfun=1:16`;
 	let comment = JSON.stringify({
 		source: {
 			w: picture.dimx,
