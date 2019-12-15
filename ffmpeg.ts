@@ -293,13 +293,10 @@ let encode_hardware = (
 	picture: FormatDetectResult,
 	rect: CropResult,
 	imode: string,
-	bm: number,
 	cb: { (code: number, outfile: string): void },
-	frameselection: string = '',
-	extraopts: Array<string> = [],
-	overrides: Array<string> = [],
-	q: number = 1,
-	opt_content: backup.Content | null = null
+	extraopts: Array<string>,
+	overrides: Array<string>,
+	opt_content: backup.Content | null
 ): void => {
 	picture = {...picture};
 	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
@@ -375,9 +372,7 @@ let encode_hardware = (
 	let farx = rect.darx;
 	let fary = rect.dary;
 	let fh = is_fhd ? picture.dimx*fary/farx : 540;
-	let den = (((1 - q)/0.2)*5 + 0.5) | 0;
-	den = bm/100.0;
-	den = Math.min(Math.max(0, den), 1);
+	let den = 1;
 	let hh = (fh >> 1);
 	let wh = ((fh*farx/fary) >> 1);
 	let w = (wh << 1);
@@ -657,11 +652,8 @@ let transcode = (filename: string, cb: { (code: number, outfile: string): void }
 	let name = file.split('.').slice(0, -1).join('.');
 	let outfile = libpath.join(...path, `${name}.mp4`);
 	get_metadata(filename, (picture, rect, imode) => {
-		get_qmetadata(filename, (quality) => {
-			let bm = (1 - quality)/0.05;
-			let extraopts = []; // ['-ss', '2:07:30', '-t', '60'];
-			encode_hardware(filename, outfile, picture, rect, imode, bm, cb, '', extraopts, [], quality, opt_content_info);
-		}, basename);
+		let extraopts = []; // ['-ss', '2:07:30', '-t', '60'];
+		encode_hardware(filename, outfile, picture, rect, imode, cb, extraopts, [], opt_content_info);
 	}, basename);
 };
 
