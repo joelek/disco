@@ -1,5 +1,3 @@
-let config = require('./private/db/config.json');
-
 function pathify(string: string): string {
 	return encodeURIComponent(string
 		.split('/').join('_')
@@ -14,6 +12,5 @@ function pathify(string: string): string {
 }
 
 export {
-	config,
 	pathify
-}
+};

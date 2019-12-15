@@ -5,7 +5,6 @@ import * as libfs from 'fs';
 let queue_metadata = require('./private/db/queue_metadata.json');
 let quality_metadata = require('./private/db/quality_metadata.json');
 import * as libdt from './delete_tree';
-let config = require('./private/db/config.json');
 import * as backup from './backup';
 
 let gcd = (a: number, b: number): number => {
@@ -352,8 +351,6 @@ let encode_hardware = (
 				];
 			}
 		}
-		let comment = config.comment;
-		md.push('-metadata', `comment=${comment}`);
 	} else {
 		if (opt_content.type === 'episode') {
 			md = [

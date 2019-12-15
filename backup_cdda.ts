@@ -351,7 +351,7 @@ function get_basename(disc_metadata: DiscMetadata, index: number): string {
 	let number = ('00' + track_metadata.number).slice(-2);
 	let artist = utils.pathify(track_metadata.artists[0]);
 	let title = utils.pathify(track_metadata.title);
-	let suffix = utils.pathify(utils.config.suffix);
+	let suffix = "cd";
 	return `${number}-${artist}-${title}-${suffix}`;
 }
 
