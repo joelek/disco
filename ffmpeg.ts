@@ -3,7 +3,6 @@ import * as libcrypto from 'crypto';
 import * as libpath from 'path';
 import * as libfs from 'fs';
 let queue_metadata = require('./private/db/queue_metadata.json');
-let quality_metadata = require('./private/db/quality_metadata.json');
 import * as libdt from './delete_tree';
 import * as backup from './backup';
 
@@ -37,34 +36,6 @@ let save_queue_metadata = (cb: { (): void }): void => {
 		out[entry.key] = entry.value;
 	});
 	let fd = libfs.openSync('./private/db/queue_metadata.json', 'w');
-	libfs.writeSync(fd, JSON.stringify(out, null, `\t`));
-	libfs.closeSync(fd);
-	cb();
-};
-
-let save_quality_metadata = (cb: { (): void }): void => {
-	let stats = quality_metadata;
-	let sorted = [];
-	for (let key of Object.keys(stats)) {
-		sorted.push({
-			key: key,
-			value: stats[key]
-		});
-	}
-	sorted = sorted.sort((a, b) => {
-		if (a.key < b.key) {
-			return -1;
-		}
-		if (a.key > b.key) {
-			return 1;
-		}
-		return 0;
-	});
-	let out = {};
-	sorted.forEach((entry) => {
-		out[entry.key] = entry.value;
-	});
-	let fd = libfs.openSync('./private/db/quality_metadata.json', 'w');
 	libfs.writeSync(fd, JSON.stringify(out, null, `\t`));
 	libfs.closeSync(fd);
 	cb();
@@ -446,152 +417,6 @@ let encode_hardware = (
 	});
 };
 
-let encode = (
-	filename: string,
-	outfile: string,
-	picture: FormatDetectResult,
-	rect: CropResult,
-	imode: string,
-	bm: number,
-	cb: { (code: number, outfile: string): void },
-	frameselection: string = '',
-	extraopts: Array<string> = [],
-	overrides: Array<string> = [],
-	q: number = 1
-): void => {
-	picture = {...picture};
-	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
-	let is_dvd_ntsc = picture.dimx === 720 && picture.dimy === 480 && picture.fpsx === 30000 && picture.fpsy === 1001;
-	let is_fhd = picture.dimx === 1920 && picture.dimy === 1080;
-	if (is_dvd_pal) {
-		picture.color_space = 'bt470bg';
-		picture.color_transfer = 'bt470bg';
-		picture.color_primaries = 'bt470bg';
-		picture.color_range = 'tv';
-	} else if (is_dvd_ntsc) {
-		picture.color_space = 'smpte170m';
-		picture.color_transfer = 'smpte170m';
-		picture.color_primaries = 'smpte170m';
-		picture.color_range = 'tv';
-	} else {
-		picture.color_space = 'bt709';
-		picture.color_transfer = 'bt709';
-		picture.color_primaries = 'bt709';
-		picture.color_range = 'tv';
-	}
-	let path = filename.split(libpath.sep);
-	let file = path.pop();
-	let name = file.split('.').slice(0, -1).join('.');
-	let parts;
-	parts = /^([a-z0-9_]+)-s([0-9]+)e([0-9]+)-([a-z0-9_]+)-/.exec(name);
-	let md = [];
-	if (parts !== null) {
-		let show = parts[1].split('_').join(' ');
-		let season_number = parseInt(parts[2]);
-		let episode_number = parseInt(parts[3]);
-		let episode_title = parts[4].split('_').join(' ');
-		md = [
-			'-metadata', `show=${show}`,
-			'-metadata', `season_number=${season_number}`,
-			'-metadata', `episode_sort=${episode_number}`,
-			'-metadata', `episode_id=${episode_title}`
-		];
-	} else {
-		parts = /^([a-z0-9_]+)-([0-9]{4})-/.exec(name);
-		if (parts !== null) {
-			let title = parts[1].split('_').join(' ');
-			let year = parseInt(parts[2]);
-			md = [
-				'-metadata', `title=${title}`,
-				'-metadata', `date=${year}`
-			];
-		}
-	}
-	let farx = rect.darx;
-	let fary = rect.dary;
-	let fh = is_fhd ? picture.dimx*fary/farx : 540;
-	let fw = fh*farx/fary;
-	let interlace = '';
-	if (imode === 'tff') {
-		interlace = 'yadif=0:0:0,';
-	} else if (imode === 'bff') {
-		interlace = 'yadif=0:1:0,';
-	} else {
-		interlace = 'setfield=prog,';
-	}
-	if (picture.color_transfer === 'bt470bg') {
-		picture.color_transfer = 'smpte170m';
-	}
-	let mbx = ((fw + 16 - 1) / 16) | 0;
-	let mby = ((fh + 16 - 1) / 16) | 0;
-	let ref = (32768 / mbx / mby) | 0;
-	ref = (ref > 16) ? 16 : ref;
-	ref = frameselection ? 16 : ref;
-	let remfilter = frameselection ? '' : `bm3d=${bm}:4:8,`;
-	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.8:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
-	let filter = `format=yuv420p16le,${picture.aspect_filter}${interlace}${frameselection}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},scale=${fw}:${fh},${remfilter}gradfun=1:16`;
-	let comment = JSON.stringify({
-		source: {
-			w: picture.dimx,
-			h: picture.dimy,
-			sar: {
-				n: picture.parx,
-				d: picture.pary
-			}
-		},
-		filters: filter.split(',')
-	});
-	let cp = libcp.spawn('ffmpeg', [
-		...extraopts,
-		'-i', filename,
-		'-f', 'h264',
-		'-map_chapters', '-1',
-		'-map_metadata', '-1',
-		'-fflags', '+bitexact',
-		'-movflags', '+faststart',
-		'-color_range', picture.color_range,
-		'-color_primaries', picture.color_primaries,
-		'-color_trc', picture.color_transfer,
-		'-colorspace', picture.color_space,
-		'-vf', filter,
-		'-c:v', 'libx264',
-		'-preset', 'veryslow',
-		'-x264-params', x264,
-		'-ac', '2',
-		'-c:a', 'aac',
-		'-q:a', '2',
-		...md,
-		'-metadata', `comment=${comment}`,
-		...overrides,
-		outfile,
-		'-y'
-	]);
-	cp.stdout.pipe(process.stdout);
-	cp.stderr.pipe(process.stderr);
-	process.stdin.pipe(cp.stdin);
-	cp.on('exit', (code) => {
-		cb(code, outfile);
-	});
-};
-
-let determine_quality = (filename: string, cb: { ({quality: number}): void }, basename: string | null = null): void => {
-	let id1 = libcrypto.randomBytes(16).toString('hex');
-	let id2 = libcrypto.randomBytes(16).toString('hex');
-	create_temp_dir((wd, id) => {
-		get_metadata(filename, (picture, rect, imode) => {
-			encode(filename, libpath.join(wd, id1), picture, rect, imode, 0, (code1, outfile1) => {
-				encode(filename, libpath.join(wd, id2), picture, rect, imode, 0, (code2, outfile2) => {
-					let s1 = libfs.statSync(outfile1).size;
-					let s2 = libfs.statSync(outfile2).size;
-					libdt.async(wd, () => {
-						cb({ quality: s1/s2 });
-					});
-				}, `select='between(mod(n\\,250)\\,0\\,1)',`, [ '-vsync', '0' ], [ '-an' ]);
-			}, `select='between(mod(n\\,250)\\,0\\,0)',`, [ '-vsync', '0' ], [ '-an' ]);
-		}, basename);
-	});
-};
-
 let determine_metadata = (filename: string, cb: { ({picture: FormatDetectResult, rect: CropResult, imode: string}): void }): void => {
 	format_detect(filename, (picture) => {
 		crop_detect(filename, picture, (rect) => {
@@ -621,31 +446,6 @@ let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: 
 	}
 };
 
-let get_qmetadata = (filename: string, cb: { (quality: number): void }, basename: string | null = null): void => {
-	get_metadata(filename, (picture, rect, imode) => {
-		if (picture.dimx === 1920 && picture.dimy === 1080) {
-			cb(1.0);
-		} else {
-			if (basename == null) {
-				basename = filename;
-			}
-			let key = basename.split(libpath.sep).join(':');
-			process.stderr.write(`Database key: ${key}\n`);
-			let md = quality_metadata[key];
-			if (md) {
-				cb(md.quality);
-			} else {
-				determine_quality(filename, (stats) => {
-					quality_metadata[key] = stats;
-					save_quality_metadata(() => {
-						cb(stats.quality);
-					});
-				}, basename);
-			}
-		}
-	}, basename);
-};
-
 let transcode = (filename: string, cb: { (code: number, outfile: string): void }, opt_content_info: backup.Content | null = null, basename: string | null = null): void => {
 	let path = filename.split(libpath.sep);
 	let file = path.pop();
@@ -661,12 +461,7 @@ if (process.argv[2] && process.argv[3]) {
 	if (true /*mingw*/) {
 		process.argv[3] = process.argv[3].split('/').join(libpath.sep);
 	}
-	if (process.argv[2] === 'q') {
-		determine_quality(process.argv[3], (n) => {
-			console.log(n);
-			process.exit(0);
-		});
-	} else if (process.argv[2] === 'e') {
+	if (process.argv[2] === 'e') {
 		transcode(process.argv[3], (code, outfile) => {
 			console.log(outfile);
 			process.exit(code);
@@ -681,6 +476,5 @@ if (process.argv[2] && process.argv[3]) {
 
 export {
 	determine_metadata,
-	determine_quality,
 	transcode
 };
