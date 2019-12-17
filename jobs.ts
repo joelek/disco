@@ -72,7 +72,13 @@ let get_media_info = (path: string): { type: string, content: backup.Content } |
 	let hash = parts[0];
 	let title = Number.parseInt(parts[1]);
 	let entry = database[hash];
-	let mi = entry.content.find(ct => Number.parseInt(ct.selector.split(':')[0]) === title);
+	let mi = entry.content.find((ct, index) => {
+		if (parts[1].length === 2) {
+			return index === title;
+		} else {
+			return Number.parseInt(ct.selector.split(':')[0]) === title;
+		}
+	});
 	if (mi) {
 		return {
 			type: entry.type,
