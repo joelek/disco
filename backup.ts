@@ -309,18 +309,21 @@ interface Content {
 let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): void }): void => {
 	compute_hash(dir, (hash) => {
 		process.stdout.write(`Determined disc id as "${hash}".\n`);
+		let done = (type: string, content: Array<Content>) => {
+			save_db('./private/db/discdb.json', db, () => {
+				cb(hash, type, content);
+			});
+		};
 		let val = db[hash] as undefined | { type: string, content: Array<Content> };
 		if (val) {
-			cb(hash, val.type, val.content);
+			done(val.type, val.content);
 		} else {
 			analyze(dir, (type, content) => {
 				db[hash] = {
 					type: type,
 					content: content
 				};
-				save_db('./private/db/discdb.json', db, () => {
-					cb(hash, type, content);
-				});
+				done(type, content);
 			});
 		}
 	});
