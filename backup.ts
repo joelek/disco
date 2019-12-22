@@ -47,10 +47,6 @@ process.argv.slice(2).forEach((arg) => {
 
 let compute_hash = (root: string, cb: { (h: string): void }): void => {
 	let hash = libcrypto.createHash('sha256');
-	function update(string: string): void {
-		console.log(`Disc id updated with "${string}"`);
-		hash.update(string);
-	}
 	function async(root: string, cb: { (): void }): void {
 		libfs.stat(root, (error, stats) => {
 			if (stats.isDirectory()) {
@@ -73,7 +69,7 @@ let compute_hash = (root: string, cb: { (h: string): void }): void => {
 							let name = node.split(libpath.sep).slice(1).join(':');
 							let ct = stats.ctimeMs;
 							let mt = stats.mtimeMs;
-							update(`${name}\0${ct}\0${mt}\0`);
+							hash.update(`${name}\0${ct}\0${mt}\0`);
 							async(node, () => {
 								pick_next();
 							});
