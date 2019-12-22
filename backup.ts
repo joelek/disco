@@ -45,6 +45,51 @@ process.argv.slice(2).forEach((arg) => {
 	}
 });
 
+function compute_digest(path: string, cb: { (digest: string): void }): void {
+	libfs.stat(path, (error, stat) => {
+		if (error) {
+			throw new Error();
+		}
+		if (stat.isFile()) {
+			let buffer = Buffer.alloc(24);
+			buffer.writeBigUInt64BE(BigInt(stat.size), 0);
+			buffer.writeBigUInt64BE(BigInt(stat.ctimeMs), 8);
+			buffer.writeBigUInt64BE(BigInt(stat.mtimeMs), 16);
+			let hash = libcrypto.createHash("sha256");
+			hash.update(buffer);
+			let digest = hash.digest("hex");
+			cb(digest);
+		} else if (stat.isDirectory()) {
+			libfs.readdir(path, (error, subpaths) => {
+				if (error) {
+					throw new Error();
+				}
+				subpaths = subpaths.sort((one, two) => {
+					return two.localeCompare(one, "en");
+				});
+				let hash = libcrypto.createHash("sha256");
+				let iterator = () => {
+					if (subpaths.length > 0) {
+						let subpath = subpaths.pop();
+						compute_digest(libpath.join(path, subpath), (digest) => {
+							let buffer = Buffer.from(subpath, "utf8");
+							hash.update(buffer);
+							hash.update(digest);
+							iterator();
+						});
+					} else {
+						let digest = hash.digest("hex");
+						cb(digest);
+					}
+				};
+				iterator();
+			});
+		} else {
+			throw new Error();
+		}
+	});
+}
+
 let compute_hash = (root: string, cb: { (h: string): void }): void => {
 	let hash = libcrypto.createHash('sha256');
 	function async(root: string, cb: { (): void }): void {
@@ -92,6 +137,7 @@ let compute_hash = (root: string, cb: { (h: string): void }): void => {
 };
 
 let db = require('./private/db/discdb.json');
+let v1v2map = require('./private/db/v1v2map.json');
 
 let save_db = (filename: string, db: Record<string, any>, cb: { (): void }) => {
 	let sorted = [];
@@ -306,8 +352,12 @@ let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): v
 	compute_hash(dir, (hash) => {
 		process.stdout.write(`Determined disc id as "${hash}".\n`);
 		let done = (type: string, content: Array<Content>) => {
-			save_db('./private/db/discdb.json', db, () => {
-				cb(hash, type, content);
+			compute_digest(dir, (digest) => {
+				process.stdout.write(`Determined disc id v2 as "${digest}".\n`);
+				v1v2map[hash] = digest;
+				save_db('./private/db/v1v2map.json', v1v2map, () => {
+					cb(hash, type, content);
+				});
 			});
 		};
 		let val = db[hash] as undefined | { type: string, content: Array<Content> };
@@ -319,7 +369,9 @@ let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): v
 					type: type,
 					content: content
 				};
-				done(type, content);
+				save_db('./private/db/discdb.json', db, () => {
+					done(type, content);
+				});
 			});
 		}
 	});
