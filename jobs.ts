@@ -28,7 +28,7 @@ let generate_queue = (files: Array<string>, node: string): Array<string> => {
 		}).map((node) => {
 			return generate_queue(files, node);
 		});
-	} else if (stat.isFile()) {
+	} else if (stat.isFile() && /[.]mkv$/.test(node)) {
 		files.push(node);
 	}
 	return files;
