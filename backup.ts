@@ -2,6 +2,7 @@ import * as libcp from 'child_process';
 import * as libfs from 'fs';
 import * as libpath from 'path';
 import * as libcrypto from 'crypto';
+import * as delete_tree from './delete_tree'
 
 let a_type = 'unknown';
 let a_show = '';
@@ -392,6 +393,9 @@ let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): v
 };
 
 let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
+	let jobid = libcrypto.randomBytes(16).toString("hex");
+	let jobwd = "./private/jobs/" + jobid + "/";
+	libfs.mkdirSync(jobwd, { recursive: true });
 	let selector = content.map(ct => ct.selector).join(' ');
 	let cp = libcp.spawn('makemkvcon', [
 		'mkv',
@@ -401,15 +405,22 @@ let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
 		'--minlength=0',
 		"--robot",
 		"--progress=-same",
-		'./private/temp/'
+		jobwd
 	]);
 	cp.stdout.pipe(process.stdout);
 	process.stdin.pipe(process.stdin);
 	cp.on('close', () => {
-		for (let i = 0; i < content.length; i++) {
-			libfs.renameSync(`./private/temp/${content[i].filename}_t${('00' + i).slice(-2)}.mkv`, `./private/queue/${hash}.${('00' + i).slice(-2)}.mkv`);
+		let subpaths = libfs.readdirSync(jobwd).sort();
+		if (subpaths.length !== content.length) {
+			throw new Error("Wrong number of files encountered!");
 		}
-		cb();
+		for (let i = 0; i < content.length; i++) {
+			let target = `./private/archive/${hash}.${('00' + i).slice(-2)}.mkv`;
+			libfs.renameSync(libpath.join(jobwd, subpaths[i]), target);
+		}
+		delete_tree.async(jobwd, () => {
+			cb();
+		});
 	});
 };
 
