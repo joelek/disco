@@ -399,6 +399,8 @@ let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
 		'all',
 		`--manual=${selector}`,
 		'--minlength=0',
+		"--robot",
+		"--progress=-same",
 		'./private/temp/'
 	]);
 	cp.stdout.pipe(process.stdout);
@@ -421,6 +423,8 @@ let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) =>
 				`disc:0`,
 				`${ct.selector.split(' ')[0]}`,
 				'--minlength=0',
+				"--robot",
+				"--progress=-same",
 				'./private/temp/'
 			]);
 			cp.stdout.pipe(process.stdout);
