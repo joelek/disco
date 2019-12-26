@@ -64,13 +64,18 @@ function compute_digest(path: string, cb: { (digest: string): void }): void {
 				if (error) {
 					throw new Error();
 				}
-				subpaths = subpaths.sort((one, two) => {
-					return two.localeCompare(one, "en");
-				});
+				subpaths = subpaths
+					.map((subpath) => {
+						return Buffer.from(subpath, "utf8");
+					})
+					.sort()
+					.map((buffer) => {
+						return buffer.toString("utf8");
+					});
 				let hash = libcrypto.createHash("sha256");
 				let iterator = () => {
 					if (subpaths.length > 0) {
-						let subpath = subpaths.pop();
+						let subpath = subpaths.shift();
 						compute_digest(libpath.join(path, subpath), (digest) => {
 							let buffer = Buffer.from(subpath, "utf8");
 							hash.update(buffer);
