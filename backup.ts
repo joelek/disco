@@ -284,6 +284,7 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 					process.stdout.write(` bytes:${args[3]}\n`);
 				} else if (args[1] === 16) {
 					process.stdout.write(` bluray_playlist:${args[3]}\n`);
+					content[args[0]].selector = args[3] + ":";
 				} else if (args[1] === 24) {
 					process.stdout.write(` dvdtitle:${args[3]}\n`);
 					content[args[0]].selector = `${args[3]}:`;
@@ -321,7 +322,7 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 			}
 		});
 		if (dtype === 'bluray') {
-			content.forEach((ct, index) => ct.selector = '' + index);
+			content.forEach((ct, index) => ct.selector = '' + index + ' ' + ct.selector);
 		}
 		content = content.filter((ct) => ct.length <= a_max && ct.length >= a_min)
 			.map((content) => {
@@ -405,7 +406,7 @@ let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) =>
 			let cp = libcp.spawn('makemkvcon', [
 				'mkv',
 				`disc:0`,
-				`${ct.selector}`,
+				`${ct.selector.split(' ')[0]}`,
 				'--minlength=0',
 				'./private/temp/'
 			]);
