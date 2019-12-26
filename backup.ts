@@ -7,6 +7,7 @@ let a_type = 'unknown';
 let a_show = '';
 let a_season = 0;
 let a_episode = null;
+let a_expect = null;
 let a_title = '';
 let a_year = 0;
 let a_min = 0;
@@ -42,6 +43,8 @@ process.argv.slice(2).forEach((arg) => {
 		a_year = Number.parseInt(parts[1]);
 	} else if ((parts = /^--episode=([0-9]+)$/.exec(arg)) != null) {
 		a_episode = Number.parseInt(parts[1]);
+	} else if ((parts = /^--expect=([0-9]+)$/.exec(arg)) != null) {
+		a_expect = Number.parseInt(parts[1]);
 	}
 });
 
@@ -441,7 +444,8 @@ get_content(dir, (hash, type, content) => {
 	let callback = () => {
 		process.exit(0);
 	};
-	if (false) {
+	if (a_expect !== null && a_expect !== content_to_rip.length) {
+		process.stdout.write("Expected " + a_expect + " titles, " + content_to_rip.length + " found!\n");
 	} else if (type === 'dvd') {
 		backup_dvd(hash, content_to_rip, callback);
 	} else if (type === 'bluray') {
