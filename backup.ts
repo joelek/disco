@@ -405,7 +405,7 @@ let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
 		`--manual=${selector}`,
 		'--minlength=0',
 		"--robot",
-		"--progress=-same",
+		/*"--progress=-same",*/
 		jobwd
 	]);
 	cp.stdout.pipe(process.stdout);
@@ -436,7 +436,7 @@ let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) =>
 				`${ct.selector.split(' ')[0]}`,
 				'--minlength=0',
 				"--robot",
-				"--progress=-same",
+				/*"--progress=-same",*/
 				'./private/temp/'
 			]);
 			cp.stdout.pipe(process.stdout);
