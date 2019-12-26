@@ -343,7 +343,6 @@ let encode_hardware = (
 	let farx = rect.darx;
 	let fary = rect.dary;
 	let fh = is_fhd ? picture.dimx*fary/farx : 540;
-	let den = 0.05;
 	let hh = (fh >> 1);
 	let wh = ((fh*farx/fary) >> 1);
 	let w = (wh << 1);
@@ -369,7 +368,7 @@ let encode_hardware = (
 	let ref = (32768 / mbx / mby) | 0;
 	ref = (ref > 16) ? 16 : ref;
 	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.8:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
-	let cpx = libcp.spawn('denice', ['yuv420p16le', `${w}`, `${h}`, `${den}`], { cwd: '../denice/build/' });
+	let cpx = libcp.spawn('denice', ['yuv420p16le', `${w}`, `${h}`, "0.05"], { cwd: '../denice/build/' });
 	let cp2 = libcp.spawn('ffmpeg', [
 		'-f', 'rawvideo',
 		'-pix_fmt', 'yuv420p16le',
