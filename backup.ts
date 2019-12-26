@@ -265,6 +265,7 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 						"type": a_type,
 						"filename": "title",
 						"selector": "",
+						"angle": 1,
 						"length": 0,
 						"title": a_title,
 						"year": a_year,
@@ -287,6 +288,9 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 					process.stdout.write(` size:${args[3]}\n`);
 				} else if (args[1] === 11) {
 					process.stdout.write(` bytes:${args[3]}\n`);
+				} else if (args[1] === 15) {
+					process.stdout.write(` angle:${args[3]}\n`);
+					content[args[0]].angle = Number.parseInt(args[3]);
 				} else if (args[1] === 16) {
 					process.stdout.write(` bluray_playlist:${args[3]}\n`);
 					content[args[0]].selector = args[3] + ":";
@@ -329,7 +333,7 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 		if (dtype === 'bluray') {
 			content.forEach((ct, index) => ct.selector = '' + index + ' ' + ct.selector);
 		}
-		content = content.filter((ct) => ct.length <= a_max && ct.length >= a_min)
+		content = content.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1)
 			.map((content) => {
 				return {
 					...content,
@@ -346,6 +350,7 @@ interface Content {
 	type: string;
 	filename: string;
 	selector: string;
+	angle: number;
 	length: number;
 	title: string;
 	year: number;
