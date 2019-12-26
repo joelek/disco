@@ -50,6 +50,7 @@ process.argv.slice(2).forEach((arg) => {
 });
 
 function compute_digest(path: string, cb: { (digest: string): void }): void {
+	console.log(path);
 	libfs.stat(path, (error, stat) => {
 		if (error) {
 			throw new Error();
