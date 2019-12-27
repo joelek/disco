@@ -4,7 +4,7 @@ import * as libpath from 'path';
 import * as libfs from 'fs';
 let queue_metadata = require('./private/db/queue_metadata.json');
 import * as libdt from './delete_tree';
-import * as backup from './backup';
+import { MediaContent } from './discdb';
 import * as stream_types from "./stream_types";
 
 interface Callback<A> {
@@ -355,7 +355,7 @@ let encode_hardware = (
 	sample_keep: number,
 	extraopts: Array<string>,
 	overrides: Array<string>,
-	opt_content: backup.Content | null = null
+	opt_content: MediaContent | null = null
 ): void => {
 	picture = {...picture};
 	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
@@ -392,6 +392,11 @@ let encode_hardware = (
 				'-metadata', `title=${opt_content.title}`,
 				'-metadata', `date=${opt_content.year}`
 			];
+		}
+		if (opt_content.imdb != null) {
+			md.push("-metadata", "comment=" + JSON.stringify({
+				imdb: opt_content.imdb
+			}));
 		}
 	}
 	audio_streams.forEach((audio_stream, index) => {
@@ -540,7 +545,7 @@ let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: 
 	}
 };
 
-let transcode = (filename: string, cb: { (code: number, outfile: string): void }, opt_content_info: backup.Content | null = null, basename: string | null = null): void => {
+let transcode = (filename: string, cb: { (code: number, outfile: string): void }, opt_content_info: MediaContent | null = null, basename: string | null = null): void => {
 	let path = filename.split(libpath.sep);
 	let file = path.pop();
 	let name = file.split('.').slice(0, -1).join('.');

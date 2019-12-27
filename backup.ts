@@ -1,18 +1,25 @@
 import * as libcp from 'child_process';
 import * as libfs from 'fs';
 import * as libpath from 'path';
+import * as librl from 'readline';
 import * as libcrypto from 'crypto';
-import * as delete_tree from './delete_tree'
+import * as delete_tree from './delete_tree';
+import * as imdb from './metadata';
+import { compute_digest } from "./discid";
+import { MediaDatabase, MediaContent, MediaContentType, MediaType } from './discdb';
+import { foreach } from './utils';
+import { Readable, Writable } from 'stream';
 
-let a_type = 'unknown';
-let a_show = '';
-let a_season = 0;
-let a_episode = null;
-let a_expect = null;
-let a_title = '';
-let a_year = 0;
+let a_type: MediaContentType = 'neither';
+let a_show: string | null = null;
+let a_season: number | null = null;
+let a_episode: number | null = null;
+let a_expect: number | null = null;
+let a_title: string | null = null;
+let a_year: number | null = null;
 let a_min = 0;
 let a_max = Infinity;
+let a_imdb: string | null = null;
 
 let length_to_seconds = (string: string): number => {
 	let parts;
@@ -46,61 +53,12 @@ process.argv.slice(2).forEach((arg) => {
 		a_episode = Number.parseInt(parts[1]);
 	} else if ((parts = /^--expect=([0-9]+)$/.exec(arg)) != null) {
 		a_expect = Number.parseInt(parts[1]);
+	} else if ((parts = /^--imdb=(.+)$/.exec(arg)) != null) {
+		a_imdb = parts[1];
 	}
 });
 
-function compute_digest(path: string, cb: { (digest: string): void }): void {
-	console.log(path);
-	libfs.stat(path, (error, stat) => {
-		if (error) {
-			throw new Error();
-		}
-		if (stat.isFile()) {
-			let buffer = Buffer.alloc(24);
-			buffer.writeBigUInt64BE(BigInt(stat.size), 0);
-			buffer.writeBigUInt64BE(BigInt(stat.ctimeMs), 8);
-			buffer.writeBigUInt64BE(BigInt(stat.mtimeMs), 16);
-			let hash = libcrypto.createHash("sha256");
-			hash.update(buffer);
-			let digest = hash.digest("hex");
-			cb(digest);
-		} else if (stat.isDirectory()) {
-			libfs.readdir(path, (error, subpaths) => {
-				if (error) {
-					throw new Error();
-				}
-				subpaths = subpaths
-					.map((subpath) => {
-						return Buffer.from(subpath, "utf8");
-					})
-					.sort()
-					.map((buffer) => {
-						return buffer.toString("utf8");
-					});
-				let hash = libcrypto.createHash("sha256");
-				let iterator = () => {
-					if (subpaths.length > 0) {
-						let subpath = subpaths.shift();
-						compute_digest(libpath.join(path, subpath), (digest) => {
-							let buffer = Buffer.from(subpath, "utf8");
-							hash.update(buffer);
-							hash.update(digest);
-							iterator();
-						});
-					} else {
-						let digest = hash.digest("hex");
-						cb(digest);
-					}
-				};
-				iterator();
-			});
-		} else {
-			throw new Error();
-		}
-	});
-}
-
-let db = require('./private/db/discdb.json');
+let db = MediaDatabase.as(JSON.parse(libfs.readFileSync("./private/db/discdb.json", "utf8")));
 
 let save_db = (filename: string, db: Record<string, any>, cb: { (): void }) => {
 	let sorted = [];
@@ -129,10 +87,16 @@ let save_db = (filename: string, db: Record<string, any>, cb: { (): void }) => {
 	cb();
 };
 
-let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void }) => {
+type MediaMetadata = {
+	content: MediaContent,
+	angle: number,
+	length: number
+}
+
+let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>): void }) => {
 	libcp.exec(`makemkvcon info disc:0 --robot --minlength=0`, (error, stdout, stderr) => {
-		let dtype = 'unknown';
-		let content = new Array<Content>();
+		let dtype: MediaType = 'neither';
+		let metadata = new Array<MediaMetadata>();
 		let lines = stdout.split(/\r?\n/);
 		lines.map((line) => {
 			let parts = line.split(':');
@@ -218,43 +182,45 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 					process.stdout.write(` unhandled:${line}\n`);
 				}
 			} else if (type === 'TINFO') {
-				if (!content[args[0]]) {
-					content[args[0]] = {
-						"type": a_type,
-						"filename": "title",
-						"selector": "",
-						"angle": 1,
-						"length": 0,
-						"title": a_title,
-						"year": a_year,
-						"show": a_show,
-						"season": a_season,
-						"episode": 0
-					}
+				if (!metadata[args[0]]) {
+					metadata[args[0]] = {
+						content: {
+							type: a_type,
+							selector: "",
+							title: a_title,
+							year: a_year,
+							show: a_show,
+							season: a_season,
+							episode: null,
+							imdb: undefined,
+							imdb_show: undefined
+						},
+						angle: 1,
+						length: 0,
+					};
 				}
 				process.stdout.write(`title:${args[0]} attribute:${args[1]}`);
 				if (false) {
 				} else if (args[1] === 2) {
 					process.stdout.write(` filename_base:${args[3]}\n`);
-					content[args[0]].filename = args[3];
 				} else if (args[1] === 8) {
 					process.stdout.write(` chapters:${args[3]}\n`);
 				} else if (args[1] === 9) {
 					process.stdout.write(` length:${args[3]}\n`);
-					content[args[0]].length = length_to_seconds(args[3]);
+					metadata[args[0]].length = length_to_seconds(args[3]);
 				} else if (args[1] === 10) {
 					process.stdout.write(` size:${args[3]}\n`);
 				} else if (args[1] === 11) {
 					process.stdout.write(` bytes:${args[3]}\n`);
 				} else if (args[1] === 15) {
 					process.stdout.write(` angle:${args[3]}\n`);
-					content[args[0]].angle = Number.parseInt(args[3]);
+					metadata[args[0]].angle = Number.parseInt(args[3]);
 				} else if (args[1] === 16) {
 					process.stdout.write(` bluray_playlist:${args[3]}\n`);
-					content[args[0]].selector = args[3] + ":";
+					metadata[args[0]].content.selector = args[3] + ":";
 				} else if (args[1] === 24) {
 					process.stdout.write(` dvdtitle:${args[3]}\n`);
-					content[args[0]].selector = `${args[3]}:`;
+					metadata[args[0]].content.selector = `${args[3]}:`;
 				} else if (args[1] === 25) {
 					process.stdout.write(` segment_count:${args[3]}\n`);
 				} else if (args[1] === 26) {
@@ -268,7 +234,7 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 							.map(k => `@${k}`)
 							.join('-'))
 						.join(',');
-					content[args[0]].selector += ranges;
+					metadata[args[0]].content.selector += ranges;
 				} else if (args[1] === 27) {
 					process.stdout.write(` filename:${args[3]}\n`);
 				} else if (args[1] === 28) {
@@ -288,51 +254,83 @@ let analyze = (dir: string, cb: { (type: string, content: Array<Content>): void 
 				process.stdout.write(`${line}\n`);
 			}
 		});
-		if (dtype === 'bluray') {
-			content.forEach((ct, index) => ct.selector = '' + index + ' ' + ct.selector);
+		if (dtype as MediaType === 'bluray') {
+			metadata.forEach((ct, index) => ct.content.selector = '' + index + ' ' + ct.content.selector);
 		}
-		content = content.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1)
+		metadata = metadata.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1)
 			.map((content) => {
 				return {
 					...content,
-					episode: (a_episode !== null) ? a_episode++ : content.episode
+					episode: (a_episode !== null) ? a_episode++ : content.content.episode
 				};
 			});
-		cb(dtype, content);
+		let content = metadata.map((ct) => {
+			return ct.content
+		});
+		if (a_imdb !== null) {
+			imdb.getTitle(a_imdb, (title) => {
+				if (title !== null) {
+					if (title.type === "show") {
+						foreach(content, (value, next) => {
+							value.type = "episode";
+							value.show = title.title;
+							value.imdb_show = a_imdb;
+							next();
+						}, () => {
+							if (a_season !== null) {
+								imdb.getSeason(a_imdb, a_season, (season) => {
+									foreach(content, (value, next) => {
+										let episode = season.episodes.find((episode) => episode.episode_number === value.episode);
+										if (episode !== undefined) {
+											value.imdb = episode.id;
+											value.title = episode.title;
+										}
+										next();
+									}, () => {
+										cb(dtype, content);
+									});
+								});
+							} else {
+								cb(dtype, content);
+							}
+						});
+					} else {
+						foreach(content, (value, next) => {
+							value.type = "movie";
+							value.title = title.title;
+							value.year = title.year;
+							value.imdb = a_imdb;
+							next();
+						}, () => {
+							cb(dtype, content);
+						});
+					}
+				} else {
+					cb(dtype, content);
+				}
+			});
+		} else {
+			cb(dtype, content);
+		}
 	});
 };
 
-let dir = 'F:\\'
-
-interface Content {
-	type: string;
-	filename: string;
-	selector: string;
-	angle: number;
-	length: number;
-	title: string;
-	year: number;
-	show: string;
-	season: number;
-	episode: number;
-}
-
-let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): void }): void => {
+let get_content = (dir: string, cb: { (hash: string, type: MediaType, content: Array<MediaContent>): void }): void => {
 	compute_digest(dir, (hash) => {
 		process.stdout.write(`Determined disc id as "${hash}".\n`);
-		let done = (type: string, content: Array<Content>) => {
+		let done = (type: MediaType, content: Array<MediaContent>) => {
 			cb(hash, type, content);
 		};
-		let val = db[hash] as undefined | { type: string, content: Array<Content> };
-		if (val) {
-			done(val.type, val.content);
+		let media = db[hash];
+		if (media !== undefined) {
+			done(media.type, media.content);
 		} else {
 			analyze(dir, (type, content) => {
 				db[hash] = {
-					type: type,
-					content: content
+					type,
+					content
 				};
-				save_db('./private/db/discdb.json', db, () => {
+				save_db("./private/db/discdb.json", db, () => {
 					done(type, content);
 				});
 			});
@@ -340,7 +338,33 @@ let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): v
 	});
 };
 
-let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
+function handleProgress(source: Readable, target: Writable): void {
+	let rl = librl.createInterface(source);
+	let progress: number | null = null;
+	rl.on("line", (line) => {
+		let parts = line.split(":");
+		let command = parts.shift();
+		let options = JSON.parse("[" + parts.join(":") + "]");
+		if (false) {
+		} else if (command === "PRGC") {
+			if (progress != null) {
+				for (let i = progress; i <= 10; i++) {
+					target.write("*");
+				}
+			}
+			target.write("\n" + options[2] + "\n");
+			progress = 0;
+		} else if (command === "PRGV") {
+			let new_progress = Math.floor((options[1] / options[2]) * 10);
+			for (let i = progress; i < new_progress; i++) {
+				target.write("*");
+			}
+			progress = new_progress;
+		}
+	});
+}
+
+let backup_dvd = (hash: string, content: Array<MediaContent>, cb: { (): void }) => {
 	let jobid = libcrypto.randomBytes(16).toString("hex");
 	let jobwd = "./private/jobs/" + jobid + "/";
 	libfs.mkdirSync(jobwd, { recursive: true });
@@ -352,13 +376,22 @@ let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
 		`--manual=${selector}`,
 		'--minlength=0',
 		"--robot",
-		/*"--progress=-same",*/
+		"--progress=-same",
 		jobwd
 	]);
-	cp.stdout.pipe(process.stdout);
-	process.stdin.pipe(process.stdin);
+	handleProgress(cp.stdout, process.stdout);
 	cp.on('close', () => {
-		let subpaths = libfs.readdirSync(jobwd).sort();
+		let subpaths = libfs.readdirSync(jobwd).map((subpath) => {
+			let stat = libfs.statSync(libpath.join(jobwd, subpath));
+			return {
+				subpath,
+				stat
+			};
+		}).sort((one, two) => {
+			return one.stat.mtimeMs - two.stat.mtimeMs;
+		}).map((object) => {
+			return object.subpath;
+		});
 		if (subpaths.length !== content.length) {
 			throw new Error("Wrong number of files encountered!");
 		}
@@ -372,8 +405,34 @@ let backup_dvd = (hash: string, content: Array<Content>, cb: { (): void }) => {
 	});
 };
 
-let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) => {
+let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void }) => {
+	let jobid = libcrypto.randomBytes(16).toString("hex");
+	let jobwd = "./private/jobs/" + jobid + "/";
+	libfs.mkdirSync(jobwd, { recursive: true });
 	let index = 0;
+	let done = () => {
+		let subpaths = libfs.readdirSync(jobwd).map((subpath) => {
+			let stat = libfs.statSync(libpath.join(jobwd, subpath));
+			return {
+				subpath,
+				stat
+			};
+		}).sort((one, two) => {
+			return one.stat.mtimeMs - two.stat.mtimeMs;
+		}).map((object) => {
+			return object.subpath;
+		});
+		if (subpaths.length !== content.length) {
+			throw new Error("Wrong number of files encountered!");
+		}
+		for (let i = 0; i < content.length; i++) {
+			let target = `./private/archive/${hash}.${('00' + i).slice(-2)}.mkv`;
+			libfs.renameSync(libpath.join(jobwd, subpaths[i]), target);
+		}
+		delete_tree.async(jobwd, () => {
+			cb();
+		});
+	};
 	let next = () => {
 		if (index < content.length) {
 			let ct = content[index++];
@@ -383,44 +442,35 @@ let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) =>
 				`${ct.selector.split(' ')[0]}`,
 				'--minlength=0',
 				"--robot",
-				/*"--progress=-same",*/
-				'./private/temp/'
+				"--progress=-same",
+				jobwd
 			]);
-			cp.stdout.pipe(process.stdout);
-			process.stdin.pipe(process.stdin);
+			handleProgress(cp.stdout, process.stdout);
 			cp.on('close', () => {
 				next();
 			});
 		} else {
-			for (let i = 0; i < content.length; i++) {
-				let dvdtitle = content[i].selector.split(':')[0];
-				libfs.renameSync(`./private/temp/${content[i].filename}_t${('00' + dvdtitle).slice(-2)}.mkv`, `./private/temp/${hash}.${('00' + i).slice(-2)}.mkv`);
-			}
-			cb();
+			done();
 		}
 	};
 	next();
 };
 
-if (process.argv.length > 2) {
-	get_content(dir, (hash, type, content) => {
-		let content_to_rip = content.filter((ct) => ['movie', 'episode'].indexOf(ct.type) >= 0);
-		let callback = () => {
-			process.exit(0);
-		};
-		if (a_expect !== null && a_expect !== content_to_rip.length) {
-			process.stdout.write("Expected " + a_expect + " titles, " + content_to_rip.length + " found!\n");
-		} else if (type === 'dvd') {
-			backup_dvd(hash, content_to_rip, callback);
-		} else if (type === 'bluray') {
-			backup_bluray(hash, content_to_rip, callback);
-		} else {
-			process.stdout.write('bad disc type!\n');
-		}
-	});
-}
+let dir = "F:\\";
 
-export {
-	Content,
-	compute_digest
-};
+get_content(dir, (hash, type, content) => {
+	let content_to_rip = content.filter((ct) => ['movie', 'episode'].indexOf(ct.type) >= 0);
+	console.log(JSON.stringify(content_to_rip, null, "\t"));
+	let callback = () => {
+		process.exit(0);
+	};
+	if (a_expect !== null && a_expect !== content_to_rip.length) {
+		process.stdout.write("Expected " + a_expect + " titles, " + content_to_rip.length + " found!\n");
+	} else if (type === 'dvd') {
+		backup_dvd(hash, content_to_rip, callback);
+	} else if (type === 'bluray') {
+		backup_bluray(hash, content_to_rip, callback);
+	} else {
+		process.stdout.write('bad disc type!\n');
+	}
+});

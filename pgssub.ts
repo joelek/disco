@@ -1,4 +1,4 @@
-import * as bmp from './bmp';
+import * as bmp from "./bmp";
 
 function log(message: any): void {
 	console.log(message);
@@ -208,7 +208,7 @@ function parse_pgssub(chunk: { buffer: Buffer, offset: number }): bmp.Bitmap {
 			parse_end({ buffer: data, offset: 0 });
 			break;
 		} else {
-			throw new Error(``);
+			throw "";
 		}
 	}
 	let w = 1920;

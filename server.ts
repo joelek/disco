@@ -1,7 +1,7 @@
 import * as libfs from "fs";
 import * as libhttp from "http";
 import * as libhttps from "https";
-import * as nsbackup from "./backup";
+import * as discid from "./discid";
 
 interface Callback1<T> {
 	(value: T): void;
@@ -32,7 +32,7 @@ function handleEvent(buffer: Buffer, response: libhttp.ServerResponse): void {
 		console.log(body);
 		if (false) {
 		} else if (body.type === "get_disc_id") {
-			nsbackup.compute_digest("F:\\", (digest) => {
+			discid.compute_digest("F:\\", (digest) => {
 				response.end(JSON.stringify({
 					type: "set_disc_id",
 					disc_id: digest

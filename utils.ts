@@ -12,6 +12,19 @@ function pathify(string: string): string {
 		.toLowerCase());
 }
 
+function foreach<A>(array: Array<A>, next: { (value: A, cb: { (): void }): void }, done: { (): void }): void {
+	array = array.slice();
+	let iterate = () => {
+		if (array.length > 0) {
+			next(array.pop(), iterate);
+		} else {
+			done();
+		}
+	};
+	iterate();
+}
+
 export {
-	pathify
+	pathify,
+	foreach
 };

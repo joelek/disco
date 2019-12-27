@@ -1,0 +1,20 @@
+{
+	MediaContentType: ("episode" | "movie" | "neither"),
+	MediaContent: {
+		type: @MediaContentType,
+		selector: string,
+		title: (string | null),
+		year: (number | null),
+		show: (string | null),
+		season: (number | null),
+		episode: (number | null),
+		imdb: (string | undefined),
+		imdb_show: (string | undefined)
+	},
+	MediaType: ("dvd" | "bluray" | "neither"),
+	Media: {
+		type: @MediaType,
+		content: [ @MediaContent ]
+	},
+	MediaDatabase: { @Media }
+}

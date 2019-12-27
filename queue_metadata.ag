@@ -1,0 +1,34 @@
+{
+	FieldOrder: ("bff" | "tff" | "progressive"),
+	PictureSettings: {
+		dimx: number,
+		dimy: number,
+		parx: number,
+		pary: number,
+		darx: number,
+		dary: number,
+		farx: number,
+		fary: number,
+		fpsx: number,
+		fpsy: number,
+		color_range: (string | null),
+		color_space: (string | null),
+		color_transfer: (string | null),
+		color_primaries: (string | null),
+		aspect_filter: string
+	},
+	RectSettings: {
+		w: number,
+		h: number,
+		x: number,
+		y: number,
+		darx: number,
+		dary: number
+	},
+	Settings: {
+		picture: @PictureSettings,
+		rect: @RectSettings,
+		imode: @FieldOrder
+	},
+	SettingsDatabase: { @Settings }
+}

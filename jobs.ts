@@ -2,16 +2,16 @@ import * as libfs from 'fs';
 import * as libpath from 'path';
 import * as vobsub from './vobsub';
 import * as ffmpeg from './ffmpeg';
-import * as backup from './backup';
+import { MediaContent, MediaDatabase, MediaType } from './discdb';
 import * as utils from './utils';
 
 let move_files = (filenames: string[], basename: string): void => {
-	basename = libpath.join(basename); // normalize
+	basename = libpath.join(basename);
 	let target_directory = ['.', 'private', 'media', ...basename.split(libpath.sep)];
 	target_directory.pop();
 	libfs.mkdirSync(target_directory.join(libpath.sep), { recursive: true });
 	filenames.forEach((filename) => {
-		filename = libpath.join(filename); // normalize
+		filename = libpath.join(filename);
 		let dirs = filename.split(libpath.sep);
 		let file = dirs.pop();
 		let parts = file.split('.');
@@ -36,60 +36,26 @@ let generate_queue = (files: Array<string>, node: string): Array<string> => {
 
 let queue = generate_queue([], './private/queue/');
 
-interface Metadata {
-	asEpisode(): EpisodeMetadata;
-	asMovie(): MovieMetadata;
-}
+let db = MediaDatabase.as(JSON.parse(libfs.readFileSync("./private/db/discdb.json", "utf8")));
 
-interface EpisodeMetadata extends Metadata {
-	season: number;
-	episode: number;
-	show: string;
-	title: string;
-	basename: string;
-}
-
-interface MovieMetadata extends Metadata {
-	title: string;
-	year: number;
-	basename: string;
-}
-
-interface DatabaseEntry {
-	type: string;
-	content: Array<backup.Content>;
-}
-
-interface Database {
-	[key: string]: DatabaseEntry;
-}
-
-let get_media_info = (path: string): { type: string, content: backup.Content } | undefined => {
-	let filename = path.split(libpath.sep).pop();
-	let string = libfs.readFileSync('./private/db/discdb.json', 'utf8');
-	let database = JSON.parse(string) as Database;
-	let parts = filename.split('.');
-	let hash = parts[0];
-	let title = Number.parseInt(parts[1]);
-	let entry = database[hash];
-	let mi = entry.content.find((ct, index) => {
-		if (parts[1].length === 2) {
-			return index === title;
-		} else {
-			return Number.parseInt(ct.selector.split(':')[0]) === title;
+let get_media_info = (path: string): { type: MediaType, content: MediaContent | undefined } => {
+	let parts = libpath.basename(path).split(".");
+	let discid = parts[0];
+	let index = Number.parseInt(parts[1]);
+	let media = db[discid];
+	if (media !== undefined) {
+		let content = media.content[index];
+		if (content !== undefined) {
+			return {
+				type: media.type,
+				content
+			};
 		}
-	});
-	if (mi) {
-		return {
-			type: entry.type,
-			content: mi
-		};
-	} else {
-		return {
-			type: "unknown",
-			content: null
-		};
 	}
+	return {
+		type: "neither",
+		content: undefined
+	};
 };
 
 let archive_file = (path: string): void => {
