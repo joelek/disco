@@ -100,54 +100,7 @@ function compute_digest(path: string, cb: { (digest: string): void }): void {
 	});
 }
 
-let compute_hash = (root: string, cb: { (h: string): void }): void => {
-	let hash = libcrypto.createHash('sha256');
-	function async(root: string, cb: { (): void }): void {
-		libfs.stat(root, (error, stats) => {
-			if (stats.isDirectory()) {
-				libfs.readdir(root, (error, nodes) => {
-					nodes = nodes.sort((a, b) => {
-						if (a < b) {
-							return -1;
-						}
-						if (b > a) {
-							return 1;
-						}
-						return 0;
-					});
-					nodes = nodes.map((node) => {
-						return libpath.join(root, node);
-					});
-					let pick_next = () => {
-						if (nodes.length > 0) {
-							let node = nodes.shift() as string;
-							let name = node.split(libpath.sep).slice(1).join(':');
-							let ct = stats.ctimeMs;
-							let mt = stats.mtimeMs;
-							hash.update(`${name}\0${ct}\0${mt}\0`);
-							async(node, () => {
-								pick_next();
-							});
-						} else {
-							cb();
-						}
-					};
-					pick_next();
-				});
-			} else if (stats.isFile()) {
-				cb();
-			} else {
-				throw new Error();
-			}
-		});
-	};
-	async(root, () => {
-		cb(hash.digest('hex'));
-	});
-};
-
 let db = require('./private/db/discdb.json');
-let v1v2map = require('./private/db/v1v2map.json');
 
 let save_db = (filename: string, db: Record<string, any>, cb: { (): void }) => {
 	let sorted = [];
@@ -365,16 +318,10 @@ interface Content {
 }
 
 let get_content = (dir, cb: { (hash: string, type: string, c: Array<Content>): void }): void => {
-	compute_hash(dir, (hash) => {
+	compute_digest(dir, (hash) => {
 		process.stdout.write(`Determined disc id as "${hash}".\n`);
 		let done = (type: string, content: Array<Content>) => {
-			compute_digest(dir, (digest) => {
-				process.stdout.write(`Determined disc id v2 as "${digest}".\n`);
-				v1v2map[hash] = digest;
-				save_db('./private/db/v1v2map.json', v1v2map, () => {
-					cb(hash, type, content);
-				});
-			});
+			cb(hash, type, content);
 		};
 		let val = db[hash] as undefined | { type: string, content: Array<Content> };
 		if (val) {
