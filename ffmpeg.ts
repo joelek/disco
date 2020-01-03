@@ -357,7 +357,7 @@ let encode_hardware = (
 		'-color_trc', picture.color_transfer,
 		'-colorspace', picture.color_space,
 		'-i', filename,
-		'-vf', `format=yuv420p16le,${interlace}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},scale=${w}:${h}`,
+		'-vf', `fspp=5:0:-10:1,format=yuv420p16le,${interlace}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},scale=${w}:${h}`,
 		'-an',
 		'-v', 'quiet',
 		'-f', 'rawvideo',
