@@ -402,22 +402,25 @@ let backup_bluray = (hash: string, content: Array<Content>, cb: { (): void }) =>
 	next();
 };
 
-get_content(dir, (hash, type, content) => {
-	let content_to_rip = content.filter((ct) => ['movie', 'episode'].indexOf(ct.type) >= 0);
-	let callback = () => {
-		process.exit(0);
-	};
-	if (a_expect !== null && a_expect !== content_to_rip.length) {
-		process.stdout.write("Expected " + a_expect + " titles, " + content_to_rip.length + " found!\n");
-	} else if (type === 'dvd') {
-		backup_dvd(hash, content_to_rip, callback);
-	} else if (type === 'bluray') {
-		backup_bluray(hash, content_to_rip, callback);
-	} else {
-		process.stdout.write('bad disc type!\n');
-	}
-});
+if (process.argv.length > 2) {
+	get_content(dir, (hash, type, content) => {
+		let content_to_rip = content.filter((ct) => ['movie', 'episode'].indexOf(ct.type) >= 0);
+		let callback = () => {
+			process.exit(0);
+		};
+		if (a_expect !== null && a_expect !== content_to_rip.length) {
+			process.stdout.write("Expected " + a_expect + " titles, " + content_to_rip.length + " found!\n");
+		} else if (type === 'dvd') {
+			backup_dvd(hash, content_to_rip, callback);
+		} else if (type === 'bluray') {
+			backup_bluray(hash, content_to_rip, callback);
+		} else {
+			process.stdout.write('bad disc type!\n');
+		}
+	});
+}
 
 export {
-	Content
+	Content,
+	compute_digest
 };
