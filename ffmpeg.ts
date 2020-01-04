@@ -293,6 +293,7 @@ let encode_hardware = (
 	if (opt_content != null) {
 		if (opt_content.type === 'episode') {
 			md = [
+				'-metadata', `title=${opt_content.title}`,
 				'-metadata', `show=${opt_content.show}`,
 				'-metadata', `season_number=${opt_content.season}`,
 				'-metadata', `episode_sort=${opt_content.episode}`,
