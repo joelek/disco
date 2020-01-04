@@ -290,36 +290,7 @@ let encode_hardware = (
 		picture.color_range = 'tv';
 	}
 	let md = [];
-	if (opt_content == null) {
-		let path = filename.split(libpath.sep);
-		let file = path.pop();
-		let name = file.split('.').slice(0, -1).join('.');
-		let parts;
-		parts = /^([a-z0-9_]+)-s([0-9]+)e([0-9]+)-([a-z0-9_]+)-/.exec(name);
-
-		if (parts !== null) {
-			let show = parts[1].split('_').join(' ');
-			let season_number = parseInt(parts[2]);
-			let episode_number = parseInt(parts[3]);
-			let episode_title = parts[4].split('_').join(' ');
-			md = [
-				'-metadata', `show=${show}`,
-				'-metadata', `season_number=${season_number}`,
-				'-metadata', `episode_sort=${episode_number}`,
-				'-metadata', `episode_id=${episode_title}`
-			];
-		} else {
-			parts = /^([a-z0-9_]+)-([0-9]{4})-/.exec(name);
-			if (parts !== null) {
-				let title = parts[1].split('_').join(' ');
-				let year = parseInt(parts[2]);
-				md = [
-					'-metadata', `title=${title}`,
-					'-metadata', `date=${year}`
-				];
-			}
-		}
-	} else {
+	if (opt_content != null) {
 		if (opt_content.type === 'episode') {
 			md = [
 				'-metadata', `show=${opt_content.show}`,
