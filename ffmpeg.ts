@@ -400,15 +400,17 @@ let encode_hardware = (
 let compute_compressibility = (filename: string, picture: FormatDetectResult, rect: CropResult, imode: string, cb: Callback<number>): void => {
 	let id1 = libcrypto.randomBytes(16).toString("hex");
 	let id2 = libcrypto.randomBytes(16).toString("hex");
+	let frames = 1;
 	create_temp_dir((wd, id) => {
 		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, (_, outfile1) => {
 			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, (_, outfile2) => {
 				let s1 = libfs.statSync(outfile1).size;
 				let s2 = libfs.statSync(outfile2).size;
+				let c = 1.0 - (s2 - s1)/(frames * s1);
 				libdt.async(wd, () => {
-					cb(Math.max(0.0, Math.min(s1 / s2, 1.0)));
+					cb(Math.max(0.0, Math.min(c, 1.0)));
 				});
-			}, 250, 2, [ "-vsync", "0" ], [ "-f", "h264", "-an" ]);
+			}, 250, 1 + frames, [ "-vsync", "0" ], [ "-f", "h264", "-an" ]);
 		}, 250, 1, [ "-vsync", "0" ], [ "-f", "h264", "-an" ]);
 	});
 };
@@ -435,7 +437,7 @@ let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: 
 	if (md) {
 		if (md.compressibility === undefined) {
 			compute_compressibility(filename, md.picture, md.rect, md.imode, (compressibility) => {
-				queue_metadata[key].compressibility = compressibility;
+				md.compressibility = compressibility;
 				save_queue_metadata(() => {
 					cb(md.picture, md.rect, md.imode, md.compressibility);
 				});
