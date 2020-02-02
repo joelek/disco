@@ -6,6 +6,10 @@ let queue_metadata = require('./private/db/queue_metadata.json');
 import * as libdt from './delete_tree';
 import * as backup from './backup';
 
+interface Callback<A> {
+	(value: A): void
+}
+
 let gcd = (a: number, b: number): number => {
 	if (!b) {
 		return a;
@@ -264,10 +268,13 @@ let encode_hardware = (
 	picture: FormatDetectResult,
 	rect: CropResult,
 	imode: string,
+	compressibility: number,
 	cb: { (code: number, outfile: string): void },
+	sample_cadance: number,
+	sample_keep: number,
 	extraopts: Array<string>,
 	overrides: Array<string>,
-	opt_content: backup.Content | null
+	opt_content: backup.Content | null = null
 ): void => {
 	picture = {...picture};
 	let is_dvd_pal = picture.dimx === 720 && picture.dimy === 576 && picture.fpsx === 25 && picture.fpsy === 1;
@@ -322,6 +329,7 @@ let encode_hardware = (
 	if (picture.color_transfer === 'bt470bg') {
 		picture.color_transfer = 'smpte170m';
 	}
+	let frameselect = `select='between(mod(n\\,${sample_cadance})\\,0\\,${sample_keep - 1})',`;
 	let cp = libcp.spawn('ffmpeg', [
 		...extraopts,
 		'-color_range', picture.color_range,
@@ -329,7 +337,7 @@ let encode_hardware = (
 		'-color_trc', picture.color_transfer,
 		'-colorspace', picture.color_space,
 		'-i', filename,
-		'-vf', `format=yuv420p16le,${interlace}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${w}:${h}`,
+		'-vf', `format=yuv420p16le,${interlace}${frameselect}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${w}:${h}`,
 		'-an',
 		'-v', 'quiet',
 		'-f', 'rawvideo',
@@ -339,8 +347,9 @@ let encode_hardware = (
 	let mby = ((h + 16 - 1) / 16) | 0;
 	let ref = (32768 / mbx / mby) | 0;
 	ref = (ref > 16) ? 16 : ref;
-	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.8:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
-	let cpx = libcp.spawn('denice', ['yuv420p16le', `${w}`, `${h}`, "0.05"], { cwd: '../denice/build/' });
+	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=${compressibility}:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
+	let strength = Math.max(0.0, Math.min((1.0 - compressibility) * 0.2, 1.0));
+	let cpx = libcp.spawn('denice', ['yuv420p16le', `${w}`, `${h}`, `${strength}`], { cwd: '../denice/build/' });
 	let cp2 = libcp.spawn('ffmpeg', [
 		'-f', 'rawvideo',
 		'-pix_fmt', 'yuv420p16le',
@@ -388,17 +397,35 @@ let encode_hardware = (
 	});
 };
 
-let determine_metadata = (filename: string, cb: { ({picture: FormatDetectResult, rect: CropResult, imode: string}): void }): void => {
+let compute_compressibility = (filename: string, picture: FormatDetectResult, rect: CropResult, imode: string, cb: Callback<number>): void => {
+	let id1 = libcrypto.randomBytes(16).toString("hex");
+	let id2 = libcrypto.randomBytes(16).toString("hex");
+	create_temp_dir((wd, id) => {
+		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, (_, outfile1) => {
+			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, (_, outfile2) => {
+				let s1 = libfs.statSync(outfile1).size;
+				let s2 = libfs.statSync(outfile2).size;
+				libdt.async(wd, () => {
+					cb(Math.max(0.0, Math.min(s1 / s2, 1.0)));
+				});
+			}, 250, 2, [ "-vsync", "0" ], [ "-f", "h264", "-an" ]);
+		}, 250, 1, [ "-vsync", "0" ], [ "-f", "h264", "-an" ]);
+	});
+};
+
+let determine_metadata = (filename: string, cb: { ({picture: FormatDetectResult, rect: CropResult, imode: string, compressibility: number}): void }): void => {
 	format_detect(filename, (picture) => {
 		crop_detect(filename, picture, (rect) => {
 			interlace_detect(filename, (imode) => {
-				cb({picture, rect, imode});
+				compute_compressibility(filename, picture, rect, imode, (compressibility) => {
+					cb({picture, rect, imode, compressibility});
+				});
 			});
 		});
 	});
 };
 
-let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: CropResult, imode: string): void }, basename: string | null = null): void => {
+let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: CropResult, imode: string, compressibility: number): void }, basename: string | null = null): void => {
 	if (basename == null) {
 		basename = filename;
 	}
@@ -406,12 +433,21 @@ let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: 
 	process.stderr.write(`Database key: ${key}\n`);
 	let md = queue_metadata[key];
 	if (md) {
-		cb(md.picture, md.rect, md.imode);
+		if (md.compressibility === undefined) {
+			compute_compressibility(filename, md.picture, md.rect, md.imode, (compressibility) => {
+				queue_metadata[key].compressibility = compressibility;
+				save_queue_metadata(() => {
+					cb(md.picture, md.rect, md.imode, md.compressibility);
+				});
+			});
+		} else {
+			cb(md.picture, md.rect, md.imode, md.compressibility);
+		}
 	} else {
-		determine_metadata(filename, (n) => {
-			queue_metadata[key] = n;
+		determine_metadata(filename, (md) => {
+			queue_metadata[key] = md;
 			save_queue_metadata(() => {
-				cb(n.picture, n.rect, n.imode);
+				cb(md.picture, md.rect, md.imode, md.compressibility);
 			});
 		});
 	}
@@ -422,9 +458,9 @@ let transcode = (filename: string, cb: { (code: number, outfile: string): void }
 	let file = path.pop();
 	let name = file.split('.').slice(0, -1).join('.');
 	let outfile = libpath.join(...path, `${name}.mp4`);
-	get_metadata(filename, (picture, rect, imode) => {
-		let extraopts = []; // ['-ss', '2:07:30', '-t', '60'];
-		encode_hardware(filename, outfile, picture, rect, imode, cb, extraopts, [], opt_content_info);
+	get_metadata(filename, (picture, rect, imode, compressibility) => {
+		let extraopts = ['-ss', '0:15:00', '-t', '60'];
+		encode_hardware(filename, outfile, picture, rect, imode, compressibility, cb, 1, 1, extraopts, [], opt_content_info);
 	}, basename);
 };
 
