@@ -262,6 +262,25 @@ let create_temp_dir = (cb: { (wd: string, id: string): void }): void => {
 	cb(wd, id);
 };
 
+let get_frame_size = (k: number, farx: number, fary: number): { w: number, h: number } => {
+	let hw = 64 * k;
+	let hh = hw * 9 / 16;
+	// Reduce height for frames with 64:27 aspect ratio.
+	if (farx * 9 > 16 * fary) {
+		hh = hw * fary / farx;
+	}
+	// Reduce width for frames with 4:3 aspect ratio.
+	if (farx * 9 < 16 * fary) {
+		hw = hh * farx / fary;
+	}
+	let w = (hw << 1);
+	let h = (hh << 1);
+	return {
+		w,
+		h
+	};
+};
+
 let encode_hardware = (
 	filename: string,
 	outfile: string,
@@ -321,11 +340,7 @@ let encode_hardware = (
 	}
 	let farx = rect.darx;
 	let fary = rect.dary;
-	let fh = is_fhd ? picture.dimx*fary/farx : 540;
-	let hh = (fh >> 1);
-	let wh = ((fh*farx/fary) >> 1);
-	let w = (wh << 1);
-	let h = (hh << 1);
+	let frame_size = get_frame_size(is_fhd ? 15 : 8, farx, fary);
 	if (picture.color_transfer === 'bt470bg') {
 		picture.color_transfer = 'smpte170m';
 	}
@@ -337,23 +352,23 @@ let encode_hardware = (
 		'-color_trc', picture.color_transfer,
 		'-colorspace', picture.color_space,
 		'-i', filename,
-		'-vf', `format=yuv420p16le,${interlace}${frameselect}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${w}:${h}`,
+		'-vf', `format=yuv420p16le,${interlace}${frameselect}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${frame_size.w}:${frame_size.h}`,
 		'-an',
 		'-v', 'quiet',
 		'-f', 'rawvideo',
 		'pipe:'
 	]);
-	let mbx = ((w + 16 - 1) / 16) | 0;
-	let mby = ((h + 16 - 1) / 16) | 0;
+	let mbx = ((frame_size.w + 16 - 1) / 16) | 0;
+	let mby = ((frame_size.h + 16 - 1) / 16) | 0;
 	let ref = (32768 / mbx / mby) | 0;
 	ref = (ref > 16) ? 16 : ref;
 	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=${compressibility}:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
 	let strength = Math.max(0.0, Math.min((1.0 - compressibility) * 0.2, 1.0));
-	let cpx = libcp.spawn('denice', ['yuv420p16le', `${w}`, `${h}`, `${strength}`], { cwd: '../denice/build/' });
+	let cpx = libcp.spawn('denice', ['yuv420p16le', `${frame_size.w}`, `${frame_size.h}`, `${strength}`], { cwd: '../denice/build/' });
 	let cp2 = libcp.spawn('ffmpeg', [
 		'-f', 'rawvideo',
 		'-pix_fmt', 'yuv420p16le',
-		'-s', `${w}:${h}`,
+		'-s', `${frame_size.w}:${frame_size.h}`,
 		'-r', `${picture.fpsx}/${picture.fpsy}`,
 		'-color_range', picture.color_range,
 		'-color_primaries', picture.color_primaries,
