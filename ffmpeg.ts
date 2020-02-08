@@ -443,9 +443,9 @@ let encode_hardware = (
 		...extraopts,
 		'-i', filename,
 		'-aspect', `${rect.darx}:${rect.dary}`,
-		'-map', '0:v:0',
+		'-map', '0:0',
 		...audio_streams.map((audio_stream, index) => {
-			return ["-map", "1:a:" + index];
+			return ["-map", "1:" + audio_stream.index];
 		}).reduce((previous, current) => {
 			previous.push(...current);
 			return previous;
