@@ -303,7 +303,7 @@ function getAudioStreamsToKeep(path: string, cb: Callback<Array<stream_types.Aud
 						weight
 					};
 				}).sort((one, two) => {
-						return two.weight - one.weight;
+					return two.weight - one.weight;
 				});
 			}).map((streams) => {
 				return streams[0];
@@ -349,6 +349,7 @@ let encode_hardware = (
 	rect: CropResult,
 	imode: string,
 	compressibility: number,
+	audio_streams: Array<stream_types.AudioStream>,
 	cb: { (code: number, outfile: string): void },
 	sample_cadance: number,
 	sample_keep: number,
@@ -393,6 +394,9 @@ let encode_hardware = (
 			];
 		}
 	}
+	audio_streams.forEach((audio_stream, index) => {
+		md.push("-metadata:s:a:" + index, "language=" + audio_stream.tags.language);
+	});
 	let interlace = '';
 	if (imode === 'tff') {
 		interlace = 'yadif=0:0:0,';
@@ -440,7 +444,12 @@ let encode_hardware = (
 		'-i', filename,
 		'-aspect', `${rect.darx}:${rect.dary}`,
 		'-map', '0:v:0',
-		'-map', '1:a:0',
+		...audio_streams.map((audio_stream, index) => {
+			return ["-map", "1:a:" + index];
+		}).reduce((previous, current) => {
+			previous.push(...current);
+			return previous;
+		}, []),
 		'-f', 'mp4',
 		'-map_chapters', '-1',
 		'-map_metadata', '-1',
@@ -478,16 +487,16 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 	let id2 = libcrypto.randomBytes(16).toString("hex");
 	let frames = 1;
 	create_temp_dir((wd, id) => {
-		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, (_, outfile1) => {
-			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, (_, outfile2) => {
+		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, [], (_, outfile1) => {
+			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, [], (_, outfile2) => {
 				let s1 = libfs.statSync(outfile1).size;
 				let s2 = libfs.statSync(outfile2).size;
 				let c = 1.0 - (s2 - s1)/(frames * s1);
 				libdt.async(wd, () => {
 					cb(Math.max(0.0, Math.min(c, 1.0)));
 				});
-			}, 250, 1 + frames, [ "-vsync", "0" ], [ "-f", "h264", "-an" ]);
-		}, 250, 1, [ "-vsync", "0" ], [ "-f", "h264", "-an" ]);
+			}, 250, 1 + frames, [ "-vsync", "0" ], [ "-f", "h264" ]);
+		}, 250, 1, [ "-vsync", "0" ], [ "-f", "h264" ]);
 	});
 };
 
@@ -538,7 +547,9 @@ let transcode = (filename: string, cb: { (code: number, outfile: string): void }
 	let outfile = libpath.join(...path, `${name}.mp4`);
 	get_metadata(filename, (picture, rect, imode, compressibility) => {
 		let extraopts = ['-ss', '0:15:00', '-t', '60'];
-		encode_hardware(filename, outfile, picture, rect, imode, compressibility, cb, 1, 1, extraopts, [], opt_content_info);
+		getAudioStreamsToKeep(filename, (audio_streams) => {
+			encode_hardware(filename, outfile, picture, rect, imode, compressibility, audio_streams, cb, 1, 1, extraopts, [], opt_content_info);
+		});
 	}, basename);
 };
 
