@@ -1,0 +1,36 @@
+{
+	Stream: {
+		index: number,
+		codec_type: string,
+		codec_name: string,
+		time_base: string,
+		start_pts: number,
+		extradata: string,
+		tags: ({ string } & {
+			language: string
+		})
+	},
+	VideoStream: (@Stream & {
+		codec_type: "video",
+		width: number,
+		height: number,
+		r_frame_rate: string,
+		sample_aspect_ratio: string,
+		display_aspect_ratio: string,
+		color_range: (string | undefined),
+		color_space: (string | undefined),
+		color_transfer: (string | undefined),
+		color_primaries: (string | undefined)
+	}),
+	AudioStream: (@Stream & {
+		codec_type: "audio",
+		sample_rate: string,
+		channels: number
+	}),
+	SubtitleStream: (@Stream & {
+		codec_type: "subtitle"
+	}),
+	FFProbe: {
+		streams: [ @Stream ]
+	}
+}
