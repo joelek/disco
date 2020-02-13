@@ -2,26 +2,15 @@ function isString(value: any): value is string {
 	return value != null && value.constructor === String;
 }
 
-interface Producer<A> {
-	(reader: Reader): A;
-}
-
-interface Token {
-	consume(): string;
-	discard(): void;
-}
-
 class Reader {
 	private string: string;
 	private offset: number;
 	private length: number;
-	private token: Token | null;
 
 	constructor(string: string) {
 		this.string = string;
 		this.offset = 0;
 		this.length = string.length;
-		this.token = null;
 	}
 
 	done(): boolean {
@@ -57,6 +46,17 @@ class Reader {
 		return string;
 	}
 
+	keep(characters: string): string {
+		let string = "";
+		while (!this.done()) {
+			if (characters.indexOf(this.peek(1)) >= 0) {
+				break;
+			}
+			string += this.read(1);
+		}
+		return string;
+	}
+
 	peek(how: string | number): string {
 		let length = isString(how) ? how.length : how;
 		let min = Math.min(this.offset, this.offset + length);
@@ -79,25 +79,6 @@ class Reader {
 		return string;
 	}
 
-	readToken(length: number): Token {
-		if (this.token !== null) {
-			throw "Unable to distribute new token!";
-		}
-		let string = this.peek(length);
-		let token = {
-			consume: (): string => {
-				this.offset += string.length;
-				this.token = null;
-				return string;
-			},
-			discard: () => {
-				this.token = null;
-			}
-		};
-		this.token = token;
-		return token;
-	}
-
 	seek(offset: number): void {
 		if ((offset < 0) || (offset >= this.length)) {
 			throw "Unable to seek to offset " + offset + " because length is " + this.length + "!";
@@ -105,16 +86,15 @@ class Reader {
 		this.offset = offset;
 	}
 
-	try<A>(producers: Array<Producer<A>>): A {
-		let offset = this.offset;
-		for (let producer of producers) {
-			try {
-				return producer(this);
-			} catch (error) {
-				this.offset = offset;
+	skip(characters: string): string {
+		let string = "";
+		while (!this.done()) {
+			if (characters.indexOf(this.peek(1)) < 0) {
+				break;
 			}
+			string += this.read(1);
 		}
-		throw "Unable to produce!";
+		return string;
 	}
 
 	tell(): number {
