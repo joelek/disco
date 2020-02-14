@@ -6,25 +6,28 @@ interface Matcher {
 	update(char: string): void;
 }
 
-function test(expected: MatchState, string: string, matcher: Matcher): void {
-	for (let char of string) {
-		matcher.update(char);
-	}
-	if (matcher.matches() !== expected) {
-		throw {
-			expected,
-			string,
-			matcher
-		};
-	}
-}
-
 class CharMatcher implements Matcher {
-	private string: string;
+	private ranges: Array<[string, string]>;
+	private negated: boolean;
 	private state: MatchState;
 
 	constructor(string: string) {
-		this.string = string;
+		this.negated = false;
+		this.ranges = new Array<[string, string]>();
+		if (string[0] === "^") {
+			this.negated = true;
+			string = string.slice(1);
+		}
+		let re = /(([^-]-[^-])|(.))/g;
+		let parts: RegExpExecArray | null = null;
+		while ((parts = re.exec(string)) != null) {
+			let string = parts[1];
+			let one = string[0];
+			let two = (string.length === 3 ? string[2] : one);
+			let min = (one < two ? one : two);
+			let max = (one > two ? one : two);
+			this.ranges.push([min, max]);
+		}
 		this.reset();
 	}
 
@@ -41,11 +44,13 @@ class CharMatcher implements Matcher {
 			if (this.state === "y") {
 				this.state = "n";
 			} else {
-				if (this.string.indexOf(char) >= 0) {
-					this.state = "y";
-				} else {
-					this.state = "n";
+				for (let range of this.ranges) {
+					if ((char >= range[0]) && (char <= range[1])) {
+						this.state = (this.negated ? "n" : "y");
+						return;
+					}
 				}
+				this.state = (this.negated ? "y" : "n");
 			}
 		}
 	}
@@ -86,11 +91,11 @@ class WordMatcher implements Matcher {
 }
 
 class OrMatcher implements Matcher {
-	private original: Iterable<Matcher>;
+	private original: Array<Matcher>;
 	private matchers: Array<Matcher>;
 
-	constructor(original: Iterable<Matcher>) {
-		this.original = original;
+	constructor(...matchers: Array<Matcher>) {
+		this.original = matchers;
 		this.reset();
 	}
 
@@ -190,13 +195,13 @@ class RepeatMatcher implements Matcher {
 }
 
 class ConcatMatcher implements Matcher {
-	private original: Iterable<Matcher>;
+	private original: Array<Matcher>;
 	private matchers: Array<Matcher>;
 	private accepted: number;
 	private state: MatchState;
 
-	constructor(original: Iterable<Matcher>) {
-		this.original = original;
+	constructor(...matchers: Array<Matcher>) {
+		this.original = matchers;
 		this.reset();
 	}
 
@@ -237,37 +242,109 @@ class ConcatMatcher implements Matcher {
 }
 
 let ns = {
-	char(string: string): CharMatcher {
+	char(string: string): Matcher {
 		return new CharMatcher(string);
 	},
-	word(string: string): WordMatcher {
+	word(string: string): Matcher {
 		return new WordMatcher(string);
 	},
-	concat(original: Iterable<Matcher>): ConcatMatcher {
-		return new ConcatMatcher(original);
+	concat(...matchers: Array<Matcher>): Matcher {
+		return new ConcatMatcher(...matchers);
 	},
-	repeat(min: number, max: number, matcher: Matcher): RepeatMatcher {
+	repeat(min: number, max: number, matcher: Matcher): Matcher {
 		return new RepeatMatcher(min, max, matcher);
 	},
-	max(max: number, matcher: Matcher): RepeatMatcher {
+	or(...matchers: Array<Matcher>): Matcher {
+		return new OrMatcher(...matchers);
+	},
+	star(matcher: Matcher): Matcher {
+		return new RepeatMatcher(0, Infinity, matcher);
+	},
+	max(max: number, matcher: Matcher): Matcher {
 		return new RepeatMatcher(0, max, matcher);
 	},
-	min(min: number, matcher: Matcher): RepeatMatcher {
+	min(min: number, matcher: Matcher): Matcher {
 		return new RepeatMatcher(min, Infinity, matcher);
 	},
-	or(original: Iterable<Matcher>): OrMatcher {
-		return new OrMatcher(original);
+	plus(matcher: Matcher): Matcher {
+		return new RepeatMatcher(1, Infinity, matcher);
 	},
-	star(matcher: Matcher): RepeatMatcher {
-		return new RepeatMatcher(0, Infinity, matcher);
+	opt(matcher: Matcher): Matcher {
+		return new RepeatMatcher(0, 1, matcher);
 	}
 };
 
-let w = ns.star(ns.char(" \t\r\n\f"));
 
-test("?", "", w);
-test("y", " ", w);
-test("y", "\t", w);
-test("y", "\r", w);
-test("y", "\n", w);
-test("y", "\f", w);
+
+
+
+
+
+
+function test(expected: MatchState, string: string, matcher: Matcher): void {
+	for (let char of string) {
+		matcher.update(char);
+	}
+	let state = matcher.matches();
+	if (state !== expected) {
+		throw {
+			state,
+			expected,
+			string,
+			matcher
+		};
+	}
+}
+
+let mname = () => ns.or(
+	ns.plus(mnmchar())
+);
+
+let mnmstart = () => ns.or(
+	ns.char("_a-z"),
+	mnonascii(),
+	mescape()
+);
+
+let mnonascii = () => ns.char("^\u0000-\u007F");
+
+let municode = () => ns.concat(
+	ns.word("\\"),
+	ns.repeat(1, 6, ns.char("0-9a-f")),
+	ns.opt(ns.or(
+		ns.word("\r\n"),
+		ns.char(" \n\r\t\f")
+	))
+);
+
+let mescape = () => ns.concat(
+	municode(),
+	ns.concat(
+		ns.word("\\"),
+		ns.char("^\n\r\f0-9a-f")
+	)
+);
+
+let mnmchar = () => ns.or(
+	ns.char("_a-z0-9-"),
+	mnonascii(),
+	mescape()
+);
+
+let mnum = () => ns.or(
+	ns.plus(ns.char("0-9")),
+	ns.concat(
+		ns.star(ns.char("0-9")),
+		ns.word("."),
+		ns.plus(ns.char("0-9"))
+	)
+);
+
+let mnl = () => ns.or(
+	ns.word("\n"),
+	ns.word("\r\n"),
+	ns.word("\r"),
+	ns.word("\f")
+);
+
+let mw = () => ns.star(ns.char(" \t\r\n\f"));
