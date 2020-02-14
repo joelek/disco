@@ -8,6 +8,7 @@ function pathify(string: string): string {
 		.split('\'').join('')
 		.split(',').join('')
 		.split('.').join('')
+		.split('?').join('')
 		.split('&').join('and')
 		.toLowerCase());
 }
