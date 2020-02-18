@@ -5,6 +5,7 @@ import * as libcrypto from 'crypto';
 import * as pgssub from './pgssub';
 import * as bmp from './bmp';
 import * as delete_tree from './delete_tree';
+import * as stream_types from "./stream_types";
 
 type Image = {
 	frame: Buffer,
@@ -483,7 +484,8 @@ let parse_duration = (dur: string): number => {
 let list_subs = (filename: string, cb: { (subs: Array<{ codec: string, lang: string, extra: string, tb: string, dur: number, frames: number }>): void }): void => {
 	libcp.exec(`ffprobe -v quiet -print_format json -show_streams -show_data ${filename}`, (error, stdout, stderr) => {
 		let json = JSON.parse(stdout);
-		let subs = json.streams.filter(stream => stream.codec_type === 'subtitle').filter(s => s.tags).map(s => ({ codec: s.codec_name, lang: s.tags.language, extra: parse_extradata(s.extradata), tb: s.time_base, dur: parse_duration(s.tags['DURATION-eng']), frames: parseInt(s.tags['NUMBER_OF_FRAMES-eng']) }));
+		let streams = json.streams as Array<stream_types.Stream>;
+		let subs = streams.filter(stream => stream.codec_type === 'subtitle').filter(s => s.tags).map(s => ({ codec: s.codec_name, lang: s.tags.language, extra: parse_extradata(s.extradata), tb: s.time_base, dur: parse_duration(s.tags['DURATION-eng']), frames: parseInt(s.tags['NUMBER_OF_FRAMES-eng']) }));
 		cb(subs);
 	});
 };
@@ -525,7 +527,7 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 					}
 				}
 			}
-			let outputs = [];
+			let outputs = new Array<string>();
 			let handle_next = () => {
 				if (indices_to_extract.length === 0) {
 					return cb(outputs);

@@ -20,7 +20,7 @@ let gcd = (a: number, b: number): number => {
 
 let save_queue_metadata = (cb: { (): void }): void => {
 	let stats = queue_metadata;
-	let sorted = [];
+	let sorted = new Array<{ key: string, value: any }>();
 	for (let key of Object.keys(stats)) {
 		sorted.push({
 			key: key,
@@ -36,7 +36,7 @@ let save_queue_metadata = (cb: { (): void }): void => {
 		}
 		return 0;
 	});
-	let out = {};
+	let out: Record<string, any> = {};
 	sorted.forEach((entry) => {
 		out[entry.key] = entry.value;
 	});
@@ -377,7 +377,7 @@ let encode_hardware = (
 		picture.color_primaries = 'bt709';
 		picture.color_range = 'tv';
 	}
-	let md = [];
+	let md = new Array<string>();
 	if (opt_content != null) {
 		if (opt_content.type === 'episode') {
 			md = [
@@ -505,7 +505,14 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 	});
 };
 
-let determine_metadata = (filename: string, cb: { ({picture: FormatDetectResult, rect: CropResult, imode: string, compressibility: number}): void }): void => {
+interface CombinedMetadata {
+	picture: FormatDetectResult,
+	rect: CropResult,
+	imode: string,
+	compressibility: number
+}
+
+let determine_metadata = (filename: string, cb: Callback<CombinedMetadata>): void => {
 	format_detect(filename, (picture) => {
 		crop_detect(filename, picture, (rect) => {
 			interlace_detect(filename, (imode) => {

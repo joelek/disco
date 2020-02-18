@@ -1,5 +1,6 @@
 {
-	"devDependencies": {
-		"@types/node": "^13"
+	"dependencies": {
+		"@types/node": "^13",
+		"typescript": "^3"
 	}
 }

@@ -36,7 +36,7 @@ process.argv.slice(2).forEach((arg) => {
 	let parts;
 	if (false) {
 	} else if ((parts = /^--type=(episode|movie)$/.exec(arg)) != null) {
-		a_type = parts[1];
+		a_type = parts[1] as MediaContentType;
 	} else if ((parts = /^--minlength=([0-9]+)$/.exec(arg)) != null) {
 		a_min = Number.parseInt(parts[1]);
 	} else if ((parts = /^--maxlength=([0-9]+)$/.exec(arg)) != null) {
@@ -226,7 +226,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 				} else if (args[1] === 26) {
 					process.stdout.write(` cells:${args[3]}\n`);
 					// Angle blocks are represented with parentheses around blocks.
-					let ranges = args[3]
+					let ranges = (args[3] as string)
 						.replace(/[()]/g, "")
 						.split(',')
 						.map((run) => run

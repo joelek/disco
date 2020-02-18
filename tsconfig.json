@@ -1,22 +1,17 @@
 {
 	"compilerOptions": {
-		"typeRoots" : ["./node_modules/@types"],
-		"module": "commonjs",
-		"target": "es6",
-		"noImplicitAny": false,
-		"strictNullChecks": false,
+		"composite": true,
+		"module": "none",
 		"moduleResolution": "node",
-		"sourceMap": true,
-		"outDir": "build",
-		"baseUrl": ".",
-		"removeComments": true,
-		"paths": {
-			"*": [
-				"node_modules/*"
-			]
-		}
-	},
-	"include": [
-		"source/**/*"
-	]
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"outDir": "./build/",
+		"rootDir": "./",
+		"strictNullChecks": false,
+		"target": "es6",
+		"types": [
+			"node"
+		]
+	}
 }

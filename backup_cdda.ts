@@ -356,7 +356,7 @@ function get_basename(disc_metadata: DiscMetadata, index: number): string {
 }
 
 function backup_disc(disc: DiscMetadata, cb: Callback<void>): void {
-	let iterator = (index: number) => {
+	let iterator = (index: number): void => {
 		if (index < disc.tracks.length) {
 			return backup_track(disc.tracks[index].number, (data) => {
 				let hash = libcrypto.createHash('sha256');
