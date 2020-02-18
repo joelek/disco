@@ -259,11 +259,18 @@ function make_disc_from_toc(toc: CDDA_TOC): DiscMetadata {
 	};
 }
 
-function get_disc_from_ws(toc: CDDA_TOC, cb: Callback<DiscMetadata>): void {
+function get_disc_from_ws(toc: CDDA_TOC, cb: Callback<DiscMetadata | null>): void {
 	let mb_disc_id = get_mb_disc_id(toc);
 	log(`Disc id (Musicbrainz): ${mb_disc_id}`);
 	get_mb_data(mb_disc_id, (data) => {
+		if (data == null) {
+			return cb(null);
+		}
 		let disc = get_disc_metadata_from_mb(data);
+		if (disc == null) {
+			return cb(null);
+		}
+		let disc2 = disc;
 		disc.id = toc.disc_id;
 		let http = libhttp.createServer((request, response) => {
 			if (false) {
@@ -273,7 +280,7 @@ function get_disc_from_ws(toc: CDDA_TOC, cb: Callback<DiscMetadata>): void {
 					response.writeHead(200, {
 						'content-type': `text/html; charset=utf-8`
 					});
-					return response.end(make_form_for_disc(disc));
+					return response.end(make_form_for_disc(disc2));
 				} else if (request.method === `POST`) {
 					let chunks = new Array<Buffer>();
 					request.on(`data`, (chunk) => {
@@ -313,7 +320,7 @@ function get_disc_from_ws(toc: CDDA_TOC, cb: Callback<DiscMetadata>): void {
 	});
 }
 
-function get_disc(cb: Callback<DiscMetadata>): void {
+function get_disc(cb: Callback<DiscMetadata | null>): void {
 	return get_toc((toc) => {
 		log(`Disc id determined as "${toc.disc_id}"`);
 		let disc = get_disc_from_db(toc.disc_id);
@@ -323,9 +330,13 @@ function get_disc(cb: Callback<DiscMetadata>): void {
 		} else {
 			log(`Disc not recognized.`);
 			return get_disc_from_ws(toc, (disc) => {
-				return save_disc_to_db(toc.disc_id, disc, () => {
-					return cb(disc);
-				});
+				if (disc != null) {
+					return save_disc_to_db(toc.disc_id, disc, () => {
+						return cb(disc);
+					});
+				} else {
+					return cb(null);
+				}
 			});
 		}
 	});
@@ -488,7 +499,9 @@ function get_disc_metadata_from_mb(mb: MB): DiscMetadata | null {
 }
 
 get_disc((disc) => {
-	backup_disc(disc, () => {
-		process.exit(0);
-	})
+	if (disc != null) {
+		backup_disc(disc, () => {
+			process.exit(0);
+		});
+	}
 });

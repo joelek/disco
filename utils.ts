@@ -17,7 +17,7 @@ function foreach<A>(array: Array<A>, next: { (value: A, cb: { (): void }): void 
 	array = array.slice();
 	let iterate = () => {
 		if (array.length > 0) {
-			next(array.pop(), iterate);
+			next(array.pop() as A, iterate);
 		} else {
 			done();
 		}

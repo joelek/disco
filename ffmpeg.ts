@@ -483,7 +483,7 @@ let encode_hardware = (
 	cp2.stdout.pipe(process.stdout);
 	cp2.stderr.pipe(process.stderr);
 	cp2.on('exit', (code) => {
-		cb(code, outfile);
+		cb(code || 0, outfile);
 	});
 };
 
@@ -554,7 +554,7 @@ let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: 
 
 let transcode = (filename: string, cb: { (code: number, outfile: string): void }, opt_content_info: MediaContent | null = null, basename: string | null = null): void => {
 	let path = filename.split(libpath.sep);
-	let file = path.pop();
+	let file = path.pop() as string;
 	let name = file.split('.').slice(0, -1).join('.');
 	let outfile = libpath.join(...path, `${name}.mp4`);
 	get_metadata(filename, (picture, rect, imode, compressibility) => {

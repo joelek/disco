@@ -36,7 +36,7 @@ function compute_digest(path: string, cb: Callback<string>): void {
 				let hash = libcrypto.createHash("sha256");
 				let iterator = () => {
 					if (subpaths.length > 0) {
-						let subpath = subpaths.shift();
+						let subpath = subpaths.shift() as string;
 						compute_digest(libpath.join(path, subpath), (digest) => {
 							let buffer = Buffer.from(subpath, "utf8");
 							hash.update(buffer);

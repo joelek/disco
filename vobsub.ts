@@ -22,7 +22,7 @@ let read_file = (filename: string, tb: string): Image => {
 	let bf: number = 0;
 	let w: number = 0;
 	let h: number = 0;
-	let pts = parseInt(filename.split(libpath.sep).pop().split('.')[0], 10);
+	let pts = parseInt((filename.split(libpath.sep).pop() as string).split('.')[0], 10);
 	let pts_start = pts;
 	let pts_end = pts;
 	let offset = 0;
@@ -33,8 +33,8 @@ let read_file = (filename: string, tb: string): Image => {
 	libfs.closeSync(fd);
 	offset = subtitle_packet.readUInt16BE(2);
 	let last_command_sequence = false;
-	let palette: Buffer | null;
-	let opacity: Buffer | null;
+	let palette: Buffer | null = null;
+	let opacity: Buffer | null = null;
 	while (!last_command_sequence) {
 		let timestamp = ((subtitle_packet.readUInt16BE(offset) << 10) / 90) | 0;
 		let next_offset = subtitle_packet.readUInt16BE(offset + 2);
@@ -398,7 +398,7 @@ let convert_to_bmp = (jobid: string, ed: string, tb: string, codec: string, cb: 
 	if (codec === 'hdmv_pgs_subtitle') {
 		let buffer = libfs.readFileSync(innode);
 		let bitmap = pgssub.parse_pgssub_as_bmp(buffer);
-		let pts = parseInt(innode.split(libpath.sep).pop().split('.')[0], 10);
+		let pts = parseInt((innode.split(libpath.sep).pop() as string).split('.')[0], 10);
 		let output_filename = `${('00000000' + pts).slice(-8)}_${('00000000' + pts).slice(-8)}.bmp`;
 		let output_path = libpath.join(outnode, output_filename);
 		let bmp_file = bmp.write_to(bitmap);
@@ -437,7 +437,7 @@ let ocr = (jobid: string, lang: string, duration: number, postprocess: boolean, 
 		let lines = text.split('\r\n').reduce((lines, line) => {
 			lines.push(...line.split('\n'));
 			return lines;
-		}, []).filter((line) => line.length > 0);
+		}, new Array<string>()).filter((line) => line.length > 0);
 		let name = subnode.split('.').slice(0, -1).join('.');
 		let pts_start = parseInt(name.split('_')[0], 10);
 		let pts_end = parseInt(name.split('_')[1], 10);
@@ -509,7 +509,7 @@ let get_supported_languages = (cb: { (languages: Array<string>): void }): void =
 	let lines = stdout.split('\r\n').reduce((lines, line) => {
 		lines.push(...line.split('\n'));
 		return lines;
-	}, []);
+	}, new Array<string>());
 	lines = lines.slice(1, -1);
 	cb(lines);
 };
@@ -532,7 +532,7 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 				if (indices_to_extract.length === 0) {
 					return cb(outputs);
 				}
-				let i = indices_to_extract.pop();
+				let i = indices_to_extract.pop() as number;
 				let lang = subs[i].lang;
 				let ed = subs[i].extra;
 				let time_base = subs[i].tb;
@@ -546,7 +546,7 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 								webvtt += subtitles[i].lines.join('\r\n') + '\r\n\r\n';
 							}
 							let directories = filename.split(libpath.sep);
-							let file = directories.pop();
+							let file = directories.pop() as string;
 							let basename = file.split('.').slice(0, -1).join('.');
 							let outfile = libpath.join(...directories, `${basename}.sub.${lang}.vtt`);
 							let fd = libfs.openSync(outfile, 'w');

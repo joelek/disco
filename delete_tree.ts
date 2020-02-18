@@ -10,7 +10,7 @@ export function async(root: string, cb: { (): void }): void {
 				});
 				let pick_next = () => {
 					if (nodes.length > 0) {
-						let node = nodes.pop();
+						let node = nodes.pop() as string;
 						async(node, () => {
 							pick_next();
 						});

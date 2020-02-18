@@ -4,11 +4,11 @@ import * as libpath from "path";
 import { Reader } from "./reader";
 
 class XMLAttribute {
-	readonly document: XMLDocument;
+	readonly document: XMLDocument | null;
 	readonly key: string;
 	readonly value: string;
 
-	constructor(document: XMLDocument, key: string, value: string) {
+	constructor(document: XMLDocument | null, key: string, value: string) {
 		this.document = document;
 		this.key = key;
 		this.value = value;
@@ -119,7 +119,7 @@ class XMLAttribute {
 		throw "";
 	}
 
-	static new(document: XMLDocument, reader: Reader): XMLAttribute {
+	static new(document: XMLDocument | null, reader: Reader): XMLAttribute {
 		let key = XMLAttribute.readKey(reader);
 		let value = "";
 		// TODO: Adhere to specification.
@@ -437,7 +437,7 @@ class XMLDocument {
 		let elements = this.elementsInDocument;
 		while (elements.size > 0 && selectors.length > 0) {
 			let newElements: Iterable<XMLElementNode> = elements;
-			let selector = selectors.pop();
+			let selector = selectors.pop() as SimpleSelector;
 			if (selector.type === "id") {
 				let element = this.getElementById(selector.value);
 				if (element !== null) {
@@ -558,10 +558,10 @@ class XMLDocument {
 	querySelectorAll(selector: string): Iterable<XMLElementNode> {
 		// GROUPS
 		let structuralParts = selector.split(/\s*([>+~ ])\s*/);
-		let elements = new Set(this.querySelectorAllSimple(structuralParts.shift()));
-		while (structuralParts.length > 0 && elements.size > 0) {
-			let combinator = structuralParts.shift();
-			let selector = structuralParts.shift();
+		let elements = new Set(this.querySelectorAllSimple(structuralParts.shift() as string));
+		while (structuralParts.length >= 2 && elements.size > 0) {
+			let combinator = structuralParts.shift() as string;
+			let selector = structuralParts.shift() as string;
 			let subElements = this.querySelectorAllSimple(selector);
 			let newElements = new Set<XMLElementNode>();
 			if (combinator === " ") {
@@ -576,7 +576,7 @@ class XMLDocument {
 			} else if (combinator === ">") {
 				for (let subElement of subElements) {
 					let parent = subElement.getParent();
-					if (elements.has(parent)) {
+					if (parent != null && elements.has(parent)) {
 						newElements.add(subElement);
 					}
 				}
@@ -872,10 +872,12 @@ function getXML(url: string, cb: Callback<XMLDocument>): void {
 
 function getImageURL(url: string): string {
 	let parts = url.split(".");
-	let extension = parts.pop();
-	parts.pop();
-	parts.push(extension);
-	url = parts.join(".");
+	if (parts.length >= 2) {
+		let extension = parts.pop() as string;
+		parts.pop();
+		parts.push(extension);
+		url = parts.join(".");
+	}
 	return url;
 }
 
@@ -898,12 +900,15 @@ export function getSearchResults(query: string, type: Array<SearchType>, year: n
 		for (let element of document.querySelectorAll("img[alt][src][data-tconst]")) {
 			let id = element.getAttribute("data-tconst");
 			let title = element.getAttribute("alt");
-			let image_url = getImageURL(element.getAttribute("src"));
-			items.push({
-				id,
-				title,
-				image_url
-			});
+			let src = element.getAttribute("src");
+			let image_url = src != null ? getImageURL(src) : null;
+			if (id != null && title != null && image_url != null) {
+				items.push({
+					id,
+					title,
+					image_url
+				});
+			}
 		}
 		cb({
 			items
@@ -943,7 +948,10 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		}
 		element = document.querySelector(".poster img[src]");
 		if (element !== null) {
-			image_url = getImageURL(element.getAttribute("src"));
+			let src = element.getAttribute("src");
+			if (src != null) {
+				image_url = getImageURL(src);
+			}
 		}
 		element = document.querySelector(".plot_summary_wrapper .summary_text");
 		if (element !== null) {
@@ -986,15 +994,30 @@ export function getCredits(id: string, cb: Callback<Credits>): void {
 		let items = new Array<Credit>();
 		let elements = document.querySelectorAll(".cast_list .primary_photo img[alt][loadlate]");
 		for (let element of elements) {
-			let parts = /^\/name\/([^\/]+)\//.exec(element.getParent().getAttribute("href"));
-			let id = (parts !== null) ? parts[1] : "";
+			let id: string | null = null;
 			let title = element.getAttribute("alt");
-			let image_url = getImageURL(element.getAttribute("loadlate"));
-			items.push({
-				id,
-				title,
-				image_url
-			});
+			let image_url: string | null = null;
+			let parent = element.getParent();
+			if (parent != null) {
+				let href = parent.getAttribute("href");
+				if (href != null) {
+					let parts = /^\/name\/([^\/]+)\//.exec(href);
+					if (parts != null) {
+			 			id = parts[1];
+					}
+				}
+			}
+			let loadlate = element.getAttribute("loadlate");
+			if (loadlate != null) {
+				image_url = getImageURL(loadlate);
+			}
+			if (id != null && title != null && image_url != null) {
+				items.push({
+					id,
+					title,
+					image_url
+				});
+			}
 		}
 		cb({
 			items
@@ -1041,20 +1064,25 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 			let episode_number: number | null = null;
 			element = container.querySelector("meta[itemprop][content]");
 			if (element !== null) {
-				episode_number = Number.parseInt(element.getAttribute("content"));
+				let content = element.getAttribute("content");
+				if (content != null) {
+					episode_number = Number.parseInt(content);
+				}
 			}
 			let air_date_timestamp: number | null = null;
 			element = container.querySelector(".airdate");
 			if (element !== null) {
 				air_date_timestamp = Date.parse(element.getText());
 			}
-			episodes.push({
-				id,
-				title,
-				description,
-				episode_number,
-				air_date_timestamp
-			});
+			if (id != null && title != null && description != null && episode_number != null && air_date_timestamp != null) {
+				episodes.push({
+					id,
+					title,
+					description,
+					episode_number,
+					air_date_timestamp
+				});
+			}
 		}
 		cb({
 			episodes

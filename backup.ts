@@ -274,10 +274,10 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 						foreach(content, (value, next) => {
 							value.type = "episode";
 							value.show = title.title;
-							value.imdb_show = a_imdb;
+							value.imdb_show = (a_imdb != null ? a_imdb : undefined);
 							next();
 						}, () => {
-							if (a_season !== null) {
+							if (a_season !== null && a_imdb != null) {
 								imdb.getSeason(a_imdb, a_season, (season) => {
 									foreach(content, (value, next) => {
 										let episode = season.episodes.find((episode) => episode.episode_number === value.episode);
@@ -299,7 +299,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 							value.type = "movie";
 							value.title = title.title;
 							value.year = title.year;
-							value.imdb = a_imdb;
+							value.imdb = (a_imdb != null ? a_imdb : undefined);
 							next();
 						}, () => {
 							cb(dtype, content);
@@ -355,11 +355,13 @@ function handleProgress(source: Readable, target: Writable): void {
 			target.write("\n" + options[2] + "\n");
 			progress = 0;
 		} else if (command === "PRGV") {
-			let new_progress = Math.floor((options[1] / options[2]) * 10);
-			for (let i = progress; i < new_progress; i++) {
-				target.write("*");
+			if (progress != null) {
+				let new_progress = Math.floor((options[1] / options[2]) * 10);
+				for (let i = progress; i < new_progress; i++) {
+					target.write("*");
+				}
+				progress = new_progress;
 			}
-			progress = new_progress;
 		}
 	});
 }

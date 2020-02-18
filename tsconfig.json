@@ -8,7 +8,7 @@
 		"noImplicitThis": true,
 		"outDir": "./build/",
 		"rootDir": "./",
-		"strictNullChecks": false,
+		"strictNullChecks": true,
 		"target": "es6",
 		"types": [
 			"node"
