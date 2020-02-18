@@ -14,7 +14,7 @@
 	MediaType: ("dvd" | "bluray" | "neither"),
 	Media: {
 		type: @MediaType,
-		content: [ @MediaContent ]
+		content: @MediaContent[]
 	},
 	MediaDatabase: { @Media }
 }
