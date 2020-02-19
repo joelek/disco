@@ -296,19 +296,23 @@ function test(expected: MatchState, string: string, matcher: Matcher): void {
 	}
 }
 
-let mname = () => ns.or(
-	ns.plus(mnmchar())
+let $ident = () => ns.concat(
+	ns.opt(ns.word("-")),
+	$nmstart(),
+	ns.opt($nmchar())
 );
 
-let mnmstart = () => ns.or(
+let $name = () => ns.plus($nmchar());
+
+let $nmstart = () => ns.or(
 	ns.char("_a-z"),
-	mnonascii(),
-	mescape()
+	$nonascii(),
+	$escape()
 );
 
-let mnonascii = () => ns.char("^\u0000-\u007F");
+let $nonascii = () => ns.char("^\u0000-\u007F");
 
-let municode = () => ns.concat(
+let $unicode = () => ns.concat(
 	ns.word("\\"),
 	ns.repeat(1, 6, ns.char("0-9a-f")),
 	ns.opt(ns.or(
@@ -317,21 +321,21 @@ let municode = () => ns.concat(
 	))
 );
 
-let mescape = () => ns.concat(
-	municode(),
+let $escape = () => ns.or(
+	$unicode(),
 	ns.concat(
 		ns.word("\\"),
 		ns.char("^\n\r\f0-9a-f")
 	)
 );
 
-let mnmchar = () => ns.or(
+let $nmchar = () => ns.or(
 	ns.char("_a-z0-9-"),
-	mnonascii(),
-	mescape()
+	$nonascii(),
+	$escape()
 );
 
-let mnum = () => ns.or(
+let $num = () => ns.or(
 	ns.plus(ns.char("0-9")),
 	ns.concat(
 		ns.star(ns.char("0-9")),
@@ -340,11 +344,175 @@ let mnum = () => ns.or(
 	)
 );
 
-let mnl = () => ns.or(
+let $string = () => ns.or(
+	$string1(),
+	$string2()
+);
+
+let $string1 = () => ns.concat(
+	ns.word("\""),
+	ns.star(ns.or(
+		ns.char("^\n\r\f\""),
+		ns.concat(
+			ns.word("\\"),
+			$nl()
+		),
+		$nonascii(),
+		$escape()
+	)),
+	ns.word("\"")
+);
+
+let $string2 = () => ns.concat(
+	ns.word("'"),
+	ns.star(ns.or(
+		ns.char("^\n\r\f'"),
+		ns.concat(
+			ns.word("\\"),
+			$nl()
+		),
+		$nonascii(),
+		$escape()
+	)),
+	ns.word("'")
+);
+
+let $invalid = () => ns.or(
+	$invalid1(),
+	$invalid2()
+);
+
+let $invalid1 = () => ns.concat(
+	ns.word("\""),
+	ns.star(ns.or(
+		ns.char("^\n\r\f\""),
+		ns.concat(
+			ns.word("\\"),
+			$nl()
+		),
+		$nonascii(),
+		$escape()
+	))
+);
+
+let $invalid2 = () => ns.concat(
+	ns.word("'"),
+	ns.star(ns.or(
+		ns.char("^\n\r\f'"),
+		ns.concat(
+			ns.word("\\"),
+			$nl()
+		),
+		$nonascii(),
+		$escape()
+	))
+);
+
+let $nl = () => ns.or(
 	ns.word("\n"),
 	ns.word("\r\n"),
 	ns.word("\r"),
 	ns.word("\f")
 );
 
-let mw = () => ns.star(ns.char(" \t\r\n\f"));
+let $w = () => ns.star(ns.char(" \t\r\n\f"));
+
+let $d = () => ns.or(
+	ns.word("d"),
+	ns.concat(
+		ns.word("\\"),
+		ns.repeat(0, 4, ns.word("0")),
+		ns.or(
+			ns.word("44"),
+			ns.word("64")
+		),
+		ns.opt(ns.or(
+			ns.word("\r\n"),
+			ns.char(" \t\r\n\f")
+		))
+	)
+);
+
+let $e = () => ns.or(
+	ns.word("e"),
+	ns.concat(
+		ns.word("\\"),
+		ns.repeat(0, 4, ns.word("0")),
+		ns.or(
+			ns.word("45"),
+			ns.word("65")
+		),
+		ns.opt(ns.or(
+			ns.word("\r\n"),
+			ns.char(" \t\r\n\f")
+		))
+	)
+);
+
+let $n = () => ns.or(
+	ns.word("n"),
+	ns.concat(
+		ns.word("\\"),
+		ns.repeat(0, 4, ns.word("0")),
+		ns.or(
+			ns.word("4e"),
+			ns.word("6e")
+		),
+		ns.opt(ns.or(
+			ns.word("\r\n"),
+			ns.char(" \t\r\n\f")
+		))
+	),
+	ns.word("\\n")
+);
+
+let $o = () => ns.or(
+	ns.word("o"),
+	ns.concat(
+		ns.word("\\"),
+		ns.repeat(0, 4, ns.word("0")),
+		ns.or(
+			ns.word("4f"),
+			ns.word("6f")
+		),
+		ns.opt(ns.or(
+			ns.word("\r\n"),
+			ns.char(" \t\r\n\f")
+		))
+	),
+	ns.word("\\o")
+);
+
+let $t = () => ns.or(
+	ns.word("t"),
+	ns.concat(
+		ns.word("\\"),
+		ns.repeat(0, 4, ns.word("0")),
+		ns.or(
+			ns.word("54"),
+			ns.word("74")
+		),
+		ns.opt(ns.or(
+			ns.word("\r\n"),
+			ns.char(" \t\r\n\f")
+		))
+	),
+	ns.word("\\t")
+);
+
+let $v = () => ns.or(
+	ns.word("v"),
+	ns.concat(
+		ns.word("\\"),
+		ns.repeat(0, 4, ns.word("0")),
+		ns.or(
+			ns.word("58"),
+			ns.word("78")
+		),
+		ns.opt(ns.or(
+			ns.word("\r\n"),
+			ns.char(" \t\r\n\f")
+		))
+	),
+	ns.word("\\v")
+);
