@@ -516,3 +516,103 @@ let $v = () => ns.or(
 	),
 	ns.word("\\v")
 );
+
+type TokenType =
+	"S" |
+	"INCLUDES";/* |
+	"DASHMATCH" |
+	"PREFIXMATCH" |
+	"SUFFIXMATCH" |
+	"SUBSTRINGMATCH" |
+	"IDENT" |
+	"STRING" |
+	"FUNCTION" |
+	"NUMBER" |
+	"HASH" |
+	"PLUS" |
+	"GREATER" |
+	"COMMA" |
+	"TILDE" |
+	"NOT" |
+	"ATKEYWORD" |
+	"INVALID" |
+	"PERCENTAGE" |
+	"DIMENSION" |
+	"CDO" |
+	"CDC";*/
+
+class Tokenizer {
+	private matcher: Matcher;
+	private length: number;
+	private counter: number;
+
+	constructor(matcher: Matcher) {
+		this.matcher = matcher;
+		this.reset();
+	}
+
+	continueUpdating(): boolean {
+		return this.matcher.matches() !== "n";
+	}
+
+	longestMatch(): number {
+		return this.length;
+	}
+
+	reset(): void {
+		this.matcher.reset();
+		this.length = 0;
+		this.counter = 0;
+	}
+
+	updateWith(char: string): void {
+		this.matcher.update(char);
+		this.counter += 1;
+		if (this.matcher.matches() === "y") {
+			this.length = this.counter;
+		}
+	}
+}
+
+function tokenize<A extends string>(string: string, tokenizers: Array<Tokenizer>): void {
+	if (tokenizers.length === 0) {
+		return;
+	}
+	let offset = 0;
+	let current = tokenizers.slice();
+	while (offset < string.length) {
+		for (let i = offset; i < string.length; i++) {
+			let char = string[i];
+			for (let tokenizer of current) {
+				tokenizer.updateWith(char);
+			}
+			current = current.filter((tokenizer) => tokenizer.continueUpdating());
+			if (current.length === 0) {
+				break;
+			}
+		}
+		current = tokenizers.slice();
+		current.sort((one, two) => {
+			return two.longestMatch() - one.longestMatch();
+		});
+		let length = current[0].longestMatch();
+		if (length === 0) {
+			throw "Syntax error at offset " + offset + "!";
+		}
+		let token = string.substr(offset, length);
+		console.log({
+			token,
+			offset,
+			length
+		});
+		offset += length;
+		for (let tokenizer of current) {
+			tokenizer.reset();
+		}
+	}
+}
+
+tokenize("   test   test", [
+	new Tokenizer(ns.plus(ns.char(" \t\r\n\f"))),
+	new Tokenizer(ns.word("test"))
+]);
