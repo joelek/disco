@@ -541,12 +541,14 @@ type TokenType =
 	"CDO" |
 	"CDC";*/
 
-class Tokenizer {
+class Tokenizer<A extends string> {
+	private type: A;
 	private matcher: Matcher;
 	private length: number;
 	private counter: number;
 
-	constructor(matcher: Matcher) {
+	constructor(type: A, matcher: Matcher) {
+		this.type = type;
 		this.matcher = matcher;
 		this.reset();
 	}
@@ -557,6 +559,12 @@ class Tokenizer {
 
 	longestMatch(): number {
 		return this.length;
+	}
+
+	produceToken(): { type: A } {
+		return {
+			type: this.type
+		};
 	}
 
 	reset(): void {
@@ -574,7 +582,7 @@ class Tokenizer {
 	}
 }
 
-function tokenize<A extends string>(string: string, tokenizers: Array<Tokenizer>): void {
+function tokenize<A extends string>(string: string, tokenizers: Array<Tokenizer<A>>): void {
 	if (tokenizers.length === 0) {
 		return;
 	}
@@ -599,11 +607,13 @@ function tokenize<A extends string>(string: string, tokenizers: Array<Tokenizer>
 		if (length === 0) {
 			throw "Syntax error at offset " + offset + "!";
 		}
-		let token = string.substr(offset, length);
+		let token = current[0].produceToken();
+		let value = string.substr(offset, length);
 		console.log({
-			token,
+			...token,
+			value,
 			offset,
-			length
+			length,
 		});
 		offset += length;
 		for (let tokenizer of current) {
@@ -613,6 +623,6 @@ function tokenize<A extends string>(string: string, tokenizers: Array<Tokenizer>
 }
 
 tokenize("   test   test", [
-	new Tokenizer(ns.plus(ns.char(" \t\r\n\f"))),
-	new Tokenizer(ns.word("test"))
+	new Tokenizer("WHITESPACE", ns.plus(ns.char(" \t\r\n\f"))),
+	new Tokenizer("TEST", ns.word("test"))
 ]);
