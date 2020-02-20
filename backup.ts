@@ -257,15 +257,14 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 		if (dtype as MediaType === 'bluray') {
 			metadata.forEach((ct, index) => ct.content.selector = '' + index + ' ' + ct.content.selector);
 		}
-		metadata = metadata.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1)
-			.map((content) => {
-				return {
-					...content,
-					episode: (a_episode !== null) ? a_episode++ : content.content.episode
-				};
-			});
-		let content = metadata.map((ct) => {
+		let content = metadata.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1).map((ct) => {
 			return ct.content
+		});
+		content = content.map((content) => {
+			return {
+				...content,
+				episode: (a_episode !== null) ? a_episode++ : content.episode
+			};
 		});
 		if (a_imdb !== null) {
 			imdb.getTitle(a_imdb, (title) => {
