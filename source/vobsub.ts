@@ -414,8 +414,8 @@ let convert_to_bmp = (jobid: string, ed: string, tb: string, codec: string, cb: 
 
 type Subtitle = { pts_start: number, pts_end: number, text: string, lines: string[] };
 
-let ocr = (jobid: string, lang: string, duration: number, postprocess: boolean, cb: { (st: Subtitle[]): void }): void => {
-	process.stdout.write(`Recognizing "${lang}" subtitles... postprocessing:${postprocess}\n`);
+let ocr = (jobid: string, lang: string, duration: number, cb: { (st: Subtitle[]): void }): void => {
+	process.stdout.write(`Recognizing "${lang}" subtitles...\n`);
 	let node = libpath.join('./private/temp/', jobid, 'bmp');
 	let subtitles: Array<Subtitle> = [];
 	try {
@@ -430,9 +430,6 @@ let ocr = (jobid: string, lang: string, duration: number, postprocess: boolean, 
 		let text = ''
 		if (w > 0 && h > 0) {
 			text = libcp.execSync(`tesseract ${input} stdout --psm 6 --oem 1 -l ${lang}`).toString('utf8');
-			if (postprocess) {
-				text = text.split('|').join('I').split('=').join('-').split('~').join('-').split('«').join('-').split('{').join('(').split('}').join(')').split('»').join('-').split('--').join('-');
-			}
 		}
 		let lines = text.split('\r\n').reduce((lines, line) => {
 			lines.push(...line.split('\n'));
@@ -539,7 +536,7 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 				let duration = subs[i].dur;
 				extract_vobsub(filename, i, (jobid) => {
 					convert_to_bmp(jobid, ed, time_base, subs[i].codec, (code) => {
-						ocr(jobid, lang, duration, subs[i].codec === 'dvd_subtitle', (subtitles) => {
+						ocr(jobid, lang, duration, (subtitles) => {
 							let webvtt = `WEBVTT { "language": "${lang}", "count": ${subtitles.length} }\r\n\r\n`;
 							for (let i = 0; i < subtitles.length; i++) {
 								webvtt += to_timecode(subtitles[i].pts_start) + ' --> ' + to_timecode(subtitles[i].pts_end) + '\r\n';
