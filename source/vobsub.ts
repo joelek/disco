@@ -504,7 +504,7 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 			extract_vobsub(filename, stream.index, (jobid) => {
 				convert_to_bmp(jobid, stream.extradata, stream.codec_name, (code) => {
 					ocr(jobid, stream.tags.language, (subtitles) => {
-						let webvtt = `WEBVTT { "language": "${stream.tags.language}", "count": ${subtitles.length} }\r\n\r\n`;
+						let webvtt = `WEBVTT { "language": "${stream.tags.language}" }\r\n\r\n`;
 						for (let i = 0; i < subtitles.length; i++) {
 							webvtt += to_timecode(subtitles[i].pts_start) + ' --> ' + to_timecode(subtitles[i].pts_end) + '\r\n';
 							webvtt += subtitles[i].lines.join('\r\n') + '\r\n\r\n';
