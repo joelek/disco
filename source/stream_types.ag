@@ -30,7 +30,8 @@
 	SubtitleStream: (@Stream & {
 		codec_type: "subtitle"
 	}),
+	StreamType: (@VideoStream | @AudioStream | @SubtitleStream),
 	FFProbe: {
-		streams: @Stream[]
+		streams: @StreamType[]
 	}
 }

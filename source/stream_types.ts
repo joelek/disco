@@ -324,8 +324,35 @@ export const SubtitleStream = {
 	}
 };
 
+export type StreamType = (VideoStream | AudioStream | SubtitleStream);
+
+export const StreamType = {
+	as(subject: any, path: string = ""): StreamType {
+		return ((subject, path) => {
+			try {
+				return (VideoStream.as)(subject, path);
+			} catch (error) {}
+			try {
+				return (AudioStream.as)(subject, path);
+			} catch (error) {}
+			try {
+				return (SubtitleStream.as)(subject, path);
+			} catch (error) {}
+			throw "Type guard \"Union\" failed at \"" + path + "\"!";
+		})(subject, path);
+	},
+	is(subject: any): subject is StreamType {
+		try {
+			StreamType.as(subject);
+		} catch (error) {
+			return false;
+		}
+		return true;
+	}
+};
+
 export type FFProbe = {
-	streams: Stream[]
+	streams: StreamType[]
 };
 
 export const FFProbe = {
@@ -335,7 +362,7 @@ export const FFProbe = {
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === Array)) {
 						for (let i = 0; i < subject.length; i++) {
-							(Stream.as)(subject[i], path + "[" + i + "]");
+							(StreamType.as)(subject[i], path + "[" + i + "]");
 						}
 						return subject;
 					}
@@ -361,6 +388,7 @@ export type Autoguard = {
 	VideoStream: VideoStream,
 	AudioStream: AudioStream,
 	SubtitleStream: SubtitleStream,
+	StreamType: StreamType,
 	FFProbe: FFProbe
 };
 
@@ -369,5 +397,6 @@ export const Autoguard = {
 	VideoStream: VideoStream,
 	AudioStream: AudioStream,
 	SubtitleStream: SubtitleStream,
+	StreamType: StreamType,
 	FFProbe: FFProbe
 };
