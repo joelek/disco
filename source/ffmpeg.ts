@@ -565,24 +565,6 @@ let transcode = (filename: string, cb: { (code: number, outfile: string): void }
 	}, basename);
 };
 
-if (process.argv[2] && process.argv[3]) {
-	if (true /*mingw*/) {
-		process.argv[3] = process.argv[3].split('/').join(libpath.sep);
-	}
-	if (process.argv[2] === 'e') {
-		transcode(process.argv[3], (code, outfile) => {
-			console.log(outfile);
-			process.exit(code);
-		});
-	} else if (process.argv[2] === 'm') {
-		determine_metadata(process.argv[3], (n) => {
-			console.log(n);
-			process.exit(0);
-		});
-	}
-}
-
 export {
-	determine_metadata,
 	transcode
 };

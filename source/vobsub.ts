@@ -565,10 +565,6 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 	});
 };
 
-if (process.argv[2]) {
-	extract(process.argv[2], (outputs) => {
-		process.exit(0);
-	});
-}
-
-export = extract;
+export {
+	extract
+};

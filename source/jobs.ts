@@ -85,7 +85,7 @@ let pick_from_queue = (): void => {
 			}
 			process.stdout.write(`Basename set to ${basename}\n`);
 			if (mi.type === 'dvd' || mi.type === 'bluray') {
-				vobsub(input, (outputs) => {
+				vobsub.extract(input, (outputs) => {
 					ffmpeg.transcode(input, (code, output) => {
 						if (basename) {
 							move_files([...outputs, output], basename);
