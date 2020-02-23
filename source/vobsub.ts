@@ -375,7 +375,7 @@ let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): voi
 	libfs.mkdirSync(libpath.join('./private/temp/', jobid, 'bmp'), { recursive: true });
 	let cp = libcp.spawn('ffmpeg', [
 		'-i', filename,
-		'-map', `0:s:${subn}`,
+		'-map', `0:${subn}`,
 		'-vn',
 		'-an',
 		'-c:s', 'copy',
