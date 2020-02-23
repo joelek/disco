@@ -38,30 +38,23 @@ let queue = generate_queue([], './private/queue/');
 
 let db = MediaDatabase.as(JSON.parse(libfs.readFileSync("./private/db/discdb.json", "utf8")));
 
-let get_media_info = (path: string): { type: MediaType, content: MediaContent | undefined } => {
+let get_media_info = (path: string): { type: MediaType, content: MediaContent } | null => {
 	let parts = libpath.basename(path).split(".");
-	let discid = parts[0];
-	let index = Number.parseInt(parts[1]);
-	let media = db[discid];
-	if (media !== undefined) {
-		let content = media.content[index];
-		if (content !== undefined) {
-			return {
-				type: media.type,
-				content
-			};
+	if (parts.length === 3) {
+		let discid = parts[0];
+		let index = Number.parseInt(parts[1]);
+		let media = db[discid];
+		if (media != null) {
+			let content = media.content[index];
+			if (content != null) {
+				return {
+					type: media.type,
+					content
+				};
+			}
 		}
 	}
-	return {
-		type: "neither",
-		content: undefined
-	};
-};
-
-let archive_file = (path: string): void => {
-	let dirs = path.split(libpath.sep);
-	let file = dirs.pop() as string;
-	libfs.renameSync(path, libpath.join('./private/archive/', file));
+	return null;
 };
 
 let pick_from_queue = (): void => {
@@ -69,19 +62,17 @@ let pick_from_queue = (): void => {
 		let index = (Math.random() * queue.length) | 0;
 		let input = queue.splice(index, 1)[0];
 		let mi = get_media_info(input);
-		if (mi) {
+		if (mi != null) {
 			let basename: string | null = null;
 			let ct = mi.content;
-			if (ct != null) {
-				if (ct.type === 'episode' && ct.show != null && ct.title != null) {
-					let rn = `${utils.pathify(ct.show)}-s${('00' + ct.season).slice(-2)}e${('00' + ct.episode).slice(-2)}-${utils.pathify(ct.title)}-${utils.pathify(mi.type)}`;
-					basename = `video/shows/${utils.pathify(ct.show)}/s${('00' + ct.season).slice(-2)}/${rn}/${rn}`;
-					basename = libpath.join(basename);
-				} else if (ct.type === 'movie' && ct.title != null) {
-					let rn = `${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}`;
-					basename = `video/movies/${rn}/${rn}`;
-					basename = libpath.join(basename);
-				}
+			if (ct.type === 'episode' && ct.show != null && ct.title != null) {
+				let rn = `${utils.pathify(ct.show)}-s${('00' + ct.season).slice(-2)}e${('00' + ct.episode).slice(-2)}-${utils.pathify(ct.title)}-${utils.pathify(mi.type)}`;
+				basename = `video/shows/${utils.pathify(ct.show)}/s${('00' + ct.season).slice(-2)}/${rn}/${rn}`;
+				basename = libpath.join(basename);
+			} else if (ct.type === 'movie' && ct.title != null) {
+				let rn = `${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}`;
+				basename = `video/movies/${rn}/${rn}`;
+				basename = libpath.join(basename);
 			}
 			process.stdout.write(`Basename set to ${basename}\n`);
 			if (mi.type === 'dvd' || mi.type === 'bluray') {
@@ -90,7 +81,6 @@ let pick_from_queue = (): void => {
 						if (basename) {
 							move_files([...outputs, output], basename);
 						}
-						archive_file(input);
 						pick_from_queue();
 					}, ct, basename);
 				});
