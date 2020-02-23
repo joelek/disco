@@ -394,20 +394,20 @@ let convert_to_bmp = (jobid: string, ed: string, tb: string, codec: string, cb: 
 	libfs.readdirSync(node).map((subnode) => {
 		let innode = libpath.join(node, subnode);
 		let name = subnode.split('.').slice(0, -1).join('.');
-	let outnode = libpath.join('./private/temp/', jobid, 'bmp');
-	if (codec === 'hdmv_pgs_subtitle') {
-		let buffer = libfs.readFileSync(innode);
-		let bitmap = pgssub.parse_pgssub_as_bmp(buffer);
-		let pts = parseInt((innode.split(libpath.sep).pop() as string).split('.')[0], 10);
-		let output_filename = `${('00000000' + pts).slice(-8)}_${('00000000' + pts).slice(-8)}.bmp`;
-		let output_path = libpath.join(outnode, output_filename);
-		let bmp_file = bmp.write_to(bitmap);
-		let fd = libfs.openSync(output_path, 'w');
-		libfs.writeSync(fd, bmp_file);
-		libfs.closeSync(fd);
-	} else {
-		write_file(read_file(innode, tb), outnode, ed);
-	}
+		let outnode = libpath.join('./private/temp/', jobid, 'bmp');
+		if (codec === 'hdmv_pgs_subtitle') {
+			let buffer = libfs.readFileSync(innode);
+			let bitmap = pgssub.parse_pgssub_as_bmp(buffer);
+			let pts = parseInt((innode.split(libpath.sep).pop() as string).split('.')[0], 10);
+			let output_filename = `${('00000000' + pts).slice(-8)}_${('00000000' + pts).slice(-8)}.bmp`;
+			let output_path = libpath.join(outnode, output_filename);
+			let bmp_file = bmp.write_to(bitmap);
+			let fd = libfs.openSync(output_path, 'w');
+			libfs.writeSync(fd, bmp_file);
+			libfs.closeSync(fd);
+		} else {
+			write_file(read_file(innode, tb), outnode, ed);
+		}
 	});
 	cb(0);
 };
@@ -420,40 +420,40 @@ let ocr = (jobid: string, lang: string, duration: number, cb: { (st: Subtitle[])
 	let subtitles: Array<Subtitle> = [];
 	try {
 		libfs.readdirSync(node).map((subnode) => {
-		let input = libpath.join(node, subnode);
-		let fd = libfs.openSync(input, 'r');
-		let head = Buffer.alloc(8);
-		libfs.readSync(fd, head, 0, 8, 18);
-		libfs.closeSync(fd);
-		let w = head.readUInt32LE(0);
-		let h = head.readUInt32LE(4);
-		let text = ''
-		if (w > 0 && h > 0) {
-			text = libcp.execSync(`tesseract ${input} stdout --psm 6 --oem 1 -l ${lang}`).toString('utf8');
-		}
-		let lines = text.split('\r\n').reduce((lines, line) => {
-			lines.push(...line.split('\n'));
-			return lines;
-		}, new Array<string>()).filter((line) => line.length > 0);
-		let name = subnode.split('.').slice(0, -1).join('.');
-		let pts_start = parseInt(name.split('_')[0], 10);
-		let pts_end = parseInt(name.split('_')[1], 10);
-		process.stdout.write(pts_start + ' to ' + pts_end + '\r\n' + text);
-		subtitles.push({ pts_start, pts_end, text, lines });
+			let input = libpath.join(node, subnode);
+			let fd = libfs.openSync(input, 'r');
+			let head = Buffer.alloc(8);
+			libfs.readSync(fd, head, 0, 8, 18);
+			libfs.closeSync(fd);
+			let w = head.readUInt32LE(0);
+			let h = head.readUInt32LE(4);
+			let text = ''
+			if (w > 0 && h > 0) {
+				text = libcp.execSync(`tesseract ${input} stdout --psm 6 --oem 1 -l ${lang}`).toString('utf8');
+			}
+			let lines = text.split('\r\n').reduce((lines, line) => {
+				lines.push(...line.split('\n'));
+				return lines;
+			}, new Array<string>()).filter((line) => line.length > 0);
+			let name = subnode.split('.').slice(0, -1).join('.');
+			let pts_start = parseInt(name.split('_')[0], 10);
+			let pts_end = parseInt(name.split('_')[1], 10);
+			process.stdout.write(pts_start + ' to ' + pts_end + '\r\n' + text);
+			subtitles.push({ pts_start, pts_end, text, lines });
 		});
 	} catch (error) {}
 	subtitles = subtitles.sort((a, b) => {
-	return a.pts_start - b.pts_start;
+		return a.pts_start - b.pts_start;
 	});
 	if (subtitles.length > 0) {
-	for (let i = 0; i < subtitles.length - 1; i++) {
-		if (subtitles[i].pts_start === subtitles[i].pts_end) {
-		subtitles[i].pts_end = subtitles[i+1].pts_start;
+		for (let i = 0; i < subtitles.length - 1; i++) {
+			if (subtitles[i].pts_start === subtitles[i].pts_end) {
+			subtitles[i].pts_end = subtitles[i+1].pts_start;
+			}
 		}
-	}
-	if (subtitles[subtitles.length - 1].pts_start === subtitles[subtitles.length - 1].pts_end) {
-		subtitles[subtitles.length - 1].pts_end = duration;
-	}
+		if (subtitles[subtitles.length - 1].pts_start === subtitles[subtitles.length - 1].pts_end) {
+			subtitles[subtitles.length - 1].pts_end = duration;
+		}
 	}
 	subtitles = subtitles.filter(st => st.lines.length > 0);
 	cb(subtitles);
