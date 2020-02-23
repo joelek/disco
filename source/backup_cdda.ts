@@ -45,7 +45,7 @@ function log(string: string): void {
 }
 
 function save_disc_to_db(disc_id: string, disc: DiscMetadata, cb: Callback<void>): void {
-	let cddb = require(`./private/db/cddb.json`);
+	let cddb = JSON.parse(libfs.readFileSync(`./private/db/cddb.json`, "utf8"));
 	cddb[disc_id] = disc;
 	libfs.writeFile(`./private/db/cddb.json`, JSON.stringify(cddb, null, `\t`), (error) => {
 		cb();
@@ -53,7 +53,7 @@ function save_disc_to_db(disc_id: string, disc: DiscMetadata, cb: Callback<void>
 }
 
 function get_disc_from_db(disc_id: string): DiscMetadata | null {
-	let cddb = require(`./private/db/cddb.json`);
+	let cddb = JSON.parse(libfs.readFileSync(`./private/db/cddb.json`, "utf8"));
 	let disc = cddb[disc_id];
 	if (disc != undefined) {
 		return disc;

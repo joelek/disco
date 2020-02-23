@@ -288,7 +288,8 @@ export const RectSettings = {
 export type Settings = {
 	picture: PictureSettings,
 	rect: RectSettings,
-	imode: FieldOrder
+	imode: FieldOrder,
+	compressibility: (number | undefined)
 };
 
 export const Settings = {
@@ -298,6 +299,25 @@ export const Settings = {
 				(PictureSettings.as)(subject.picture, path + "." + "picture");
 				(RectSettings.as)(subject.rect, path + "." + "rect");
 				(FieldOrder.as)(subject.imode, path + "." + "imode");
+				((subject, path) => {
+					try {
+						return ((subject, path) => {
+							if ((subject != null) && (subject.constructor === Number)) {
+								return subject;
+							}
+							throw "Type guard \"Number\" failed at \"" + path + "\"!";
+						})(subject, path);
+					} catch (error) {}
+					try {
+						return ((subject, path) => {
+							if (subject === undefined) {
+								return subject;
+							}
+							throw "Type guard \"Undefined\" failed at \"" + path + "\"!";
+						})(subject, path);
+					} catch (error) {}
+					throw "Type guard \"Union\" failed at \"" + path + "\"!";
+				})(subject.compressibility, path + "." + "compressibility");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";

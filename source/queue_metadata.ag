@@ -28,7 +28,8 @@
 	Settings: {
 		picture: @PictureSettings,
 		rect: @RectSettings,
-		imode: @FieldOrder
+		imode: @FieldOrder,
+		compressibility: (number | undefined)
 	},
 	SettingsDatabase: { @Settings }
 }

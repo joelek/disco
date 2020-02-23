@@ -6,8 +6,9 @@ import * as libdt from './delete_tree';
 import { MediaContent } from './discdb';
 import * as stream_types from "./stream_types";
 import * as ffprobe from "./ffprobe";
+import { FieldOrder, Settings, SettingsDatabase } from "./queue_metadata";
 
-let queue_metadata = require('./private/db/queue_metadata.json');
+let queue_metadata = SettingsDatabase.as(JSON.parse(libfs.readFileSync('./private/db/queue_metadata.json', "utf8")));
 
 interface Callback<A> {
 	(value: A): void
@@ -106,7 +107,7 @@ let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): 
 	});
 };
 
-let interlace_detect = (path: string, cb: { (imode: string): void }): void => {
+let interlace_detect = (path: string, cb: { (imode: FieldOrder): void }): void => {
 	console.log(`Detecting interlace mode...`);
 	libcp.execFile('ffmpeg', [
 		'-i', path,
@@ -118,7 +119,7 @@ let interlace_detect = (path: string, cb: { (imode: string): void }): void => {
 	], (error, stdout, stderr) => {
 		let re;
 		let parts;
-		let imode = 'unknown';
+		let imode = 'progressive' as FieldOrder;
 		re = /\[Parsed_idet_[0-9]+\s+@\s+[0-9a-fA-F]{16}\]\s+Multi\s+frame\s+detection:\s+TFF:\s*([0-9]+)\s+BFF:\s*([0-9]+)\s+Progressive:\s*([0-9]+)\s+Undetermined:\s*([0-9]+)/;
 		parts = re.exec(stderr);
 		if (parts !== null) {
@@ -447,14 +448,7 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 	});
 };
 
-interface CombinedMetadata {
-	picture: FormatDetectResult,
-	rect: CropResult,
-	imode: string,
-	compressibility: number
-}
-
-let determine_metadata = (filename: string, cb: Callback<CombinedMetadata>): void => {
+let determine_metadata = (filename: string, cb: Callback<Settings>): void => {
 	format_detect(filename, (picture) => {
 		crop_detect(filename, picture, (rect) => {
 			interlace_detect(filename, (imode) => {
@@ -466,7 +460,7 @@ let determine_metadata = (filename: string, cb: Callback<CombinedMetadata>): voi
 	});
 };
 
-let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: CropResult, imode: string, compressibility: number): void }, basename: string | null = null): void => {
+let get_metadata = (filename: string, cb: Callback<Settings>, basename: string | null = null): void => {
 	if (basename == null) {
 		basename = filename;
 	}
@@ -478,17 +472,17 @@ let get_metadata = (filename: string, cb: { (picture: FormatDetectResult, rect: 
 			compute_compressibility(filename, md.picture, md.rect, md.imode, (compressibility) => {
 				md.compressibility = compressibility;
 				save_queue_metadata(() => {
-					cb(md.picture, md.rect, md.imode, md.compressibility);
+					cb(md);
 				});
 			});
 		} else {
-			cb(md.picture, md.rect, md.imode, md.compressibility);
+			cb(md);
 		}
 	} else {
 		determine_metadata(filename, (md) => {
 			queue_metadata[key] = md;
 			save_queue_metadata(() => {
-				cb(md.picture, md.rect, md.imode, md.compressibility);
+				cb(md);
 			});
 		});
 	}
@@ -499,10 +493,10 @@ let transcode = (filename: string, cb: { (code: number, outfile: string): void }
 	let file = path.pop() as string;
 	let name = file.split('.').slice(0, -1).join('.');
 	let outfile = libpath.join(...path, `${name}.mp4`);
-	get_metadata(filename, (picture, rect, imode, compressibility) => {
+	get_metadata(filename, (md) => {
 		let extraopts = ['-ss', '0:15:00', '-t', '60'];
 		ffprobe.getAudioStreamsToKeep(filename, (audio_streams) => {
-			encode_hardware(filename, outfile, picture, rect, imode, compressibility, audio_streams, cb, 1, 1, extraopts, [], opt_content_info);
+			encode_hardware(filename, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], opt_content_info);
 		});
 	}, basename);
 };
