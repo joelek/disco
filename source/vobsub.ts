@@ -6,6 +6,7 @@ import * as pgssub from './pgssub';
 import * as bmp from './bmp';
 import * as delete_tree from './delete_tree';
 import * as stream_types from "./stream_types";
+import * as ffprobe from "./ffprobe";
 
 type Image = {
 	frame: Buffer,
@@ -406,7 +407,7 @@ let convert_to_bmp = (jobid: string, ed: string, codec: string, cb: { (code: num
 			libfs.writeSync(fd, bmp_file);
 			libfs.closeSync(fd);
 		} else {
-			write_file(read_file(innode), outnode, ed);
+			write_file(read_file(innode), outnode, parse_extradata(ed));
 		}
 	});
 	cb(0);
@@ -414,7 +415,7 @@ let convert_to_bmp = (jobid: string, ed: string, codec: string, cb: { (code: num
 
 type Subtitle = { pts_start: number, pts_end: number, text: string, lines: string[] };
 
-let ocr = (jobid: string, lang: string, duration: number, cb: { (st: Subtitle[]): void }): void => {
+let ocr = (jobid: string, lang: string, cb: { (st: Subtitle[]): void }): void => {
 	process.stdout.write(`Recognizing "${lang}" subtitles...\n`);
 	let node = libpath.join('./private/temp/', jobid, 'bmp');
 	let subtitles: Array<Subtitle> = [];
@@ -452,7 +453,7 @@ let ocr = (jobid: string, lang: string, duration: number, cb: { (st: Subtitle[])
 			}
 		}
 		if (subtitles[subtitles.length - 1].pts_start === subtitles[subtitles.length - 1].pts_end) {
-			subtitles[subtitles.length - 1].pts_end = duration;
+			//subtitles[subtitles.length - 1].pts_end = duration;
 		}
 	}
 	subtitles = subtitles.filter(st => st.lines.length > 0);
@@ -478,15 +479,6 @@ let parse_duration = (dur: string): number => {
 	return ms + 1000*(s + 60*(m + 60*h));
 };
 
-let list_subs = (filename: string, cb: { (subs: Array<{ codec: string, lang: string, extra: string, dur: number, frames: number }>): void }): void => {
-	libcp.exec(`ffprobe -v quiet -print_format json -show_streams -show_data ${filename}`, (error, stdout, stderr) => {
-		let json = JSON.parse(stdout);
-		let streams = json.streams as Array<stream_types.Stream>;
-		let subs = streams.filter(stream => stream.codec_type === 'subtitle').filter(s => s.tags).map(s => ({ codec: s.codec_name, lang: s.tags.language, extra: parse_extradata(s.extradata), dur: parse_duration(s.tags['DURATION-eng']), frames: parseInt(s.tags['NUMBER_OF_FRAMES-eng']) }));
-		cb(subs);
-	});
-};
-
 let to_timecode = (ms: number): string => {
 	let s = (ms / 1000) | 0;
 	ms -= s * 1000;
@@ -501,63 +493,38 @@ let to_timecode = (ms: number): string => {
 	return `${tch}:${tcm}:${tcs}.${tcms}`;
 };
 
-let get_supported_languages = (cb: { (languages: Array<string>): void }): void => {
-	let stdout = libcp.execSync(`tesseract --list-langs`).toString('utf8');
-	let lines = stdout.split('\r\n').reduce((lines, line) => {
-		lines.push(...line.split('\n'));
-		return lines;
-	}, new Array<string>());
-	lines = lines.slice(1, -1);
-	cb(lines);
-};
-
 let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
-	get_supported_languages((supported_languages) => {
-		list_subs(filename, (subs) => {
-			let indices_to_extract: Array<number> = [];
-			outer: for (let supported_language of supported_languages) {
-				inner: for (let i = 0; i < subs.length; i++) {
-					let s = subs[i];
-					if (s.lang === supported_language && s.dur > 0 && s.frames/s.dur > 1/(60*1000)) {
-						indices_to_extract.push(i);
-						break inner;
-					}
-				}
+	ffprobe.getSubtitleStreamsToKeep(filename, (subtitle_streams) => {
+		let outputs = new Array<string>();
+		let handle_next = () => {
+			if (subtitle_streams.length === 0) {
+				return cb(outputs);
 			}
-			let outputs = new Array<string>();
-			let handle_next = () => {
-				if (indices_to_extract.length === 0) {
-					return cb(outputs);
-				}
-				let i = indices_to_extract.pop() as number;
-				let lang = subs[i].lang;
-				let ed = subs[i].extra;
-				let duration = subs[i].dur;
-				extract_vobsub(filename, i, (jobid) => {
-					convert_to_bmp(jobid, ed, subs[i].codec, (code) => {
-						ocr(jobid, lang, duration, (subtitles) => {
-							let webvtt = `WEBVTT { "language": "${lang}", "count": ${subtitles.length} }\r\n\r\n`;
-							for (let i = 0; i < subtitles.length; i++) {
-								webvtt += to_timecode(subtitles[i].pts_start) + ' --> ' + to_timecode(subtitles[i].pts_end) + '\r\n';
-								webvtt += subtitles[i].lines.join('\r\n') + '\r\n\r\n';
-							}
-							let directories = filename.split(libpath.sep);
-							let file = directories.pop() as string;
-							let basename = file.split('.').slice(0, -1).join('.');
-							let outfile = libpath.join(...directories, `${basename}.sub.${lang}.vtt`);
-							let fd = libfs.openSync(outfile, 'w');
-							libfs.writeSync(fd, webvtt);
-							libfs.closeSync(fd);
-							outputs.push(outfile);
-							delete_tree.async(libpath.join('./private/temp/', jobid), () => {
-								handle_next();
-							});
+			let stream = subtitle_streams.pop() as stream_types.SubtitleStream;
+			extract_vobsub(filename, stream.index, (jobid) => {
+				convert_to_bmp(jobid, stream.extradata, stream.codec_name, (code) => {
+					ocr(jobid, stream.tags.language, (subtitles) => {
+						let webvtt = `WEBVTT { "language": "${stream.tags.language}", "count": ${subtitles.length} }\r\n\r\n`;
+						for (let i = 0; i < subtitles.length; i++) {
+							webvtt += to_timecode(subtitles[i].pts_start) + ' --> ' + to_timecode(subtitles[i].pts_end) + '\r\n';
+							webvtt += subtitles[i].lines.join('\r\n') + '\r\n\r\n';
+						}
+						let directories = filename.split(libpath.sep);
+						let file = directories.pop() as string;
+						let basename = file.split('.').slice(0, -1).join('.');
+						let outfile = libpath.join(...directories, `${basename}.sub.${stream.tags.language}.vtt`);
+						let fd = libfs.openSync(outfile, 'w');
+						libfs.writeSync(fd, webvtt);
+						libfs.closeSync(fd);
+						outputs.push(outfile);
+						delete_tree.async(libpath.join('./private/temp/', jobid), () => {
+							handle_next();
 						});
 					});
 				});
-			};
-			handle_next();
-		});
+			});
+		};
+		handle_next();
 	});
 };
 

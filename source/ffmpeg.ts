@@ -2,10 +2,12 @@ import * as libcp from 'child_process';
 import * as libcrypto from 'crypto';
 import * as libpath from 'path';
 import * as libfs from 'fs';
-let queue_metadata = require('./private/db/queue_metadata.json');
 import * as libdt from './delete_tree';
 import { MediaContent } from './discdb';
 import * as stream_types from "./stream_types";
+import * as ffprobe from "./ffprobe";
+
+let queue_metadata = require('./private/db/queue_metadata.json');
 
 interface Callback<A> {
 	(value: A): void
@@ -256,66 +258,6 @@ let crop_detect = (path: string, picture: FormatDetectResult, cb: { (result: Cro
 	});
 };
 
-function getStreams(path: string, cb: Callback<Array<stream_types.Stream>>): void {
-	let options = [
-		"ffprobe",
-		"-v", "quiet",
-		"-show_streams",
-		"-show_data",
-		"-print_format", "json",
-		path
-	];
-	libcp.exec(options.join(" "), (error, stdout, stderr) => {
-		let json = JSON.parse(stdout);
-		let ffprobe = stream_types.FFProbe.as(json);
-		ffprobe.streams.map((stream) => {
-			if (stream.codec_type === "video") {
-				return stream_types.VideoStream.as(stream);
-			}
-			if (stream.codec_type === "audio") {
-				return stream_types.AudioStream.as(stream);
-			}
-			if (stream.codec_type === "subtitle") {
-				return stream_types.SubtitleStream.as(stream);
-			}
-			throw "";
-		});
-		cb(ffprobe.streams);
-	});
-}
-
-function getAudioStreams(path: string, cb: Callback<Array<stream_types.AudioStream>>): void {
-	getStreams(path, (streams) => {
-		cb(streams.filter(stream_types.AudioStream.is));
-	});
-}
-
-function getAudioStreamsToKeep(path: string, cb: Callback<Array<stream_types.AudioStream>>): void {
-	let target_languages = [ "eng", "swe" ];
-	getAudioStreams(path, (audio_streams) => {
-		let streams = target_languages.map((target_language) => {
-				return audio_streams.filter((stream) => {
-					return stream.tags.language === target_language;
-				}).map((stream) => {
-					let weight = stream.channels * Number.parseInt(stream.sample_rate);
-					return {
-						stream,
-						weight
-					};
-				}).sort((one, two) => {
-					return two.weight - one.weight;
-				});
-			}).map((streams) => {
-				return streams[0];
-			}).filter((stream) => {
-				return stream !== undefined;
-			}).map((stream) => {
-				return stream.stream;
-			});
-		cb(streams);
-	});
-}
-
 let create_temp_dir = (cb: { (wd: string, id: string): void }): void => {
 	let id = libcrypto.randomBytes(16).toString('hex');
 	let wd = libpath.join('./private/temp/', id);
@@ -559,7 +501,7 @@ let transcode = (filename: string, cb: { (code: number, outfile: string): void }
 	let outfile = libpath.join(...path, `${name}.mp4`);
 	get_metadata(filename, (picture, rect, imode, compressibility) => {
 		let extraopts = ['-ss', '0:15:00', '-t', '60'];
-		getAudioStreamsToKeep(filename, (audio_streams) => {
+		ffprobe.getAudioStreamsToKeep(filename, (audio_streams) => {
 			encode_hardware(filename, outfile, picture, rect, imode, compressibility, audio_streams, cb, 1, 1, extraopts, [], opt_content_info);
 		});
 	}, basename);
