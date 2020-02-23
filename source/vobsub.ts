@@ -17,7 +17,7 @@ type Image = {
 	pts_end: number
 };
 
-let read_file = (filename: string, tb: string): Image => {
+let read_file = (filename: string): Image => {
 	let tf: number = 0;
 	let bf: number = 0;
 	let w: number = 0;
@@ -389,7 +389,7 @@ let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): voi
 	});
 };
 
-let convert_to_bmp = (jobid: string, ed: string, tb: string, codec: string, cb: { (code: number): void }): void => {
+let convert_to_bmp = (jobid: string, ed: string, codec: string, cb: { (code: number): void }): void => {
 	let node = libpath.join('./private/temp/', jobid, 'raw');
 	libfs.readdirSync(node).map((subnode) => {
 		let innode = libpath.join(node, subnode);
@@ -406,7 +406,7 @@ let convert_to_bmp = (jobid: string, ed: string, tb: string, codec: string, cb: 
 			libfs.writeSync(fd, bmp_file);
 			libfs.closeSync(fd);
 		} else {
-			write_file(read_file(innode, tb), outnode, ed);
+			write_file(read_file(innode), outnode, ed);
 		}
 	});
 	cb(0);
@@ -478,11 +478,11 @@ let parse_duration = (dur: string): number => {
 	return ms + 1000*(s + 60*(m + 60*h));
 };
 
-let list_subs = (filename: string, cb: { (subs: Array<{ codec: string, lang: string, extra: string, tb: string, dur: number, frames: number }>): void }): void => {
+let list_subs = (filename: string, cb: { (subs: Array<{ codec: string, lang: string, extra: string, dur: number, frames: number }>): void }): void => {
 	libcp.exec(`ffprobe -v quiet -print_format json -show_streams -show_data ${filename}`, (error, stdout, stderr) => {
 		let json = JSON.parse(stdout);
 		let streams = json.streams as Array<stream_types.Stream>;
-		let subs = streams.filter(stream => stream.codec_type === 'subtitle').filter(s => s.tags).map(s => ({ codec: s.codec_name, lang: s.tags.language, extra: parse_extradata(s.extradata), tb: s.time_base, dur: parse_duration(s.tags['DURATION-eng']), frames: parseInt(s.tags['NUMBER_OF_FRAMES-eng']) }));
+		let subs = streams.filter(stream => stream.codec_type === 'subtitle').filter(s => s.tags).map(s => ({ codec: s.codec_name, lang: s.tags.language, extra: parse_extradata(s.extradata), dur: parse_duration(s.tags['DURATION-eng']), frames: parseInt(s.tags['NUMBER_OF_FRAMES-eng']) }));
 		cb(subs);
 	});
 };
@@ -532,10 +532,9 @@ let extract = (filename: string, cb: { (outputs: string[]): void }): void => {
 				let i = indices_to_extract.pop() as number;
 				let lang = subs[i].lang;
 				let ed = subs[i].extra;
-				let time_base = subs[i].tb;
 				let duration = subs[i].dur;
 				extract_vobsub(filename, i, (jobid) => {
-					convert_to_bmp(jobid, ed, time_base, subs[i].codec, (code) => {
+					convert_to_bmp(jobid, ed, subs[i].codec, (code) => {
 						ocr(jobid, lang, duration, (subtitles) => {
 							let webvtt = `WEBVTT { "language": "${lang}", "count": ${subtitles.length} }\r\n\r\n`;
 							for (let i = 0; i < subtitles.length; i++) {
