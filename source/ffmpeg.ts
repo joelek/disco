@@ -463,7 +463,7 @@ let determine_metadata = (filename: string, cb: Callback<Settings>): void => {
 };
 
 let get_metadata = (filename: string, cb: Callback<Settings>, basename: string): void => {
-	let key = basename.split("/").join(':');
+	let key = basename.split("/").slice(3).join(':');
 	process.stderr.write(`Database key: ${key}\n`);
 	let md = queue_metadata[key];
 	if (md) {

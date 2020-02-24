@@ -69,12 +69,11 @@ let pick_from_queue = (): void => {
 						let jobs = [...vobsub_jobs, ...ffmpeg_jobs];
 						utils.foreach(jobs, (job, next) => {
 							const path = job.getArtifactPath();
-							if (libfs.existsSync("./private/media/" + path)) {
-								console.log("Artifact exists: " + path);
+							console.log(path);
+							if (libfs.existsSync(path)) {
 								next();
 							} else {
 								job.produceArtifact((path) => {
-									console.log("Produced artifact: " + path);
 									next();
 								});
 							}
