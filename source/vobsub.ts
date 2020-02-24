@@ -446,7 +446,7 @@ let ocr = (jobid: string, lang: string, cb: { (st: Subtitle[]): void }): void =>
 			let name = subnode.split('.').slice(0, -1).join('.');
 			let pts_start = parseInt(name.split('_')[0], 10);
 			let pts_end = parseInt(name.split('_')[1], 10);
-			process.stdout.write(pts_start + ' to ' + pts_end + '\r\n' + text);
+			//process.stdout.write(pts_start + ' to ' + pts_end + '\r\n' + text);
 			subtitles.push({ pts_start, pts_end, text, lines });
 		});
 	} catch (error) {}
