@@ -69,6 +69,7 @@ let pick_from_queue = (): void => {
 						let jobs = [...vobsub_jobs, ...ffmpeg_jobs];
 						utils.foreach(jobs, (job, next) => {
 							const path = job.getArtifactPath();
+							libfs.mkdirSync(path.split("/").slice(0, -1).join("/"), { recursive: true });
 							console.log(path);
 							if (libfs.existsSync(path)) {
 								next();
