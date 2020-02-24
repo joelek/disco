@@ -5,6 +5,7 @@
 		codec_name: string,
 		time_base: string,
 		start_pts: number,
+		start_time: string,
 		extradata: string,
 		tags: ({ string } & {
 			language: string

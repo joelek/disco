@@ -6,6 +6,7 @@ export type Stream = {
 	codec_name: string,
 	time_base: string,
 	start_pts: number,
+	start_time: string,
 	extradata: string,
 	tags: ({ [key: string]: string } & {
 		language: string
@@ -46,6 +47,12 @@ export const Stream = {
 					}
 					throw "Type guard \"Number\" failed at \"" + path + "\"!";
 				})(subject.start_pts, path + "." + "start_pts");
+				((subject, path) => {
+					if ((subject != null) && (subject.constructor === String)) {
+						return subject;
+					}
+					throw "Type guard \"String\" failed at \"" + path + "\"!";
+				})(subject.start_time, path + "." + "start_time");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === String)) {
 						return subject;

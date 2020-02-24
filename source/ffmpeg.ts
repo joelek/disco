@@ -290,6 +290,7 @@ let get_frame_size = (k: number, farx: number, fary: number): { w: number, h: nu
 let encode_hardware = (
 	filename: string,
 	outfile: string,
+	start_time: number,
 	picture: FormatDetectResult,
 	rect: CropResult,
 	imode: string,
@@ -389,6 +390,7 @@ let encode_hardware = (
 		'-color_primaries', picture.color_primaries,
 		'-color_trc', picture.color_transfer,
 		'-colorspace', picture.color_space,
+		"-itsoffset", "" + start_time,
 		'-i', 'pipe:',
 		...extraopts,
 		'-i', filename,
@@ -437,8 +439,8 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 	let id2 = libcrypto.randomBytes(16).toString("hex");
 	let frames = 1;
 	create_temp_dir((wd, id) => {
-		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, [], (outfile1) => {
-			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, [], (outfile2) => {
+		encode_hardware(filename, libpath.join(wd, id1), 0.0, picture, rect, imode, 1.0, [], (outfile1) => {
+			encode_hardware(filename, libpath.join(wd, id2), 0.0, picture, rect, imode, 1.0, [], (outfile2) => {
 				let s1 = libfs.statSync(outfile1).size;
 				let s2 = libfs.statSync(outfile2).size;
 				let c = 1.0 - (s2 - s1)/(frames * s1);
@@ -497,7 +499,8 @@ function transcodeSingleStream(path: string, stream: stream_types.VideoStream, b
 		let extraopts = new Array<string>()
 		// extraopts = ['-ss', '0:15:00', '-t', '60'];
 		ffprobe.getAudioStreamsToKeep(path, (audio_streams) => {
-			encode_hardware(path, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], content);
+			let start_time = Number.parseFloat(stream.start_time);
+			encode_hardware(path, outfile, start_time, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], content);
 		});
 	}, basename);
 }
