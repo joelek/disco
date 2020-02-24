@@ -494,7 +494,8 @@ let transcode = (filename: string, cb: { (code: number, outfile: string): void }
 	let name = file.split('.').slice(0, -1).join('.');
 	let outfile = libpath.join(...path, `${name}.mp4`);
 	get_metadata(filename, (md) => {
-		let extraopts = ['-ss', '0:15:00', '-t', '60'];
+		let extraopts = new Array<string>()
+		// extraopts = ['-ss', '0:15:00', '-t', '60'];
 		ffprobe.getAudioStreamsToKeep(filename, (audio_streams) => {
 			encode_hardware(filename, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], opt_content_info);
 		});

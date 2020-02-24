@@ -78,11 +78,24 @@ let pick_from_queue = (): void => {
 			const basename = getBasename(mi.type, mi.content);
 			process.stdout.write(`Basename set to ${basename}\n`);
 			if (mi.type === 'dvd' || mi.type === 'bluray') {
-				vobsub.extract(input, basename, (outputs) => {
-					ffmpeg.transcode(input, (code, output) => {
-						move_files([...outputs, output], basename);
-						pick_from_queue();
-					}, mi.content, basename);
+				vobsub.generateJobs(input, basename, (jobs) => {
+					utils.foreach(jobs, (job, next) => {
+						const path = job.getArtifactPath();
+						if (libfs.existsSync("./private/media/" + path)) {
+							console.log("Artifact exists: " + path);
+							next();
+						} else {
+							job.produceArtifact((path) => {
+								console.log("Produced artifact: " + path);
+								next();
+							});
+						}
+					}, () => {
+						ffmpeg.transcode(input, (code, output) => {
+							move_files([output], basename);
+							pick_from_queue();
+						}, mi.content, basename);
+					})
 				});
 			}
 			return;
