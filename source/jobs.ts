@@ -57,32 +57,32 @@ let get_media_info = (path: string): { type: MediaType, content: MediaContent } 
 	return null;
 };
 
+function getBasename(type: MediaType, content: MediaContent): string {
+	if (content.type === "episode" && content.show != null && content.title != null) {
+		let rn = `${utils.pathify(content.show)}-s${("00" + content.season).slice(-2)}e${("00" + content.episode).slice(-2)}-${utils.pathify(content.title)}-${utils.pathify(type)}`;
+		return `video/shows/${utils.pathify(content.show)}/s${('00' + content.season).slice(-2)}/${rn}/${rn}`;
+	}
+	if (content.type === "movie" && content.title != null) {
+		let rn = `${utils.pathify(content.title)}-${('0000' + content.year).slice(-4)}-${utils.pathify(type)}`;
+		return `video/movies/${rn}/${rn}`;
+	}
+	throw "";
+}
+
 let pick_from_queue = (): void => {
 	if (queue.length > 0) {
 		let index = (Math.random() * queue.length) | 0;
 		let input = queue.splice(index, 1)[0];
-		let mi = get_media_info(input);
+		const mi = get_media_info(input);
 		if (mi != null) {
-			let basename: string | null = null;
-			let ct = mi.content;
-			if (ct.type === 'episode' && ct.show != null && ct.title != null) {
-				let rn = `${utils.pathify(ct.show)}-s${('00' + ct.season).slice(-2)}e${('00' + ct.episode).slice(-2)}-${utils.pathify(ct.title)}-${utils.pathify(mi.type)}`;
-				basename = `video/shows/${utils.pathify(ct.show)}/s${('00' + ct.season).slice(-2)}/${rn}/${rn}`;
-				basename = libpath.join(basename);
-			} else if (ct.type === 'movie' && ct.title != null) {
-				let rn = `${utils.pathify(ct.title)}-${('0000' + ct.year).slice(-4)}-${utils.pathify(mi.type)}`;
-				basename = `video/movies/${rn}/${rn}`;
-				basename = libpath.join(basename);
-			}
+			const basename = getBasename(mi.type, mi.content);
 			process.stdout.write(`Basename set to ${basename}\n`);
 			if (mi.type === 'dvd' || mi.type === 'bluray') {
-				vobsub.extract(input, (outputs) => {
+				vobsub.extract(input, basename, (outputs) => {
 					ffmpeg.transcode(input, (code, output) => {
-						if (basename) {
-							move_files([...outputs, output], basename);
-						}
+						move_files([...outputs, output], basename);
 						pick_from_queue();
-					}, ct, basename);
+					}, mi.content, basename);
 				});
 			}
 			return;
