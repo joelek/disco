@@ -25,19 +25,8 @@ function getStreams(path: string, cb: Callback<Array<stream_types.StreamType>>):
 
 function getAudioStreams(path: string, cb: Callback<Array<stream_types.AudioStream>>): void {
 	getStreams(path, (streams) => {
-		return cb(streams.filter(stream_types.AudioStream.is));
-	});
-}
-
-function getSubtitleStreams(path: string, cb: Callback<Array<stream_types.SubtitleStream>>): void {
-	getStreams(path, (streams) => {
-		return cb(streams.filter(stream_types.SubtitleStream.is));
-	});
-}
-
-function getVideoStreams(path: string, cb: Callback<Array<stream_types.VideoStream>>): void {
-	getStreams(path, (streams) => {
-		return cb(streams.filter(stream_types.VideoStream.is));
+		let audio_streams = streams.filter(stream_types.AudioStream.is);
+		return cb(audio_streams);
 	});
 }
 
@@ -67,6 +56,13 @@ function getAudioStreamsToKeep(path: string, cb: Callback<Array<stream_types.Aud
 	});
 }
 
+function getSubtitleStreams(path: string, cb: Callback<Array<stream_types.SubtitleStream>>): void {
+	getStreams(path, (streams) => {
+		let subtitles_stream = streams.filter(stream_types.SubtitleStream.is);
+		return cb(subtitles_stream);
+	});
+}
+
 function getSubtitleStreamsToKeep(path: string, cb: Callback<Array<stream_types.SubtitleStream>>): void {
 	tesseract.getSupportedLanguages((supported_languages) => {
 		getSubtitleStreams(path, (subtitle_streams) => {
@@ -86,7 +82,22 @@ function getSubtitleStreamsToKeep(path: string, cb: Callback<Array<stream_types.
 	});
 }
 
+function getVideoStreams(path: string, cb: Callback<Array<stream_types.VideoStream>>): void {
+	getStreams(path, (streams) => {
+		let video_streams = streams.filter(stream_types.VideoStream.is);
+		return cb(video_streams);
+	});
+}
+
+function getVideoStreamsToKeep(path: string, cb: Callback<Array<stream_types.VideoStream>>): void {
+	getVideoStreams(path, (video_streams) => {
+		let streams = video_streams;
+		return cb(streams);
+	});
+}
+
 export {
 	getAudioStreamsToKeep,
-	getSubtitleStreamsToKeep
+	getSubtitleStreamsToKeep,
+	getVideoStreamsToKeep
 };

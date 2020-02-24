@@ -57,45 +57,31 @@ let get_media_info = (path: string): { type: MediaType, content: MediaContent } 
 	return null;
 };
 
-function getBasename(type: MediaType, content: MediaContent): string {
-	if (content.type === "episode" && content.show != null && content.title != null) {
-		let rn = `${utils.pathify(content.show)}-s${("00" + content.season).slice(-2)}e${("00" + content.episode).slice(-2)}-${utils.pathify(content.title)}-${utils.pathify(type)}`;
-		return `video/shows/${utils.pathify(content.show)}/s${('00' + content.season).slice(-2)}/${rn}/${rn}`;
-	}
-	if (content.type === "movie" && content.title != null) {
-		let rn = `${utils.pathify(content.title)}-${('0000' + content.year).slice(-4)}-${utils.pathify(type)}`;
-		return `video/movies/${rn}/${rn}`;
-	}
-	throw "";
-}
-
 let pick_from_queue = (): void => {
 	if (queue.length > 0) {
 		let index = (Math.random() * queue.length) | 0;
 		let input = queue.splice(index, 1)[0];
 		const mi = get_media_info(input);
 		if (mi != null) {
-			const basename = getBasename(mi.type, mi.content);
-			process.stdout.write(`Basename set to ${basename}\n`);
 			if (mi.type === 'dvd' || mi.type === 'bluray') {
-				vobsub.generateJobs(input, basename, (jobs) => {
-					utils.foreach(jobs, (job, next) => {
-						const path = job.getArtifactPath();
-						if (libfs.existsSync("./private/media/" + path)) {
-							console.log("Artifact exists: " + path);
-							next();
-						} else {
-							job.produceArtifact((path) => {
-								console.log("Produced artifact: " + path);
+				vobsub.generateJobs(input, mi.type, mi.content, (vobsub_jobs) => {
+					ffmpeg.generateJobs(input, mi.type, mi.content, (ffmpeg_jobs) => {
+						let jobs = [...vobsub_jobs, ...ffmpeg_jobs];
+						utils.foreach(jobs, (job, next) => {
+							const path = job.getArtifactPath();
+							if (libfs.existsSync("./private/media/" + path)) {
+								console.log("Artifact exists: " + path);
 								next();
-							});
-						}
-					}, () => {
-						ffmpeg.transcode(input, (code, output) => {
-							move_files([output], basename);
+							} else {
+								job.produceArtifact((path) => {
+									console.log("Produced artifact: " + path);
+									next();
+								});
+							}
+						}, () => {
 							pick_from_queue();
-						}, mi.content, basename);
-					})
+						});
+					});
 				});
 			}
 			return;

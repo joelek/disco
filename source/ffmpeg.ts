@@ -3,10 +3,12 @@ import * as libcrypto from 'crypto';
 import * as libpath from 'path';
 import * as libfs from 'fs';
 import * as libdt from './delete_tree';
-import { MediaContent } from './discdb';
+import { MediaContent, MediaType } from './discdb';
 import * as stream_types from "./stream_types";
 import * as ffprobe from "./ffprobe";
 import { FieldOrder, Settings, SettingsDatabase } from "./queue_metadata";
+import * as job from "./job";
+import * as utils from "./utils";
 
 let queue_metadata = SettingsDatabase.as(JSON.parse(libfs.readFileSync('./private/db/queue_metadata.json', "utf8")));
 
@@ -293,7 +295,7 @@ let encode_hardware = (
 	imode: string,
 	compressibility: number,
 	audio_streams: Array<stream_types.AudioStream>,
-	cb: { (code: number, outfile: string): void },
+	cb: { (outfile: string): void },
 	sample_cadance: number,
 	sample_keep: number,
 	extraopts: Array<string>,
@@ -425,8 +427,8 @@ let encode_hardware = (
 	cpx.stdout.pipe(cp2.stdin);
 	cp2.stdout.pipe(process.stdout);
 	cp2.stderr.pipe(process.stderr);
-	cp2.on('exit', (code) => {
-		cb(code || 0, outfile);
+	cp2.on('exit', () => {
+		cb(outfile);
 	});
 };
 
@@ -435,8 +437,8 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 	let id2 = libcrypto.randomBytes(16).toString("hex");
 	let frames = 1;
 	create_temp_dir((wd, id) => {
-		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, [], (_, outfile1) => {
-			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, [], (_, outfile2) => {
+		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, [], (outfile1) => {
+			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, [], (outfile2) => {
 				let s1 = libfs.statSync(outfile1).size;
 				let s2 = libfs.statSync(outfile2).size;
 				let c = 1.0 - (s2 - s1)/(frames * s1);
@@ -460,11 +462,8 @@ let determine_metadata = (filename: string, cb: Callback<Settings>): void => {
 	});
 };
 
-let get_metadata = (filename: string, cb: Callback<Settings>, basename: string | null = null): void => {
-	if (basename == null) {
-		basename = filename;
-	}
-	let key = basename.split(libpath.sep).join(':');
+let get_metadata = (filename: string, cb: Callback<Settings>, basename: string): void => {
+	let key = basename.split("/").join(':');
 	process.stderr.write(`Database key: ${key}\n`);
 	let md = queue_metadata[key];
 	if (md) {
@@ -488,20 +487,39 @@ let get_metadata = (filename: string, cb: Callback<Settings>, basename: string |
 	}
 };
 
-let transcode = (filename: string, cb: { (code: number, outfile: string): void }, opt_content_info: MediaContent | null = null, basename: string | null = null): void => {
-	let path = filename.split(libpath.sep);
-	let file = path.pop() as string;
-	let name = file.split('.').slice(0, -1).join('.');
-	let outfile = libpath.join(...path, `${name}.mp4`);
-	get_metadata(filename, (md) => {
+function getArtifactPath(path: string, stream: stream_types.VideoStream, basename: string): string {
+	return `${basename}.mp4`;
+}
+
+function transcodeSingleStream(path: string, stream: stream_types.VideoStream, basename: string, content: MediaContent, cb: Callback<string>): void {
+	let outfile = getArtifactPath(path, stream, basename);
+	get_metadata(path, (md) => {
 		let extraopts = new Array<string>()
 		// extraopts = ['-ss', '0:15:00', '-t', '60'];
-		ffprobe.getAudioStreamsToKeep(filename, (audio_streams) => {
-			encode_hardware(filename, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], opt_content_info);
+		ffprobe.getAudioStreamsToKeep(path, (audio_streams) => {
+			encode_hardware(path, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], content);
 		});
 	}, basename);
-};
+}
+
+function generateJobs(path: string, type: MediaType, content: MediaContent, cb: Callback<Array<job.Job>>) {
+	let basename = utils.getBasename(type, content);
+	ffprobe.getVideoStreamsToKeep(path, (video_streams) => {
+		let jobs = new Array<job.Job>();
+		for (let stream of video_streams) {
+			jobs.push({
+				getArtifactPath() {
+					return getArtifactPath(path, stream, basename);
+				},
+				produceArtifact(cb) {
+					transcodeSingleStream(path, stream, basename, content, cb);
+				}
+			});
+		}
+		return cb(jobs);
+	});
+}
 
 export {
-	transcode
+	generateJobs
 };

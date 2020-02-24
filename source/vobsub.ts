@@ -7,6 +7,9 @@ import * as bmp from './bmp';
 import * as delete_tree from './delete_tree';
 import * as stream_types from "./stream_types";
 import * as ffprobe from "./ffprobe";
+import * as job from "./job";
+import * as utils from "./utils";
+import { MediaType, MediaContent } from './discdb';
 
 interface Callback<A> {
 	(value: A): void
@@ -501,16 +504,16 @@ function getArtifactPath(path: string, stream: stream_types.SubtitleStream, base
 	return `${basename}.sub.${stream.tags.language}.vtt`;
 }
 
-function extractSingleStream(filename: string, stream: stream_types.SubtitleStream, basename: string, cb: Callback<string>): void {
-	extract_vobsub(filename, stream.index, (jobid) => {
+function extractSingleStream(path: string, stream: stream_types.SubtitleStream, basename: string, cb: Callback<string>): void {
+	extract_vobsub(path, stream.index, (jobid) => {
 		convert_to_bmp(jobid, stream.extradata, stream.codec_name, () => {
 			ocr(jobid, stream.tags.language, (subtitles) => {
-				let webvtt = `WEBVTT { "language": "${stream.tags.language}" }\r\n\r\n`;
+				let webvtt = `WEBVTT {"language":"${stream.tags.language}"}\r\n\r\n`;
 				for (let i = 0; i < subtitles.length; i++) {
 					webvtt += to_timecode(subtitles[i].pts_start) + ' --> ' + to_timecode(subtitles[i].pts_end) + '\r\n';
 					webvtt += subtitles[i].lines.join('\r\n') + '\r\n\r\n';
 				}
-				let outfile = getArtifactPath(filename, stream, basename);
+				let outfile = getArtifactPath(path, stream, basename);
 				let fd = libfs.openSync(outfile, 'w');
 				libfs.writeSync(fd, webvtt);
 				libfs.closeSync(fd);
@@ -522,38 +525,17 @@ function extractSingleStream(filename: string, stream: stream_types.SubtitleStre
 	});
 }
 
-let extract = (filename: string, basename: string, cb: Callback<Array<string>>): void => {
-	ffprobe.getSubtitleStreamsToKeep(filename, (subtitle_streams) => {
-		let outputs = new Array<string>();
-		let handle_next = () => {
-			if (subtitle_streams.length === 0) {
-				return cb(outputs);
-			}
-			let stream = subtitle_streams.pop() as stream_types.SubtitleStream;
-			extractSingleStream(filename, stream, basename, (outfile) => {
-				outputs.push(outfile);
-				handle_next();
-			});
-		};
-		handle_next();
-	});
-};
-
-interface Job {
-	getArtifactPath(): string;
-	produceArtifact(cb: Callback<string>): void;
-}
-
-function generateJobs(path: string, basename: string, cb: Callback<Array<Job>>) {
-	ffprobe.getSubtitleStreamsToKeep(path, (subtitle_streams) => {
-		let jobs = new Array<Job>();
-		for (let stream of subtitle_streams) {
+function generateJobs(path: string, type: MediaType, content: MediaContent, cb: Callback<Array<job.Job>>) {
+	let basename = utils.getBasename(type, content);
+	ffprobe.getSubtitleStreamsToKeep(path, (streams) => {
+		let jobs = new Array<job.Job>();
+		for (let stream of streams) {
 			jobs.push({
 				getArtifactPath() {
 					return getArtifactPath(path, stream, basename);
 				},
 				produceArtifact(cb) {
-					extractSingleStream(path, stream, basename, cb)
+					extractSingleStream(path, stream, basename, cb);
 				}
 			});
 		}
@@ -562,6 +544,5 @@ function generateJobs(path: string, basename: string, cb: Callback<Array<Job>>) 
 }
 
 export {
-	extract,
 	generateJobs
 };
