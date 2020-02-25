@@ -9,6 +9,7 @@ import * as stream_types from "./stream_types";
 import * as ffprobe from "./ffprobe";
 import * as job from "./job";
 import * as utils from "./utils";
+import * as tesseract from "./tesseract";
 import { MediaType, MediaContent } from './discdb';
 
 interface Callback<A> {
@@ -422,8 +423,8 @@ let convert_to_bmp = (jobid: string, ed: string, codec: string, cb: { (): void }
 
 type Subtitle = { pts_start: number, pts_end: number, text: string, lines: string[] };
 
-let ocr = (jobid: string, lang: string, cb: { (st: Subtitle[]): void }): void => {
-	process.stdout.write(`Recognizing "${lang}" subtitles...\n`);
+let ocr = (jobid: string, language: string, cb: { (st: Subtitle[]): void }): void => {
+	process.stdout.write(`Recognizing "${language}" subtitles...\n`);
 	let node = libpath.join('./private/temp/', jobid, 'bmp');
 	let subtitles: Array<Subtitle> = [];
 	try {
@@ -435,9 +436,12 @@ let ocr = (jobid: string, lang: string, cb: { (st: Subtitle[]): void }): void =>
 			libfs.closeSync(fd);
 			let w = head.readUInt32LE(0);
 			let h = head.readUInt32LE(4);
-			let text = ''
+			let text = '';
 			if (w > 0 && h > 0) {
-				text = libcp.execSync(`tesseract ${input} stdout --psm 6 --oem 1 -l ${lang}`).toString('utf8');
+				let v = tesseract.recognizeText(input, language);
+				if (v != null) {
+					text = v;
+				}
 			}
 			let lines = text.split('\r\n').reduce((lines, line) => {
 				lines.push(...line.split('\n'));

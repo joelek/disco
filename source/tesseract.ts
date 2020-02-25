@@ -21,6 +21,22 @@ function getSupportedLanguages(cb: Callback<Array<string>>): void {
 	});
 }
 
+function recognizeText(path: string, language: string): string | null {
+	let options = [
+		"tesseract",
+		path,
+		"stdout",
+		"--psm", "6",
+		"--oem", "1",
+		"-l", language
+	];
+	try {
+		return libcp.execSync(options.join(" ")).toString("utf8");
+	} catch (error) {}
+	return null;
+}
+
 export {
-	getSupportedLanguages
+	getSupportedLanguages,
+	recognizeText
 };
