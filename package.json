@@ -1,6 +1,21 @@
 {
+	"bin": {},
 	"dependencies": {
+		"@joelek/ts-autoguard": "github:joelek/ts-autoguard",
 		"@types/node": "^13",
 		"typescript": "^3"
-	}
+	},
+	"license": "MIT",
+	"name": "@joelek/disco",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/joelek/disco.git"
+	},
+	"scripts": {
+		"build": "rm -rf ./build/ && npm run codegen && npx tsc --build",
+		"clean": "rm -rf ./build/ ./node_modules/",
+		"codegen": "npx autoguard --standalone=false",
+		"install": "npm run build"
+	},
+	"version": "1.0.0"
 }
