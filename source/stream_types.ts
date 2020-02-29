@@ -18,7 +18,7 @@ export type Stream = {
 export const Stream = {
 	as(subject: any, path: string = ""): Stream {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				(autoguard.guards.Number.as)(subject.index, path + "." + "index");
 				(autoguard.guards.String.as)(subject.codec_type, path + "." + "codec_type");
 				(autoguard.guards.String.as)(subject.codec_name, path + "." + "codec_name");
@@ -28,8 +28,8 @@ export const Stream = {
 				(autoguard.guards.String.as)(subject.extradata, path + "." + "extradata");
 				((subject, path) => {
 					((subject, path) => {
-						if ((subject != null) && (subject.constructor === Object)) {
-							for (let key of Object.keys(subject)) {
+						if ((subject != null) && (subject.constructor === globalThis.Object)) {
+							for (let key of globalThis.Object.keys(subject)) {
 								(autoguard.guards.String.as)(subject[key], path + "[\"" + key + "\"]");
 							}
 							return subject;
@@ -37,7 +37,7 @@ export const Stream = {
 						throw "Type guard \"Record\" failed at \"" + path + "\"!";
 					})(subject, path);
 					((subject, path) => {
-						if ((subject != null) && (subject.constructor === Object)) {
+						if ((subject != null) && (subject.constructor === globalThis.Object)) {
 							(autoguard.guards.String.as)(subject.language, path + "." + "language");
 							return subject;
 						}
@@ -78,7 +78,7 @@ export const VideoStream = {
 		return ((subject, path) => {
 			(Stream.as)(subject, path);
 			((subject, path) => {
-				if ((subject != null) && (subject.constructor === Object)) {
+				if ((subject != null) && (subject.constructor === globalThis.Object)) {
 					((subject, path) => {
 						if (subject === "video") {
 							return subject;
@@ -154,7 +154,7 @@ export const AudioStream = {
 		return ((subject, path) => {
 			(Stream.as)(subject, path);
 			((subject, path) => {
-				if ((subject != null) && (subject.constructor === Object)) {
+				if ((subject != null) && (subject.constructor === globalThis.Object)) {
 					((subject, path) => {
 						if (subject === "audio") {
 							return subject;
@@ -189,7 +189,7 @@ export const SubtitleStream = {
 		return ((subject, path) => {
 			(Stream.as)(subject, path);
 			((subject, path) => {
-				if ((subject != null) && (subject.constructor === Object)) {
+				if ((subject != null) && (subject.constructor === globalThis.Object)) {
 					((subject, path) => {
 						if (subject === "subtitle") {
 							return subject;
@@ -247,9 +247,9 @@ export type FFProbe = {
 export const FFProbe = {
 	as(subject: any, path: string = ""): FFProbe {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				((subject, path) => {
-					if ((subject != null) && (subject.constructor === Array)) {
+					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
 							(StreamType.as)(subject[i], path + "[" + i + "]");
 						}

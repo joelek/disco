@@ -65,7 +65,7 @@ export type PictureSettings = {
 export const PictureSettings = {
 	as(subject: any, path: string = ""): PictureSettings {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				(autoguard.guards.Number.as)(subject.dimx, path + "." + "dimx");
 				(autoguard.guards.Number.as)(subject.dimy, path + "." + "dimy");
 				(autoguard.guards.Number.as)(subject.parx, path + "." + "parx");
@@ -140,7 +140,7 @@ export type RectSettings = {
 export const RectSettings = {
 	as(subject: any, path: string = ""): RectSettings {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				(autoguard.guards.Number.as)(subject.w, path + "." + "w");
 				(autoguard.guards.Number.as)(subject.h, path + "." + "h");
 				(autoguard.guards.Number.as)(subject.x, path + "." + "x");
@@ -172,7 +172,7 @@ export type Settings = {
 export const Settings = {
 	as(subject: any, path: string = ""): Settings {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				(PictureSettings.as)(subject.picture, path + "." + "picture");
 				(RectSettings.as)(subject.rect, path + "." + "rect");
 				(FieldOrder.as)(subject.imode, path + "." + "imode");
@@ -205,8 +205,8 @@ export type SettingsDatabase = { [key: string]: Settings };
 export const SettingsDatabase = {
 	as(subject: any, path: string = ""): SettingsDatabase {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
-				for (let key of Object.keys(subject)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
+				for (let key of globalThis.Object.keys(subject)) {
 					(Settings.as)(subject[key], path + "[\"" + key + "\"]");
 				}
 				return subject;

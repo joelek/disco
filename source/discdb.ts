@@ -59,7 +59,7 @@ export type MediaContent = {
 export const MediaContent = {
 	as(subject: any, path: string = ""): MediaContent {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				(MediaContentType.as)(subject.type, path + "." + "type");
 				(autoguard.guards.String.as)(subject.selector, path + "." + "selector");
 				((subject, path) => {
@@ -190,10 +190,10 @@ export type Media = {
 export const Media = {
 	as(subject: any, path: string = ""): Media {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				(MediaType.as)(subject.type, path + "." + "type");
 				((subject, path) => {
-					if ((subject != null) && (subject.constructor === Array)) {
+					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
 							(MediaContent.as)(subject[i], path + "[" + i + "]");
 						}
@@ -221,8 +221,8 @@ export type MediaDatabase = { [key: string]: Media };
 export const MediaDatabase = {
 	as(subject: any, path: string = ""): MediaDatabase {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === Object)) {
-				for (let key of Object.keys(subject)) {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
+				for (let key of globalThis.Object.keys(subject)) {
 					(Media.as)(subject[key], path + "[\"" + key + "\"]");
 				}
 				return subject;
