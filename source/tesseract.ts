@@ -21,7 +21,7 @@ function getSupportedLanguages(cb: Callback<Array<string>>): void {
 	});
 }
 
-function recognizeText(path: string, language: string): string | null {
+function recognizeText(path: string, language: string): Array<string> {
 	let options = [
 		"tesseract",
 		path,
@@ -30,10 +30,34 @@ function recognizeText(path: string, language: string): string | null {
 		"--oem", "1",
 		"-l", language
 	];
+	let lines = new Array<string>();
 	try {
-		return libcp.execSync(options.join(" ")).toString("utf8");
+		let string = libcp.execSync(options.join(" ")).toString("utf8");
+		lines = string.split(/\r\n|\n\r|\n|\r/);
 	} catch (error) {}
-	return null;
+	lines = lines.map((line) => {
+			return line.trim();
+		})
+		.filter((line) => {
+			return line.length > 0;
+		})
+		.map((line) => {
+			line = line.replace(/\|/g, "I");
+			line = line.replace(/\~/g, "-");
+			line = line.replace(/\=/g, "-");
+			line = line.replace(/\«/g, "-");
+			line = line.replace(/\»/g, "-");
+			line = line.replace(/\{/g, "(");
+			line = line.replace(/\}/g, ")");
+			line = line.replace(/\-+/g, "-");
+			line = line.replace(/\'+/g, "'");
+			line = line.replace(/\"+/g, "\"");
+			line = line.replace(/(.+)\[/g, "$1I");
+			line = line.replace(/\](.+)/g, "I$1");
+			line = line.replace(/^-l /g, "-I ");
+			return line;
+		});
+	return lines;
 }
 
 export {

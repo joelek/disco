@@ -421,7 +421,7 @@ let convert_to_bmp = (jobid: string, ed: string, codec: string, cb: { (): void }
 	cb();
 };
 
-type Subtitle = { pts_start: number, pts_end: number, text: string, lines: string[] };
+type Subtitle = { pts_start: number, pts_end: number, lines: string[] };
 
 let ocr = (jobid: string, language: string, cb: { (st: Subtitle[]): void }): void => {
 	process.stdout.write(`Recognizing "${language}" subtitles...\n`);
@@ -430,28 +430,12 @@ let ocr = (jobid: string, language: string, cb: { (st: Subtitle[]): void }): voi
 	try {
 		libfs.readdirSync(node).map((subnode) => {
 			let input = libpath.join(node, subnode);
-			let fd = libfs.openSync(input, 'r');
-			let head = Buffer.alloc(8);
-			libfs.readSync(fd, head, 0, 8, 18);
-			libfs.closeSync(fd);
-			let w = head.readUInt32LE(0);
-			let h = head.readUInt32LE(4);
-			let text = '';
-			if (w > 0 && h > 0) {
-				let v = tesseract.recognizeText(input, language);
-				if (v != null) {
-					text = v;
-				}
-			}
-			let lines = text.split('\r\n').reduce((lines, line) => {
-				lines.push(...line.split('\n'));
-				return lines;
-			}, new Array<string>()).filter((line) => line.length > 0);
+			let lines = tesseract.recognizeText(input, language);
 			let name = subnode.split('.').slice(0, -1).join('.');
 			let pts_start = parseInt(name.split('_')[0], 10);
 			let pts_end = parseInt(name.split('_')[1], 10);
 			//process.stdout.write(pts_start + ' to ' + pts_end + '\r\n' + text);
-			subtitles.push({ pts_start, pts_end, text, lines });
+			subtitles.push({ pts_start, pts_end, lines });
 		});
 	} catch (error) {}
 	subtitles = subtitles.sort((a, b) => {
@@ -460,7 +444,7 @@ let ocr = (jobid: string, language: string, cb: { (st: Subtitle[]): void }): voi
 	if (subtitles.length > 0) {
 		for (let i = 0; i < subtitles.length - 1; i++) {
 			if (subtitles[i].pts_start === subtitles[i].pts_end) {
-			subtitles[i].pts_end = subtitles[i+1].pts_start;
+				subtitles[i].pts_end = subtitles[i+1].pts_start;
 			}
 		}
 		if (subtitles[subtitles.length - 1].pts_start === subtitles[subtitles.length - 1].pts_end) {
