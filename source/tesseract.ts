@@ -28,7 +28,8 @@ function recognizeText(path: string, language: string): Array<string> {
 		"stdout",
 		"--psm", "6",
 		"--oem", "1",
-		"-l", language
+		"-l", language,
+		"quiet"
 	];
 	let lines = new Array<string>();
 	try {
