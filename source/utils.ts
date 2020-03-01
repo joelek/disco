@@ -1,18 +1,14 @@
 import * as discdb from "./discdb";
 
 function pathify(string: string): string {
-	return encodeURIComponent(string
-		.split('/').join('_')
-		.split(' ').join('_')
-		.split('-').join('_')
-		.split('ñ').join('n')
-		.split(':').join('')
-		.split('\'').join('')
-		.split(',').join('')
-		.split('.').join('')
-		.split('?').join('')
-		.split('&').join('and')
-		.toLowerCase());
+	return string
+		.toLowerCase()
+		.normalize("NFKD")
+		.replace(/[%]/g, "percent")
+		.replace(/[&]/g, "and")
+		.replace(/[|/\\-]/g, " ")
+		.replace(/[^a-z0-9 ]/g, "")
+		.replace(/[ ]+/g, "_");
 }
 
 function foreach<A>(array: Array<A>, next: { (value: A, cb: { (): void }): void }, done: { (): void }): void {
