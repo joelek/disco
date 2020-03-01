@@ -109,7 +109,7 @@ let read_file = (filename: string): Image => {
 		code_points[(i << 1) + 0] = ((subtitle_packet[i] & 0xF0) >> 4);
 		code_points[(i << 1) + 1] = ((subtitle_packet[i] & 0x0F) >> 0);
 	}
-	let image = new Buffer(w * h);
+	let image = Buffer.alloc(w * h);
 	let decode = (i: number, y: number, ymax: number): void => {
 		let x = 0;
 		while (y < ymax) {
