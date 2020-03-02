@@ -35,22 +35,29 @@ function getAudioStreamsToKeep(path: string, cb: Callback<Array<stream_types.Aud
 	getAudioStreams(path, (audio_streams) => {
 		let streams = target_languages.map((target_language) => {
 				return audio_streams.filter((stream) => {
-					return stream.tags.language === target_language;
-				}).map((stream) => {
-					let weight = stream.channels * Number.parseInt(stream.sample_rate);
-					return {
-						stream,
-						weight
-					};
+					if (stream.tags.language !== target_language) {
+						return false;
+					}
+					return true;
 				}).sort((one, two) => {
-					return two.weight - one.weight;
+					if (one.channels > two.channels) {
+						return -1;
+					}
+					if (one.channels < two.channels) {
+						return 1;
+					}
+					if (one.sample_rate > two.sample_rate) {
+						return -1;
+					}
+					if (one.sample_rate < two.sample_rate) {
+						return 1;
+					}
+					return 0;
 				});
+			}).filter((items) => {
+				return items.length >= 1;
 			}).map((items) => {
 				return items[0];
-			}).filter((item) => {
-				return item != null;
-			}).map((item) => {
-				return item.stream;
 			});
 		return cb(streams);
 	});
@@ -64,18 +71,39 @@ function getSubtitleStreams(path: string, cb: Callback<Array<stream_types.Subtit
 }
 
 function getSubtitleStreamsToKeep(path: string, cb: Callback<Array<stream_types.SubtitleStream>>): void {
+	let target_languages = ["eng", "swe"];
 	tesseract.getSupportedLanguages((supported_languages) => {
 		getSubtitleStreams(path, (subtitle_streams) => {
-			let streams = supported_languages.map((language) => {
+			let streams = target_languages.map((target_language) => {
 					return subtitle_streams.filter((stream) => {
-						return stream.tags.language === language;
-					}).filter((stream) => {
-						return Number.parseInt(stream.tags["BPS-eng"] || "0") > 100;
+						if (stream.tags.language !== target_language) {
+							return false;
+						}
+						if (stream.codec_name === "dvd_subtitle" || stream.codec_name === "hdmv_pgs_subtitle") {
+							if (supported_languages.indexOf(target_language) === -1) {
+								return false;
+							}
+						}
+						return true;
+					}).sort((one, two) => {
+						if (one.codec_name === "subrip") {
+							if (two.codec_name === "subrip") {
+								return 0;
+							} else {
+								return -1;
+							}
+						} else {
+							if (two.codec_name === "subrip") {
+								return 1;
+							} else {
+								return 0;
+							}
+						}
 					});
+				}).filter((items) => {
+					return items.length >= 1;
 				}).map((items) => {
 					return items[0];
-				}).filter((item) => {
-					return item != null;
 				});
 			return cb(streams);
 		});
