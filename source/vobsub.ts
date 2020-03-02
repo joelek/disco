@@ -398,6 +398,20 @@ let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): voi
 	});
 };
 
+function extractSubrip(filename: string, subn: number, cb: Callback<string>): void {
+	libcp.exec([
+		'ffmpeg',
+		'-i', filename,
+		'-vn',
+		'-an',
+		'-map', `0:${subn}`,
+		'-c:s', 'webvtt',
+		'pipe:'
+	].join(" "), (error, stdout, stderr) => {
+		cb(stdout);
+	});
+}
+
 let convert_to_bmp = (jobid: string, ed: string, codec: string, cb: { (): void }): void => {
 	let node = libpath.join('./private/temp/', jobid, 'raw');
 	libfs.readdirSync(node).map((subnode) => {
@@ -493,6 +507,16 @@ function getArtifactPath(path: string, stream: stream_types.SubtitleStream, base
 }
 
 function extractSingleStream(path: string, stream: stream_types.SubtitleStream, basename: string, cb: Callback<string>): void {
+	if (stream.codec_name === "subrip") {
+		extractSubrip(path, stream.index, (webvtt) => {
+			let outfile = getArtifactPath(path, stream, basename);
+			let fd = libfs.openSync(outfile, 'w');
+			libfs.writeSync(fd, webvtt);
+			libfs.closeSync(fd);
+			cb(outfile);
+		});
+		return;
+	}
 	extract_vobsub(path, stream.index, (jobid) => {
 		convert_to_bmp(jobid, stream.extradata, stream.codec_name, () => {
 			ocr(jobid, stream.tags.language, (subtitles) => {
