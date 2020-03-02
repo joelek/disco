@@ -406,6 +406,7 @@ function extractSubrip(filename: string, subn: number, cb: Callback<string>): vo
 		'-an',
 		'-map', `0:${subn}`,
 		'-c:s', 'webvtt',
+		"-f", "webvtt",
 		'pipe:'
 	].join(" "), (error, stdout, stderr) => {
 		cb(stdout);
