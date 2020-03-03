@@ -307,20 +307,20 @@ let encode_hardware = (
 	let is_dvd_ntsc = picture.dimx === 720 && picture.dimy === 480 && picture.fpsx === 30000 && picture.fpsy === 1001;
 	let is_fhd = picture.dimx === 1920 && picture.dimy === 1080;
 	if (is_dvd_pal) {
-		picture.color_space = 'bt470bg';
-		picture.color_transfer = 'bt470bg';
-		picture.color_primaries = 'bt470bg';
-		picture.color_range = 'tv';
+		picture.color_space = picture.color_space || 'bt470bg';
+		picture.color_transfer = picture.color_transfer || 'smpte170m';
+		picture.color_primaries = picture.color_primaries || 'bt470bg';
+		picture.color_range = picture.color_range || 'tv';
 	} else if (is_dvd_ntsc) {
-		picture.color_space = 'smpte170m';
-		picture.color_transfer = 'smpte170m';
-		picture.color_primaries = 'smpte170m';
-		picture.color_range = 'tv';
+		picture.color_space = picture.color_space || 'smpte170m';
+		picture.color_transfer = picture.color_transfer || 'smpte170m';
+		picture.color_primaries = picture.color_primaries || 'smpte170m';
+		picture.color_range = picture.color_range || 'tv';
 	} else {
-		picture.color_space = 'bt709';
-		picture.color_transfer = 'bt709';
-		picture.color_primaries = 'bt709';
-		picture.color_range = 'tv';
+		picture.color_space = picture.color_space || 'bt709';
+		picture.color_transfer = picture.color_transfer || 'bt709';
+		picture.color_primaries = picture.color_primaries || 'bt709';
+		picture.color_range = picture.color_range || 'tv';
 	}
 	let md = new Array<string>();
 	if (opt_content != null) {
@@ -356,16 +356,9 @@ let encode_hardware = (
 	let farx = rect.darx;
 	let fary = rect.dary;
 	let frame_size = get_frame_size(is_fhd ? 15 : 8, farx, fary);
-	if (picture.color_transfer === 'bt470bg') {
-		picture.color_transfer = 'smpte170m';
-	}
 	let frameselect = `select='between(mod(n\\,${sample_cadance})\\,0\\,${sample_keep - 1})',`;
 	let cp = libcp.spawn('ffmpeg', [
 		...extraopts,
-		'-color_range', picture.color_range,
-		'-color_primaries', picture.color_primaries,
-		'-color_trc', picture.color_transfer,
-		'-colorspace', picture.color_space,
 		'-i', filename,
 		'-vf', `format=yuv420p16le,${interlace}${frameselect}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${frame_size.w}:${frame_size.h}`,
 		'-an',
@@ -377,7 +370,7 @@ let encode_hardware = (
 	let mby = ((frame_size.h + 16 - 1) / 16) | 0;
 	let ref = (32768 / mbx / mby) | 0;
 	ref = (ref > 16) ? 16 : ref;
-	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.6:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0`;
+	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.6:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0:colorprim=${picture.color_primaries}:transfer=${picture.color_transfer}:colormatrix=${picture.color_space}:range=${picture.color_range}`;
 	let strength = Math.max(0.0, Math.min((1.0 - compressibility) * 0.1, 1.0));
 	let cpx = libcp.spawn('denice', ['yuv420p16le', `${frame_size.w}`, `${frame_size.h}`, `${strength}`], { cwd: '../denice/build/' });
 	let cp2 = libcp.spawn('ffmpeg', [
@@ -385,10 +378,6 @@ let encode_hardware = (
 		'-pix_fmt', 'yuv420p16le',
 		'-s', `${frame_size.w}:${frame_size.h}`,
 		'-r', `${picture.fpsx}/${picture.fpsy}`,
-		'-color_range', picture.color_range,
-		'-color_primaries', picture.color_primaries,
-		'-color_trc', picture.color_transfer,
-		'-colorspace', picture.color_space,
 		'-i', 'pipe:',
 		...extraopts,
 		'-i', filename,
@@ -412,10 +401,6 @@ let encode_hardware = (
 		'-ac', '2',
 		'-c:a', 'aac',
 		'-q:a', '2',
-		'-color_range', picture.color_range,
-		'-color_primaries', picture.color_primaries,
-		'-color_trc', picture.color_transfer,
-		'-colorspace', picture.color_space,
 		...md,
 		...overrides,
 		outfile,
