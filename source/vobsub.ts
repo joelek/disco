@@ -10,6 +10,7 @@ import * as ffprobe from "./ffprobe";
 import * as job from "./job";
 import * as utils from "./utils";
 import * as tesseract from "./tesseract";
+import * as vtt from "./vtt";
 import { MediaType, MediaContent } from './discdb';
 
 interface Callback<A> {
@@ -510,6 +511,11 @@ function getArtifactPath(path: string, stream: stream_types.SubtitleStream, base
 function extractSingleStream(path: string, stream: stream_types.SubtitleStream, basename: string, cb: Callback<string>): void {
 	if (stream.codec_name === "subrip") {
 		extractSubrip(path, stream.index, (webvtt) => {
+			let track = vtt.decode(webvtt);
+			track.head.metadata = JSON.stringify({
+				language: stream.tags.language
+			});
+			webvtt = vtt.encode(track);
 			let outfile = getArtifactPath(path, stream, basename);
 			let fd = libfs.openSync(outfile, 'w');
 			libfs.writeSync(fd, webvtt);
