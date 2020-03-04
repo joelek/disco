@@ -370,7 +370,7 @@ let encode_hardware = (
 	let mby = ((frame_size.h + 16 - 1) / 16) | 0;
 	let ref = (32768 / mbx / mby) | 0;
 	ref = (ref > 16) ? 16 : ref;
-	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.6:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0:colorprim=${picture.color_primaries}:transfer=${picture.color_transfer}:colormatrix=${picture.color_space}:range=${picture.color_range}`;
+	let x264 = `me=umh:subme=10:ref=${ref}:me-range=24:chroma-me=1:bframes=8:crf=20:nr=0:psy=1:psy-rd=1.0,1.0:trellis=2:dct-decimate=0:qcomp=0.6:deadzone-intra=0:deadzone-inter=0:fast-pskip=1:aq-mode=1:aq-strength=1.0:colorprim=${picture.color_primaries}:transfer=${picture.color_transfer}:colormatrix=${picture.color_space}`;
 	let strength = Math.max(0.0, Math.min((1.0 - compressibility) * 0.1, 1.0));
 	let cpx = libcp.spawn('denice', ['yuv420p16le', `${frame_size.w}`, `${frame_size.h}`, `${strength}`], { cwd: '../denice/build/' });
 	let cp2 = libcp.spawn('ffmpeg', [
