@@ -43,6 +43,7 @@ export const Track = {
 };
 
 export type Disc = {
+	musicbrainz: string,
 	id: string,
 	artists: string[],
 	title: string,
@@ -55,6 +56,7 @@ export const Disc = {
 	as(subject: any, path: string = ""): Disc {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
+				(autoguard.guards.String.as)(subject.musicbrainz, path + "." + "musicbrainz");
 				(autoguard.guards.String.as)(subject.id, path + "." + "id");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {

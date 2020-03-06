@@ -48,6 +48,9 @@ function createTranscodingJob(source_path: string): Job {
 					function perform(): Promise<void> {
 						return new Promise((resolve, reject) => {
 							libfs.mkdirSync(folders.join("/"), { recursive: true });
+							let comment = JSON.stringify({
+								musicbrainz: disc.musicbrainz
+							});
 							let options = [
 								"-f", "s16le",
 								"-ar", "44100",
@@ -62,10 +65,11 @@ function createTranscodingJob(source_path: string): Job {
 								"-metadata", `disc=${disc.number}`,
 								"-metadata", `album_artist=${disc.artists[0]}`,
 								"-metadata", `album=${disc.title}`,
-								"-metadata", `year=${disc.year}`,
+								"-metadata", `date=${disc.year}`,
 								"-metadata", `track=${track.number}`,
 								"-metadata", `artist=${track.artists[0]}`,
 								"-metadata", `title=${track.title}`,
+								"-metadata", `comment=${comment}`,
 								target_path, "-y"
 							];
 							let cp = libcp.spawn("ffmpeg", options);
