@@ -18,10 +18,10 @@
 		r_frame_rate: string,
 		sample_aspect_ratio: string,
 		display_aspect_ratio: string,
-		color_range: (string | undefined),
-		color_space: (string | undefined),
-		color_transfer: (string | undefined),
-		color_primaries: (string | undefined)
+		color_range?: string,
+		color_space?: string,
+		color_transfer?: string,
+		color_primaries?: string
 	}),
 	AudioStream: (@Stream & {
 		codec_type: "audio",

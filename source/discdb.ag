@@ -8,8 +8,8 @@
 		show: (string | null),
 		season: (number | null),
 		episode: (number | null),
-		imdb: (string | undefined),
-		imdb_show: (string | undefined)
+		imdb?: string,
+		imdb_show?: string
 	},
 	MediaType: ("dvd" | "bluray" | "neither"),
 	Media: {

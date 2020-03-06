@@ -4,6 +4,7 @@ import * as vobsub from './vobsub';
 import * as ffmpeg from './ffmpeg';
 import { MediaContent, MediaDatabase, MediaType } from './discdb';
 import * as utils from './utils';
+import * as audio_jobs from './audio_jobs';
 
 let move_files = (filenames: string[], basename: string): void => {
 	basename = libpath.join(basename);
@@ -28,13 +29,13 @@ let generate_queue = (files: Array<string>, node: string): Array<string> => {
 		}).map((node) => {
 			return generate_queue(files, node);
 		});
-	} else if (stat.isFile() && /[.]mkv$/.test(node)) {
+	} else if (stat.isFile()) {
 		files.push(node);
 	}
 	return files;
 };
 
-let queue = generate_queue([], './private/queue/');
+let queue = generate_queue([], './private/archive/audio/');
 
 let db = MediaDatabase.as(JSON.parse(libfs.readFileSync("./private/db/discdb.json", "utf8")));
 
@@ -86,7 +87,13 @@ let pick_from_queue = (): void => {
 			}
 			return;
 		}
-		pick_from_queue();
+		audio_jobs.createJobList(input)
+			.then(async (jobs) => {
+				for (let job of jobs) {
+					await job.perform();
+				}
+				pick_from_queue();
+			});
 	} else {
 		process.exit(0);
 	}

@@ -1,0 +1,18 @@
+{
+	Track: {
+		artists: string[],
+		title: string,
+		duration_ms: number,
+		number: number,
+		index: number
+	},
+	Disc: {
+		id: string,
+		artists: string[],
+		title: string,
+		year: number,
+		number: number,
+		tracks: @Track[]
+	},
+	Database: { @Disc }
+}

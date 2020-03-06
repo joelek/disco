@@ -166,7 +166,7 @@ export type Settings = {
 	picture: PictureSettings,
 	rect: RectSettings,
 	imode: FieldOrder,
-	compressibility: (number | undefined)
+	compressibility: (undefined | number)
 };
 
 export const Settings = {
@@ -178,10 +178,10 @@ export const Settings = {
 				(FieldOrder.as)(subject.imode, path + "." + "imode");
 				((subject, path) => {
 					try {
-						return (autoguard.guards.Number.as)(subject, path);
+						return (autoguard.guards.Undefined.as)(subject, path);
 					} catch (error) {}
 					try {
-						return (autoguard.guards.Undefined.as)(subject, path);
+						return (autoguard.guards.Number.as)(subject, path);
 					} catch (error) {}
 					throw "Type guard \"Union\" failed at \"" + path + "\"!";
 				})(subject.compressibility, path + "." + "compressibility");

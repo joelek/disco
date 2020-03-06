@@ -67,10 +67,10 @@ export type VideoStream = (Stream & {
 	r_frame_rate: string,
 	sample_aspect_ratio: string,
 	display_aspect_ratio: string,
-	color_range: (string | undefined),
-	color_space: (string | undefined),
-	color_transfer: (string | undefined),
-	color_primaries: (string | undefined)
+	color_range: (undefined | string),
+	color_space: (undefined | string),
+	color_transfer: (undefined | string),
+	color_primaries: (undefined | string)
 });
 
 export const VideoStream = {
@@ -92,37 +92,37 @@ export const VideoStream = {
 					(autoguard.guards.String.as)(subject.display_aspect_ratio, path + "." + "display_aspect_ratio");
 					((subject, path) => {
 						try {
-							return (autoguard.guards.String.as)(subject, path);
+							return (autoguard.guards.Undefined.as)(subject, path);
 						} catch (error) {}
 						try {
-							return (autoguard.guards.Undefined.as)(subject, path);
+							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
 					})(subject.color_range, path + "." + "color_range");
 					((subject, path) => {
 						try {
-							return (autoguard.guards.String.as)(subject, path);
+							return (autoguard.guards.Undefined.as)(subject, path);
 						} catch (error) {}
 						try {
-							return (autoguard.guards.Undefined.as)(subject, path);
+							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
 					})(subject.color_space, path + "." + "color_space");
 					((subject, path) => {
 						try {
-							return (autoguard.guards.String.as)(subject, path);
+							return (autoguard.guards.Undefined.as)(subject, path);
 						} catch (error) {}
 						try {
-							return (autoguard.guards.Undefined.as)(subject, path);
+							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
 					})(subject.color_transfer, path + "." + "color_transfer");
 					((subject, path) => {
 						try {
-							return (autoguard.guards.String.as)(subject, path);
+							return (autoguard.guards.Undefined.as)(subject, path);
 						} catch (error) {}
 						try {
-							return (autoguard.guards.Undefined.as)(subject, path);
+							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
 					})(subject.color_primaries, path + "." + "color_primaries");

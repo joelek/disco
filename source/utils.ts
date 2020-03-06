@@ -1,4 +1,5 @@
 import * as discdb from "./discdb";
+import * as libfs from "fs";
 
 function pathify(string: string): string {
 	return string
@@ -35,8 +36,13 @@ function getBasename(type: discdb.MediaType, content: discdb.MediaContent): stri
 	throw "";
 }
 
+function loadDatabase<A>(path: string, guard: { (subject: any): A }): A {
+	return guard(JSON.parse(libfs.readFileSync(path, "utf8")));
+}
+
 export {
 	pathify,
 	foreach,
-	getBasename
+	getBasename,
+	loadDatabase
 };

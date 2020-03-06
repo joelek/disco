@@ -3,7 +3,6 @@ import * as libcrypto from 'crypto';
 import * as libhttp from 'http';
 import * as libhttps from 'https';
 import * as libfs from 'fs';
-import * as utils from './utils';
 
 interface Callback<T> {
 	(value: T): void;
@@ -63,7 +62,7 @@ function get_disc_from_db(disc_id: string): DiscMetadata | null {
 
 function get_raw_toc(cb: Callback<Buffer>): void {
 	let chunks = new Array<Buffer>();
-	let cp = libcp.spawn(`disc_reader`, [ `toc` ]);
+	let cp = libcp.spawn(`main`, [ `toc` ], { cwd: "../disc_reader/build/targets/" });
 	cp.stderr.pipe(process.stderr);
 	cp.stdout.setEncoding(`binary`);
 	cp.stdout.on(`data`, (chunk) => {
@@ -344,7 +343,7 @@ function get_disc(cb: Callback<DiscMetadata | null>): void {
 
 function backup_track(track_number: number, cb: Callback<Buffer>): void {
 	let chunks = new Array<Buffer>();
-	let cp = libcp.spawn(`disc_reader`, [ `ext`, `${track_number}` ]);
+	let cp = libcp.spawn(`main`, [ `ext`, `${track_number}` ], { cwd: "../disc_reader/build/targets/" });
 	cp.stderr.pipe(process.stderr);
 	cp.stdout.setEncoding(`binary`);
 	cp.stdout.on(`data`, (chunk) => {
@@ -357,16 +356,15 @@ function backup_track(track_number: number, cb: Callback<Buffer>): void {
 	return;
 }
 
-function get_basename(disc_metadata: DiscMetadata, index: number): string {
-	let track_metadata = disc_metadata.tracks[index];
-	let number = ('00' + track_metadata.number).slice(-2);
-	let artist = utils.pathify(track_metadata.artists[0]);
-	let title = utils.pathify(track_metadata.title);
-	let suffix = "cd";
-	return `${number}-${artist}-${title}-${suffix}`;
-}
-
 function backup_disc(disc: DiscMetadata, cb: Callback<void>): void {
+	let folders = [
+		".",
+		"private",
+		"archive",
+		"audio",
+		disc.id
+	];
+	libfs.mkdirSync(folders.join("/"), { recursive: true });
 	let iterator = (index: number): void => {
 		if (index < disc.tracks.length) {
 			return backup_track(disc.tracks[index].number, (data) => {
@@ -374,8 +372,8 @@ function backup_disc(disc: DiscMetadata, cb: Callback<void>): void {
 				hash.update(data);
 				let tid = hash.digest('hex');
 				log(`Track id: ${tid}`);
-				log(`Basename: ${get_basename(disc, index)}`);
-				return libfs.writeFile(`./private/temp/${disc.id}.${('00' + disc.tracks[index].number).slice(-2)}.raw`, data, (error) => {
+				let filename = `${disc.id}.${('00' + index).slice(-2)}.cdda`;
+				return libfs.writeFile(folders.join("/") + "/" + filename, data, (error) => {
 					return iterator(index + 1);
 				});
 			});

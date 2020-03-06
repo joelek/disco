@@ -52,8 +52,8 @@ export type MediaContent = {
 	show: (string | null),
 	season: (number | null),
 	episode: (number | null),
-	imdb: (string | undefined),
-	imdb_show: (string | undefined)
+	imdb: (undefined | string),
+	imdb_show: (undefined | string)
 };
 
 export const MediaContent = {
@@ -109,19 +109,19 @@ export const MediaContent = {
 				})(subject.episode, path + "." + "episode");
 				((subject, path) => {
 					try {
-						return (autoguard.guards.String.as)(subject, path);
+						return (autoguard.guards.Undefined.as)(subject, path);
 					} catch (error) {}
 					try {
-						return (autoguard.guards.Undefined.as)(subject, path);
+						return (autoguard.guards.String.as)(subject, path);
 					} catch (error) {}
 					throw "Type guard \"Union\" failed at \"" + path + "\"!";
 				})(subject.imdb, path + "." + "imdb");
 				((subject, path) => {
 					try {
-						return (autoguard.guards.String.as)(subject, path);
+						return (autoguard.guards.Undefined.as)(subject, path);
 					} catch (error) {}
 					try {
-						return (autoguard.guards.Undefined.as)(subject, path);
+						return (autoguard.guards.String.as)(subject, path);
 					} catch (error) {}
 					throw "Type guard \"Union\" failed at \"" + path + "\"!";
 				})(subject.imdb_show, path + "." + "imdb_show");
