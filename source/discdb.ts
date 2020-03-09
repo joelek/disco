@@ -2,41 +2,25 @@
 
 import * as autoguard from "@joelek/ts-autoguard";
 
-export type MediaContentType = ("episode" | "movie" | "neither");
+export type Content = {
+	type: string,
+	selector: string
+};
 
-export const MediaContentType = {
-	as(subject: any, path: string = ""): MediaContentType {
+export const Content = {
+	as(subject: any, path: string = ""): Content {
 		return ((subject, path) => {
-			try {
-				return ((subject, path) => {
-					if (subject === "episode") {
-						return subject;
-					}
-					throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-				})(subject, path);
-			} catch (error) {}
-			try {
-				return ((subject, path) => {
-					if (subject === "movie") {
-						return subject;
-					}
-					throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-				})(subject, path);
-			} catch (error) {}
-			try {
-				return ((subject, path) => {
-					if (subject === "neither") {
-						return subject;
-					}
-					throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-				})(subject, path);
-			} catch (error) {}
-			throw "Type guard \"Union\" failed at \"" + path + "\"!";
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
+				(autoguard.guards.String.as)(subject.type, path + "." + "type");
+				(autoguard.guards.String.as)(subject.selector, path + "." + "selector");
+				return subject;
+			}
+			throw "Type guard \"Object\" failed at \"" + path + "\"!";
 		})(subject, path);
 	},
-	is(subject: any): subject is MediaContentType {
+	is(subject: any): subject is Content {
 		try {
-			MediaContentType.as(subject);
+			Content.as(subject);
 		} catch (error) {
 			return false;
 		}
@@ -44,90 +28,107 @@ export const MediaContentType = {
 	}
 };
 
-export type MediaContent = {
-	type: MediaContentType,
-	selector: string,
-	title: (string | null),
-	year: (number | null),
-	show: (string | null),
-	season: (number | null),
-	episode: (number | null),
-	imdb: (undefined | string),
-	imdb_show: (undefined | string)
+export type MovieContent = (Content & {
+	type: "movie",
+	title: string,
+	year: number,
+	part: number,
+	imdb: string
+});
+
+export const MovieContent = {
+	as(subject: any, path: string = ""): MovieContent {
+		return ((subject, path) => {
+			(Content.as)(subject, path);
+			((subject, path) => {
+				if ((subject != null) && (subject.constructor === globalThis.Object)) {
+					((subject, path) => {
+						if (subject === "movie") {
+							return subject;
+						}
+						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
+					})(subject.type, path + "." + "type");
+					(autoguard.guards.String.as)(subject.title, path + "." + "title");
+					(autoguard.guards.Number.as)(subject.year, path + "." + "year");
+					(autoguard.guards.Number.as)(subject.part, path + "." + "part");
+					(autoguard.guards.String.as)(subject.imdb, path + "." + "imdb");
+					return subject;
+				}
+				throw "Type guard \"Object\" failed at \"" + path + "\"!";
+			})(subject, path);
+			return subject;
+		})(subject, path);
+	},
+	is(subject: any): subject is MovieContent {
+		try {
+			MovieContent.as(subject);
+		} catch (error) {
+			return false;
+		}
+		return true;
+	}
 };
+
+export type EpisodeContent = (Content & {
+	type: "episode",
+	title: string,
+	show: string,
+	season: number,
+	episode: number,
+	imdb: string,
+	imdb_show: string
+});
+
+export const EpisodeContent = {
+	as(subject: any, path: string = ""): EpisodeContent {
+		return ((subject, path) => {
+			(Content.as)(subject, path);
+			((subject, path) => {
+				if ((subject != null) && (subject.constructor === globalThis.Object)) {
+					((subject, path) => {
+						if (subject === "episode") {
+							return subject;
+						}
+						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
+					})(subject.type, path + "." + "type");
+					(autoguard.guards.String.as)(subject.title, path + "." + "title");
+					(autoguard.guards.String.as)(subject.show, path + "." + "show");
+					(autoguard.guards.Number.as)(subject.season, path + "." + "season");
+					(autoguard.guards.Number.as)(subject.episode, path + "." + "episode");
+					(autoguard.guards.String.as)(subject.imdb, path + "." + "imdb");
+					(autoguard.guards.String.as)(subject.imdb_show, path + "." + "imdb_show");
+					return subject;
+				}
+				throw "Type guard \"Object\" failed at \"" + path + "\"!";
+			})(subject, path);
+			return subject;
+		})(subject, path);
+	},
+	is(subject: any): subject is EpisodeContent {
+		try {
+			EpisodeContent.as(subject);
+		} catch (error) {
+			return false;
+		}
+		return true;
+	}
+};
+
+export type MediaContent = (Content | MovieContent | EpisodeContent);
 
 export const MediaContent = {
 	as(subject: any, path: string = ""): MediaContent {
 		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(MediaContentType.as)(subject.type, path + "." + "type");
-				(autoguard.guards.String.as)(subject.selector, path + "." + "selector");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.title, path + "." + "title");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.Number.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.year, path + "." + "year");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.show, path + "." + "show");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.Number.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.season, path + "." + "season");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.Number.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.episode, path + "." + "episode");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.Undefined.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.imdb, path + "." + "imdb");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.Undefined.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.imdb_show, path + "." + "imdb_show");
-				return subject;
-			}
-			throw "Type guard \"Object\" failed at \"" + path + "\"!";
+			try {
+				return (Content.as)(subject, path);
+			} catch (error) {}
+			try {
+				return (MovieContent.as)(subject, path);
+			} catch (error) {}
+			try {
+				return (EpisodeContent.as)(subject, path);
+			} catch (error) {}
+			throw "Type guard \"Union\" failed at \"" + path + "\"!";
 		})(subject, path);
 	},
 	is(subject: any): subject is MediaContent {
@@ -241,7 +242,9 @@ export const MediaDatabase = {
 };
 
 export type Autoguard = {
-	MediaContentType: MediaContentType,
+	Content: Content,
+	MovieContent: MovieContent,
+	EpisodeContent: EpisodeContent,
 	MediaContent: MediaContent,
 	MediaType: MediaType,
 	Media: Media,
@@ -249,7 +252,9 @@ export type Autoguard = {
 };
 
 export const Autoguard = {
-	MediaContentType: MediaContentType,
+	Content: Content,
+	MovieContent: MovieContent,
+	EpisodeContent: EpisodeContent,
 	MediaContent: MediaContent,
 	MediaType: MediaType,
 	Media: Media,

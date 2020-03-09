@@ -6,11 +6,11 @@ import * as libcrypto from 'crypto';
 import * as delete_tree from './delete_tree';
 import * as imdb from './metadata';
 import { compute_digest } from "./discid";
-import { MediaDatabase, MediaContent, MediaContentType, MediaType } from './discdb';
+import { MediaDatabase, MediaContent, MediaType, MovieContent, EpisodeContent } from './discdb';
 import { foreach } from './utils';
 import { Readable, Writable } from 'stream';
 
-let a_type: MediaContentType = 'neither';
+let a_type: string = 'neither';
 let a_show: string | null = null;
 let a_season: number | null = null;
 let a_episode: number | null = null;
@@ -36,7 +36,7 @@ process.argv.slice(2).forEach((arg) => {
 	let parts;
 	if (false) {
 	} else if ((parts = /^--type=(episode|movie)$/.exec(arg)) != null) {
-		a_type = parts[1] as MediaContentType;
+		a_type = parts[1];
 	} else if ((parts = /^--minlength=([0-9]+)$/.exec(arg)) != null) {
 		a_min = Number.parseInt(parts[1]);
 	} else if ((parts = /^--maxlength=([0-9]+)$/.exec(arg)) != null) {
@@ -186,14 +186,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 					metadata[args[0]] = {
 						content: {
 							type: a_type,
-							selector: "",
-							title: a_title,
-							year: a_year,
-							show: a_show,
-							season: a_season,
-							episode: null,
-							imdb: undefined,
-							imdb_show: undefined
+							selector: ""
 						},
 						angle: 1,
 						length: 0,
@@ -260,25 +253,32 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 		let content = metadata.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1).map((ct) => {
 			return ct.content
 		});
-		content = content.map((content) => {
-			return {
-				...content,
-				episode: (a_episode !== null) ? a_episode++ : content.episode
-			};
-		});
+		if (a_episode != null) {
+			let episode = a_episode;
+			content = content.map((content) => {
+				return {
+					...content,
+					episode: episode++
+				};
+			});
+		}
 		if (a_imdb !== null) {
 			imdb.getTitle(a_imdb, (title) => {
 				if (title !== null) {
 					if (title.type === "show") {
-						foreach(content, (value, next) => {
-							value.type = "episode";
-							value.show = title.title;
-							value.imdb_show = (a_imdb != null ? a_imdb : undefined);
+						foreach(content, (orig_value, next) => {
+							if (a_imdb != null) {
+								let value = orig_value as EpisodeContent;
+								value.type = "episode";
+								value.show = title.title;
+								value.imdb_show = a_imdb;
+							}
 							next();
 						}, () => {
 							if (a_season !== null && a_imdb != null) {
 								imdb.getSeason(a_imdb, a_season, (season) => {
-									foreach(content, (value, next) => {
+									foreach(content, (orig_value, next) => {
+										let value = orig_value as EpisodeContent;
 										let episode = season.episodes.find((episode) => episode.episode_number === value.episode);
 										if (episode !== undefined) {
 											value.imdb = episode.id;
@@ -294,11 +294,14 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 							}
 						});
 					} else {
-						foreach(content, (value, next) => {
-							value.type = "movie";
-							value.title = title.title;
-							value.year = title.year;
-							value.imdb = (a_imdb != null ? a_imdb : undefined);
+						foreach(content, (orig_value, next) => {
+							if (title.year != null && a_imdb != null) {
+								let value = orig_value as MovieContent;
+								value.type = "movie";
+								value.title = title.title;
+								value.year = title.year;
+								value.imdb = a_imdb;
+							}
 							next();
 						}, () => {
 							cb(dtype, content);

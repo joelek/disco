@@ -1,16 +1,25 @@
 {
-	MediaContentType: ("episode" | "movie" | "neither"),
-	MediaContent: {
-		type: @MediaContentType,
-		selector: string,
-		title: (string | null),
-		year: (number | null),
-		show: (string | null),
-		season: (number | null),
-		episode: (number | null),
-		imdb?: string,
-		imdb_show?: string
+	Content: {
+		type: string,
+		selector: string
 	},
+	MovieContent: (@Content & {
+		type: "movie",
+		title: string,
+		year: number,
+		part: number,
+		imdb: string
+	}),
+	EpisodeContent: (@Content & {
+		type: "episode",
+		title: string,
+		show: string,
+		season: number,
+		episode: number,
+		imdb: string,
+		imdb_show: string
+	}),
+	MediaContent: (@Content | @MovieContent | @EpisodeContent),
 	MediaType: ("dvd" | "bluray" | "neither"),
 	Media: {
 		type: @MediaType,

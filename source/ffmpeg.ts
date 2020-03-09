@@ -3,7 +3,7 @@ import * as libcrypto from 'crypto';
 import * as libpath from 'path';
 import * as libfs from 'fs';
 import * as libdt from './delete_tree';
-import { MediaContent, MediaType } from './discdb';
+import { MediaContent, MediaType, EpisodeContent, MovieContent } from './discdb';
 import * as stream_types from "./stream_types";
 import * as ffprobe from "./ffprobe";
 import { FieldOrder, Settings, SettingsDatabase } from "./queue_metadata";
@@ -300,6 +300,7 @@ let encode_hardware = (
 	sample_keep: number,
 	extraopts: Array<string>,
 	overrides: Array<string>,
+	video_stream: stream_types.VideoStream,
 	opt_content: MediaContent | null = null
 ): void => {
 	picture = {...picture};
@@ -324,26 +325,24 @@ let encode_hardware = (
 	}
 	let md = new Array<string>();
 	if (opt_content != null) {
-		if (opt_content.type === 'episode') {
+		if (EpisodeContent.is(opt_content)) {
 			md = [
 				'-metadata', `title=${opt_content.title}`,
 				'-metadata', `show=${opt_content.show}`,
 				'-metadata', `season_number=${opt_content.season}`,
 				'-metadata', `episode_sort=${opt_content.episode}`,
-				'-metadata', `episode_id=${opt_content.title}`
+				'-metadata', `episode_id=${opt_content.title}`,
+				"-metadata", "comment=" + JSON.stringify({ imdb: opt_content.imdb })
 			];
-		} else if (opt_content.type === 'movie') {
+		} else if (MovieContent.is(opt_content)) {
 			md = [
 				'-metadata', `title=${opt_content.title}`,
-				'-metadata', `date=${opt_content.year}`
+				'-metadata', `date=${opt_content.year}`,
+				"-metadata", "comment=" + JSON.stringify({ imdb: opt_content.imdb })
 			];
 		}
-		if (opt_content.imdb != null) {
-			md.push("-metadata", "comment=" + JSON.stringify({
-				imdb: opt_content.imdb
-			}));
-		}
 	}
+	md.push("-metadata:s:v:0", "language=" + video_stream.tags.language);
 	audio_streams.forEach((audio_stream, index) => {
 		md.push("-metadata:s:a:" + index, "language=" + audio_stream.tags.language);
 	});
@@ -421,17 +420,23 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 	let id1 = libcrypto.randomBytes(16).toString("hex");
 	let id2 = libcrypto.randomBytes(16).toString("hex");
 	let frames = 1;
-	create_temp_dir((wd, id) => {
-		encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, [], (outfile1) => {
-			encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, [], (outfile2) => {
-				let s1 = libfs.statSync(outfile1).size;
-				let s2 = libfs.statSync(outfile2).size;
-				let c = 1.0 - (s2 - s1)/(frames * s1);
-				libdt.async(wd, () => {
-					cb(Math.max(0.0, Math.min(c, 1.0)));
-				});
-			}, 250, 1 + frames, [ "-vsync", "0" ], [ "-f", "h264" ]);
-		}, 250, 1, [ "-vsync", "0" ], [ "-f", "h264" ]);
+	ffprobe.getVideoStreamsToKeep(filename, (video_streams) => {
+		const stream = video_streams.shift();
+		if (stream == null) {
+			throw "";
+		}
+		create_temp_dir((wd, id) => {
+			encode_hardware(filename, libpath.join(wd, id1), picture, rect, imode, 1.0, [], (outfile1) => {
+				encode_hardware(filename, libpath.join(wd, id2), picture, rect, imode, 1.0, [], (outfile2) => {
+					let s1 = libfs.statSync(outfile1).size;
+					let s2 = libfs.statSync(outfile2).size;
+					let c = 1.0 - (s2 - s1)/(frames * s1);
+					libdt.async(wd, () => {
+						cb(Math.max(0.0, Math.min(c, 1.0)));
+					});
+				}, 250, 1 + frames, [ "-vsync", "0" ], [ "-f", "h264" ], stream);
+			}, 250, 1, [ "-vsync", "0" ], [ "-f", "h264" ], stream);
+		});
 	});
 };
 
@@ -482,7 +487,7 @@ function transcodeSingleStream(path: string, stream: stream_types.VideoStream, b
 		let extraopts = new Array<string>()
 		// extraopts = ['-ss', '0:15:00', '-t', '60'];
 		ffprobe.getAudioStreamsToKeep(path, (audio_streams) => {
-			encode_hardware(path, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], content);
+			encode_hardware(path, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], stream, content);
 		});
 	}, basename);
 }
