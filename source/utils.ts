@@ -29,7 +29,7 @@ function getBasename(type: discdb.MediaType, content: discdb.MediaContent): stri
 	}
 	if (discdb.MovieContent.is(content)) {
 		let rn = `${pathify(content.title)}-${('0000' + content.year).slice(-4)}-${pathify(type)}`;
-		return `./private/media/video/movies/${rn}/${rn}`;
+		return `./private/media/video/movies/${rn}/${("00" + content.part).slice(-2)}-${rn}`;
 	}
 	throw "";
 }

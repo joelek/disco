@@ -35,7 +35,7 @@ let generate_queue = (files: Array<string>, node: string): Array<string> => {
 	return files;
 };
 
-let queue = generate_queue([], './private/archive/audio/');
+let queue = generate_queue([], './private/queue/');
 
 let db = MediaDatabase.as(JSON.parse(libfs.readFileSync("./private/db/discdb.json", "utf8")));
 
