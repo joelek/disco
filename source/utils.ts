@@ -5,9 +5,7 @@ function pathify(string: string): string {
 	return string
 		.toLowerCase()
 		.normalize("NFKD")
-		.replace(/[%]/g, "percent")
-		.replace(/[&]/g, "and")
-		.replace(/[|/\\-]/g, " ")
+		.replace(/[\|\/\\\_\-]/g, " ")
 		.replace(/[^a-z0-9 ]/g, "")
 		.replace(/[ ]+/g, "_");
 }
