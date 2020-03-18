@@ -35,7 +35,7 @@ let generate_queue = (files: Array<string>, node: string): Array<string> => {
 	return files;
 };
 
-let queue = generate_queue([], './private/queue/');
+let queue = new Array<string>();
 
 let db = MediaDatabase.as(JSON.parse(libfs.readFileSync("./private/db/discdb.json", "utf8")));
 
@@ -58,13 +58,19 @@ let get_media_info = (path: string): { type: MediaType, content: MediaContent } 
 	return null;
 };
 
+function checkForJobs() {
+	queue = generate_queue([], './private/archive/audio/');
+	pick_from_queue();
+}
+
 let pick_from_queue = (): void => {
 	if (queue.length > 0) {
 		let index = (Math.random() * queue.length) | 0;
+		index = 0;
 		let input = queue.splice(index, 1)[0];
 		const mi = get_media_info(input);
 		if (mi != null) {
-			if (mi.type === 'dvd' || mi.type === 'bluray') {
+			if (mi.type === 'paldvd' || mi.type === "ntscdvd" || mi.type === 'bluray') {
 				vobsub.generateJobs(input, mi.type, mi.content, (vobsub_jobs) => {
 					ffmpeg.generateJobs(input, mi.type, mi.content, (ffmpeg_jobs) => {
 						let jobs = [...vobsub_jobs, ...ffmpeg_jobs];
@@ -92,11 +98,13 @@ let pick_from_queue = (): void => {
 				for (let job of jobs) {
 					await job.perform();
 				}
+			})
+			.finally(() => {
 				pick_from_queue();
 			});
 	} else {
-		process.exit(0);
+		setTimeout(checkForJobs, 60000);
 	}
 };
 
-pick_from_queue();
+checkForJobs();

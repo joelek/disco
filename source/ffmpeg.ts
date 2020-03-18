@@ -6,11 +6,11 @@ import * as libdt from './delete_tree';
 import { MediaContent, MediaType, EpisodeContent, MovieContent } from './discdb';
 import * as stream_types from "./stream_types";
 import * as ffprobe from "./ffprobe";
-import { FieldOrder, Settings, SettingsDatabase } from "./queue_metadata";
+import * as queue_metadata from "./queue_metadata";
 import * as job from "./job";
 import * as utils from "./utils";
 
-let queue_metadata = SettingsDatabase.as(JSON.parse(libfs.readFileSync('./private/db/queue_metadata.json', "utf8")));
+let sdb = queue_metadata.Database.as(JSON.parse(libfs.readFileSync('./private/db/queue_metadata.json', "utf8")));
 
 interface Callback<A> {
 	(value: A): void
@@ -24,7 +24,7 @@ let gcd = (a: number, b: number): number => {
 };
 
 let save_queue_metadata = (cb: { (): void }): void => {
-	let stats = queue_metadata;
+	let stats = sdb;
 	let sorted = new Array<{ key: string, value: any }>();
 	for (let key of Object.keys(stats)) {
 		sorted.push({
@@ -66,7 +66,6 @@ type FormatDetectResult = {
 	color_space: string | null;
 	color_transfer: string | null;
 	color_primaries: string | null;
-	aspect_filter: string;
 };
 
 let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): void => {
@@ -91,15 +90,13 @@ let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): 
 					color_range: stream.color_range || null,
 					color_space: stream.color_space || null,
 					color_transfer: stream.color_transfer || null,
-					color_primaries: stream.color_primaries || null,
-					aspect_filter: ''
+					color_primaries: stream.color_primaries || null
 				};
 				if (result.parx === 186 && result.pary === 157 && result.darx === 279 && result.dary === 157) {
 					result.parx = 32;
 					result.pary = 27;
 					result.darx = 16;
 					result.dary = 9;
-					result.aspect_filter = `setsar=${result.parx}/${result.pary},setdar=${result.darx}/${result.dary},`;
 				}
 				console.log(result);
 				cb(result);
@@ -109,7 +106,7 @@ let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): 
 	});
 };
 
-let interlace_detect = (path: string, cb: { (imode: FieldOrder): void }): void => {
+let interlace_detect = (path: string, cb: { (imode: queue_metadata.FieldOrder): void }): void => {
 	console.log(`Detecting interlace mode...`);
 	libcp.execFile('ffmpeg', [
 		'-i', path,
@@ -121,7 +118,7 @@ let interlace_detect = (path: string, cb: { (imode: FieldOrder): void }): void =
 	], (error, stdout, stderr) => {
 		let re;
 		let parts;
-		let imode = 'progressive' as FieldOrder;
+		let imode = 'progressive' as queue_metadata.FieldOrder;
 		re = /\[Parsed_idet_[0-9]+\s+@\s+[0-9a-fA-F]{16}\]\s+Multi\s+frame\s+detection:\s+TFF:\s*([0-9]+)\s+BFF:\s*([0-9]+)\s+Progressive:\s*([0-9]+)\s+Undetermined:\s*([0-9]+)/;
 		parts = re.exec(stderr);
 		if (parts !== null) {
@@ -152,7 +149,7 @@ type CropResult = {
 	dary: number;
 };
 
-let crop_detect = (path: string, picture: FormatDetectResult, cb: { (result: CropResult): void }): void => {
+let crop_detect = (path: string, picture: FormatDetectResult, cb: { (crop: queue_metadata.CropSettings): void }): void => {
 	console.log(`Detecting crop settings...`);
 	libcp.execFile('ffmpeg', [
 		'-i', `${path}`,
@@ -252,9 +249,7 @@ let crop_detect = (path: string, picture: FormatDetectResult, cb: { (result: Cro
 			w: nw,
 			h: nh,
 			x: mx | 0,
-			y: my | 0,
-			darx,
-			dary
+			y: my | 0
 		};
 		console.log(final);
 		cb(final);
@@ -291,8 +286,8 @@ let encode_hardware = (
 	filename: string,
 	outfile: string,
 	picture: FormatDetectResult,
-	rect: CropResult,
-	imode: string,
+	rect: queue_metadata.CropSettings,
+	imode: queue_metadata.FieldOrder,
 	compressibility: number,
 	audio_streams: Array<stream_types.AudioStream>,
 	cb: { (outfile: string): void },
@@ -352,9 +347,7 @@ let encode_hardware = (
 	} else if (imode === 'bff') {
 		interlace = 'yadif=0:1:0,';
 	}
-	let farx = rect.darx;
-	let fary = rect.dary;
-	let frame_size = get_frame_size(is_fhd ? 15 : 8, farx, fary);
+	let frame_size = get_frame_size(is_fhd ? 15 : 8, picture.parx * rect.w, picture.pary * rect.h);
 	let frameselect = `select='between(mod(n\\,${sample_cadance})\\,0\\,${sample_keep - 1})',`;
 	let cp = libcp.spawn('ffmpeg', [
 		...extraopts,
@@ -380,9 +373,8 @@ let encode_hardware = (
 		'-i', 'pipe:',
 		...extraopts,
 		'-i', filename,
-		'-aspect', `${rect.darx}:${rect.dary}`,
 		'-map', '0:0',
-		...audio_streams.map((audio_stream, index) => {
+		...audio_streams.map((audio_stream) => {
 			return ["-map", "1:" + audio_stream.index];
 		}).reduce((previous, current) => {
 			previous.push(...current);
@@ -416,7 +408,7 @@ let encode_hardware = (
 	});
 };
 
-let compute_compressibility = (filename: string, picture: FormatDetectResult, rect: CropResult, imode: string, cb: Callback<number>): void => {
+let compute_compressibility = (filename: string, picture: FormatDetectResult, rect: queue_metadata.CropSettings, imode: queue_metadata.FieldOrder, cb: Callback<number>): void => {
 	let id1 = libcrypto.randomBytes(16).toString("hex");
 	let id2 = libcrypto.randomBytes(16).toString("hex");
 	let frames = 1;
@@ -440,36 +432,40 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 	});
 };
 
-let determine_metadata = (filename: string, cb: Callback<Settings>): void => {
+let determine_metadata = (filename: string, cb: Callback<{ picture: FormatDetectResult, settings: queue_metadata.Setting }>): void => {
 	format_detect(filename, (picture) => {
-		crop_detect(filename, picture, (rect) => {
-			interlace_detect(filename, (imode) => {
-				compute_compressibility(filename, picture, rect, imode, (compressibility) => {
-					cb({picture, rect, imode, compressibility});
+		crop_detect(filename, picture, (crop) => {
+			interlace_detect(filename, (field_order) => {
+				compute_compressibility(filename, picture, crop, field_order, (compressibility) => {
+					cb({
+						picture,
+						settings: {
+							crop,
+							field_order,
+							compressibility
+						}
+					});
 				});
 			});
 		});
 	});
 };
 
-let get_metadata = (filename: string, cb: Callback<Settings>, basename: string): void => {
-	let key = basename.split("/").slice(3).join(':');
+let get_metadata = (filename: string, cb: Callback<{ picture: FormatDetectResult, settings: queue_metadata.Setting }>, basename: string): void => {
+	let parts = libpath.basename(filename).split(".");
+	let key = parts.slice(0, -1).join(".");
 	process.stderr.write(`Database key: ${key}\n`);
-	let md = queue_metadata[key];
+	let md = sdb[key];
 	if (md) {
-		if (md.compressibility === undefined) {
-			compute_compressibility(filename, md.picture, md.rect, md.imode, (compressibility) => {
-				md.compressibility = compressibility;
-				save_queue_metadata(() => {
-					cb(md);
-				});
+		format_detect(filename, (format) => {
+			cb({
+				picture: format,
+				settings: md
 			});
-		} else {
-			cb(md);
-		}
+		});
 	} else {
 		determine_metadata(filename, (md) => {
-			queue_metadata[key] = md;
+			sdb[key] = md.settings;
 			save_queue_metadata(() => {
 				cb(md);
 			});
@@ -477,17 +473,17 @@ let get_metadata = (filename: string, cb: Callback<Settings>, basename: string):
 	}
 };
 
-function getArtifactPath(path: string, stream: stream_types.VideoStream, basename: string): string {
+function getArtifactPath(stream: stream_types.VideoStream, basename: string): string {
 	return `${basename}.mp4`;
 }
 
 function transcodeSingleStream(path: string, stream: stream_types.VideoStream, basename: string, content: MediaContent, cb: Callback<string>): void {
-	let outfile = getArtifactPath(path, stream, basename);
+	let outfile = getArtifactPath(stream, basename);
 	get_metadata(path, (md) => {
 		let extraopts = new Array<string>()
-		// extraopts = ['-ss', '0:15:00', '-t', '60'];
+		extraopts = ['-ss', '0:15:00', '-t', '60'];
 		ffprobe.getAudioStreamsToKeep(path, (audio_streams) => {
-			encode_hardware(path, outfile, md.picture, md.rect, md.imode, md.compressibility || 1.0, audio_streams, cb, 1, 1, extraopts, [], stream, content);
+			encode_hardware(path, outfile, md.picture, md.settings.crop, md.settings.field_order, md.settings.compressibility, audio_streams, cb, 1, 1, extraopts, [], stream, content);
 		});
 	}, basename);
 }
@@ -499,7 +495,7 @@ function generateJobs(path: string, type: MediaType, content: MediaContent, cb: 
 		for (let stream of video_streams) {
 			jobs.push({
 				getArtifactPath() {
-					return getArtifactPath(path, stream, basename);
+					return getArtifactPath(stream, basename);
 				},
 				produceArtifact(cb) {
 					transcodeSingleStream(path, stream, basename, content, cb);

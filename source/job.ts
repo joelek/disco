@@ -7,6 +7,11 @@ interface Job {
 	produceArtifact(cb: Callback<string>): void;
 }
 
+interface PromiseJob {
+	perform(): Promise<void>;
+}
+
 export {
-	Job
+	Job,
+	PromiseJob
 };

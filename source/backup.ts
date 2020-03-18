@@ -95,7 +95,9 @@ type MediaMetadata = {
 
 let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>): void }) => {
 	libcp.exec(`makemkvcon info disc:0 --robot --minlength=0`, (error, stdout, stderr) => {
-		let dtype: MediaType = 'neither';
+		let detected_disc_type = "neither" as "bluray" | "dvd" | "neither";
+		let detected_resolution = "neither" as "720x480" | "720x576" | "neither";
+		let detected_frame_rate = "neither" as "30000/1001" | "25/1" | "neither";
 		let metadata = new Array<MediaMetadata>();
 		let lines = stdout.split(/\r?\n/);
 		lines.map((line) => {
@@ -112,9 +114,9 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 					process.stdout.write(` disc_type:${args[2]}\n`);
 					if (false) {
 					} else if (args[2] === 'Blu-ray disc') {
-						dtype = 'bluray';
+						detected_disc_type = 'bluray';
 					} else if (args[2] === 'DVD disc') {
-						dtype = 'dvd';
+						detected_disc_type = 'dvd';
 					}
 				} else if (args[0] === 2) {
 					process.stdout.write(` title:${args[2]}\n`);
@@ -158,10 +160,26 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 					process.stdout.write(` samplerate:${args[4]}\n`);
 				} else if (args[2] === 19) {
 					process.stdout.write(` resolution:${args[4]}\n`);
+					if (args[0] === 0 && args[1] === 0) {
+						if (args[4] === "720x480") {
+							detected_resolution = "720x480";
+						}
+						if (args[4] === "720x576") {
+							detected_resolution = "720x576";
+						}
+					}
 				} else if (args[2] === 20) {
 					process.stdout.write(` aspect_ratio:${args[4]}\n`);
 				} else if (args[2] === 21) {
 					process.stdout.write(` framerate:${args[4]}\n`);
+					if (args[0] === 0 && args[1] === 0) {
+						if (args[4] === "29.97 (30000/1001)") {
+							detected_frame_rate = "30000/1001";
+						}
+						if (args[4] === "25") {
+							detected_frame_rate = "25/1";
+						}
+					}
 				} else if (args[2] === 22) {
 					process.stdout.write(` unknown:${args[4]}\n`);
 				} else if (args[2] === 30) {
@@ -185,11 +203,11 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 				if (!metadata[args[0]]) {
 					metadata[args[0]] = {
 						content: {
-							type: a_type,
+							type: "unknown",
 							selector: ""
 						},
 						angle: 1,
-						length: 0,
+						length: 0
 					};
 				}
 				process.stdout.write(`title:${args[0]} attribute:${args[1]}`);
@@ -247,7 +265,21 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 				process.stdout.write(`${line}\n`);
 			}
 		});
-		if (dtype as MediaType === 'bluray') {
+		let media_type = ((): MediaType => {
+			if (detected_disc_type === "bluray") {
+				return "bluray";
+			}
+			if (detected_disc_type === "dvd") {
+				if (detected_frame_rate === "30000/1001" && detected_resolution === "720x480") {
+					return "ntscdvd";
+				}
+				if (detected_frame_rate === "25/1" && detected_resolution === "720x576") {
+					return "paldvd";
+				}
+			}
+			throw "";
+		})();
+		if (detected_disc_type === 'bluray') {
 			metadata.forEach((ct, index) => ct.content.selector = '' + index + ' ' + ct.content.selector);
 		}
 		let content = metadata.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1).map((ct) => {
@@ -286,11 +318,11 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 										}
 										next();
 									}, () => {
-										cb(dtype, content);
+										cb(media_type, content);
 									});
 								});
 							} else {
-								cb(dtype, content);
+								cb(media_type, content);
 							}
 						});
 					} else {
@@ -304,15 +336,15 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 							}
 							next();
 						}, () => {
-							cb(dtype, content);
+							cb(media_type, content);
 						});
 					}
 				} else {
-					cb(dtype, content);
+					cb(media_type, content);
 				}
 			});
 		} else {
-			cb(dtype, content);
+			cb(media_type, content);
 		}
 	});
 };
@@ -470,7 +502,7 @@ get_content(dir, (hash, type, content) => {
 	};
 	if (a_expect !== null && a_expect !== content_to_rip.length) {
 		process.stdout.write("Expected " + a_expect + " titles, " + content_to_rip.length + " found!\n");
-	} else if (type === 'dvd') {
+	} else if (type === 'paldvd' || type === "ntscdvd") {
 		backup_dvd(hash, content_to_rip, callback);
 	} else if (type === 'bluray') {
 		backup_bluray(hash, content_to_rip, callback);

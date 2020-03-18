@@ -2,37 +2,95 @@ import * as libcp from "child_process";
 import * as libfs from "fs";
 import * as libpath from "path";
 import * as cddb from "./cddb";
+import * as job from "./job";
 import * as utils from "./utils";
 
-interface Job {
-	perform(): Promise<void>;
-}
+type Metadata = {
+	disc: cddb.Disc,
+	track: cddb.Track
+};
 
-function getFolders(disc: cddb.Disc): Array<string> {
-	let disc_number = ("00" + disc.number).slice(-2);
-	let artist = utils.pathify(disc.artists[0]);
-	let title = utils.pathify(disc.title);
-	let year = ("0000" + disc.year).slice(-4);
-	let suffix = "cd";
-	return [
+function getPaths(disc: cddb.Disc, track: cddb.Track): Array<string> {
+	let root = [
 		".",
 		"private",
 		"media",
-		"audio",
-		`${artist}-${title}-${year}-${suffix}`,
-		`d${disc_number}`
+		"audio"
+	];
+	let disc_number = ("00" + disc.number).slice(-2);
+	let disc_artist = utils.pathify(disc.artists.join("; "));
+	let disc_title = utils.pathify(disc.title);
+	let disc_year = ("0000" + disc.year).slice(-4);
+	let suffix = "cd";
+	let track_number = ("00" + track.number).slice(-2);
+	let track_artist = utils.pathify(track.artists.join("; "));
+	let track_title = utils.pathify(track.title);
+	return [
+		...root,
+		`${disc_artist}`,
+		`${disc_artist}-${disc_year}-${disc_title}-${disc_number}-${suffix}`,
+		`${track_number}-${track_artist}-${track_title}-${suffix}`
 	];
 }
 
-function getFilename(track: cddb.Track): string {
-	let track_number = ("00" + track.number).slice(-2);
-	let artist = utils.pathify(track.artists[0]);
-	let title = utils.pathify(track.title);
-	let suffix = "cd";
-	return `${track_number}-${artist}-${title}-${suffix}.mp4`;
+function getVolumeAdjustmentDecibels(volume?: cddb.Volume): number {
+	let result = 0;
+	if (volume != null) {
+		let target_level_db = -18;
+		let adjustment_db = target_level_db - volume.mean_volume;
+		let max_adjustment_db = 0.0 - volume.peak_volume;
+		let clipped_adjustment_db = Math.min(max_adjustment_db, adjustment_db);
+		result = clipped_adjustment_db;
+	}
+	return result;
 }
 
-function createTranscodingJob(source_path: string): Job {
+async function createAudioJob(source_path: string, metadata: Metadata): Promise<job.PromiseJob> {
+	let disc = metadata.disc;
+	let track = metadata.track;
+	let paths = getPaths(disc, track);
+	let target_path = paths.join("/") + ".mp4";
+	if (libfs.existsSync(target_path)) {
+		throw "Unable to create job!";
+	}
+	async function perform(): Promise<void> {
+		libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
+		return new Promise((resolve, reject) => {
+			let comment = JSON.stringify({
+				musicbrainz: disc.musicbrainz
+			});
+			let options = [
+				"-i", source_path,
+				"-af", `volume=${getVolumeAdjustmentDecibels(metadata.disc.volume)}dB`,
+				"-f", "mp4",
+				"-fflags", "+bitexact",
+				"-movflags", "+faststart",
+				"-c:a", "aac",
+				"-q:a", "2",
+				"-map_metadata", "-1",
+				"-metadata", `disc=${disc.number}`,
+				"-metadata", `album_artist=${disc.artists.join("; ")}`,
+				"-metadata", `album=${disc.title}`,
+				"-metadata", `date=${disc.year}`,
+				"-metadata", `track=${track.number}`,
+				"-metadata", `artist=${track.artists.join("; ")}`,
+				"-metadata", `title=${track.title}`,
+				"-metadata", `comment=${comment}`,
+				target_path, "-y"
+			];
+			console.log(`${source_path} --> ${target_path}`);
+			let cp = libcp.spawn("ffmpeg", options);
+			cp.on("error", reject);
+			cp.on("close", resolve);
+		});
+	}
+	return {
+		perform
+	};
+}
+
+async function getMetadata(source_path: string): Promise<Metadata> {
+	const db = utils.loadDatabase("./private/db/cddb.json", cddb.Database.as);
 	let parts = libpath.basename(source_path).split(".");
 	if (parts.length === 3) {
 		let id = parts[0];
@@ -41,58 +99,21 @@ function createTranscodingJob(source_path: string): Job {
 			let index = Number.parseInt(parts[1]);
 			let track = disc.tracks[index];
 			if (track != null) {
-				let folders = getFolders(disc);
-				let filename = getFilename(track);
-				let target_path = folders.join("/") + "/" + filename;
-				if (!libfs.existsSync(target_path)) {
-					function perform(): Promise<void> {
-						return new Promise((resolve, reject) => {
-							libfs.mkdirSync(folders.join("/"), { recursive: true });
-							let comment = JSON.stringify({
-								musicbrainz: disc.musicbrainz
-							});
-							let options = [
-								"-f", "s16le",
-								"-ar", "44100",
-								"-ac", "2",
-								"-i", source_path,
-								"-f", "mp4",
-								"-fflags", "+bitexact",
-								"-movflags", "+faststart",
-								"-c:a", "aac",
-								"-q:a", "2",
-								"-map_metadata", "-1",
-								"-metadata", `disc=${disc.number}`,
-								"-metadata", `album_artist=${disc.artists[0]}`,
-								"-metadata", `album=${disc.title}`,
-								"-metadata", `date=${disc.year}`,
-								"-metadata", `track=${track.number}`,
-								"-metadata", `artist=${track.artists[0]}`,
-								"-metadata", `title=${track.title}`,
-								"-metadata", `comment=${comment}`,
-								target_path, "-y"
-							];
-							let cp = libcp.spawn("ffmpeg", options);
-							cp.on("error", reject);
-							cp.on("close", resolve);
-						});
-					}
-					return {
-						perform
-					};
-				}
+				return {
+					disc,
+					track
+				};
 			}
 		}
 	}
-	throw "Unable to create job!";
+	throw "Unable to get metadata!";
 }
 
-const db = utils.loadDatabase("./private/db/cddb.json", cddb.Database.as);
-
-async function createJobList(path: string): Promise<Array<Job>> {
-	let jobs = new Array<Job>();
+async function createJobList(source_path: string): Promise<Array<job.PromiseJob>> {
+	let jobs = new Array<job.PromiseJob>();
+	let metadata = await getMetadata(source_path);
 	try {
-		jobs.push(createTranscodingJob(path));
+		jobs.push(await createAudioJob(source_path, metadata));
 	} catch (error) {}
 	return jobs;
 }

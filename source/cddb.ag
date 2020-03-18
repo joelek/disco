@@ -1,18 +1,22 @@
 {
+	Volume: {
+		replaygain_gain: number,
+		replaygain_peak: number,
+		mean_volume: number,
+		peak_volume: number
+	},
 	Track: {
-		artists: string[],
-		title: string,
-		duration_ms: number,
 		number: number,
-		index: number
+		artists: string[],
+		title: string
 	},
 	Disc: {
-		musicbrainz: string,
-		id: string,
+		number: number,
 		artists: string[],
 		title: string,
 		year: number,
-		number: number,
+		musicbrainz: string,
+		volume?: @Volume,
 		tracks: @Track[]
 	},
 	Database: { @Disc }

@@ -19,8 +19,11 @@
 		imdb: string,
 		imdb_show: string
 	}),
-	MediaContent: (@Content | @MovieContent | @EpisodeContent),
-	MediaType: ("dvd" | "bluray" | "neither"),
+	UnknownContent: (@Content & {
+		type: "unknown"
+	}),
+	MediaContent: (@UnknownContent | @MovieContent | @EpisodeContent),
+	MediaType: ("paldvd" | "ntscdvd" | "bluray"),
 	Media: {
 		type: @MediaType,
 		content: @MediaContent[]

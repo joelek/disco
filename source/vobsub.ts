@@ -504,7 +504,7 @@ let to_timecode = (ms: number): string => {
 	return `${tch}:${tcm}:${tcs}.${tcms}`;
 };
 
-function getArtifactPath(path: string, stream: stream_types.SubtitleStream, basename: string): string {
+function getArtifactPath(stream: stream_types.SubtitleStream, basename: string): string {
 	return `${basename}.sub.${stream.tags.language}.vtt`;
 }
 
@@ -516,7 +516,7 @@ function extractSingleStream(path: string, stream: stream_types.SubtitleStream, 
 				language: stream.tags.language
 			});
 			webvtt = vtt.encode(track);
-			let outfile = getArtifactPath(path, stream, basename);
+			let outfile = getArtifactPath(stream, basename);
 			let fd = libfs.openSync(outfile, 'w');
 			libfs.writeSync(fd, webvtt);
 			libfs.closeSync(fd);
@@ -532,7 +532,7 @@ function extractSingleStream(path: string, stream: stream_types.SubtitleStream, 
 					webvtt += to_timecode(subtitles[i].pts_start) + ' --> ' + to_timecode(subtitles[i].pts_end) + '\r\n';
 					webvtt += subtitles[i].lines.join('\r\n') + '\r\n\r\n';
 				}
-				let outfile = getArtifactPath(path, stream, basename);
+				let outfile = getArtifactPath(stream, basename);
 				let fd = libfs.openSync(outfile, 'w');
 				libfs.writeSync(fd, webvtt);
 				libfs.closeSync(fd);
@@ -551,14 +551,14 @@ function generateJobs(path: string, type: MediaType, content: MediaContent, cb: 
 		for (let stream of streams) {
 			jobs.push({
 				getArtifactPath() {
-					return getArtifactPath(path, stream, basename);
+					return getArtifactPath(stream, basename);
 				},
 				produceArtifact(cb) {
 					extractSingleStream(path, stream, basename, cb);
 				}
 			});
 		}
-		return cb(jobs);
+		return cb([]);
 	});
 }
 

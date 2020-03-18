@@ -2,18 +2,47 @@
 
 import * as autoguard from "@joelek/ts-autoguard";
 
+export type Volume = {
+	replaygain_gain: number,
+	replaygain_peak: number,
+	mean_volume: number,
+	peak_volume: number
+};
+
+export const Volume = {
+	as(subject: any, path: string = ""): Volume {
+		return ((subject, path) => {
+			if ((subject != null) && (subject.constructor === globalThis.Object)) {
+				(autoguard.guards.Number.as)(subject.replaygain_gain, path + "." + "replaygain_gain");
+				(autoguard.guards.Number.as)(subject.replaygain_peak, path + "." + "replaygain_peak");
+				(autoguard.guards.Number.as)(subject.mean_volume, path + "." + "mean_volume");
+				(autoguard.guards.Number.as)(subject.peak_volume, path + "." + "peak_volume");
+				return subject;
+			}
+			throw "Type guard \"Object\" failed at \"" + path + "\"!";
+		})(subject, path);
+	},
+	is(subject: any): subject is Volume {
+		try {
+			Volume.as(subject);
+		} catch (error) {
+			return false;
+		}
+		return true;
+	}
+};
+
 export type Track = {
-	artists: string[],
-	title: string,
-	duration_ms: number,
 	number: number,
-	index: number
+	artists: string[],
+	title: string
 };
 
 export const Track = {
 	as(subject: any, path: string = ""): Track {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
+				(autoguard.guards.Number.as)(subject.number, path + "." + "number");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
@@ -24,9 +53,6 @@ export const Track = {
 					throw "Type guard \"Array\" failed at \"" + path + "\"!";
 				})(subject.artists, path + "." + "artists");
 				(autoguard.guards.String.as)(subject.title, path + "." + "title");
-				(autoguard.guards.Number.as)(subject.duration_ms, path + "." + "duration_ms");
-				(autoguard.guards.Number.as)(subject.number, path + "." + "number");
-				(autoguard.guards.Number.as)(subject.index, path + "." + "index");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -43,12 +69,12 @@ export const Track = {
 };
 
 export type Disc = {
-	musicbrainz: string,
-	id: string,
+	number: number,
 	artists: string[],
 	title: string,
 	year: number,
-	number: number,
+	musicbrainz: string,
+	volume: (undefined | Volume),
 	tracks: Track[]
 };
 
@@ -56,8 +82,7 @@ export const Disc = {
 	as(subject: any, path: string = ""): Disc {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.String.as)(subject.musicbrainz, path + "." + "musicbrainz");
-				(autoguard.guards.String.as)(subject.id, path + "." + "id");
+				(autoguard.guards.Number.as)(subject.number, path + "." + "number");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
@@ -69,7 +94,16 @@ export const Disc = {
 				})(subject.artists, path + "." + "artists");
 				(autoguard.guards.String.as)(subject.title, path + "." + "title");
 				(autoguard.guards.Number.as)(subject.year, path + "." + "year");
-				(autoguard.guards.Number.as)(subject.number, path + "." + "number");
+				(autoguard.guards.String.as)(subject.musicbrainz, path + "." + "musicbrainz");
+				((subject, path) => {
+					try {
+						return (autoguard.guards.Undefined.as)(subject, path);
+					} catch (error) {}
+					try {
+						return (Volume.as)(subject, path);
+					} catch (error) {}
+					throw "Type guard \"Union\" failed at \"" + path + "\"!";
+				})(subject.volume, path + "." + "volume");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
@@ -119,12 +153,14 @@ export const Database = {
 };
 
 export type Autoguard = {
+	Volume: Volume,
 	Track: Track,
 	Disc: Disc,
 	Database: Database
 };
 
 export const Autoguard = {
+	Volume: Volume,
 	Track: Track,
 	Disc: Disc,
 	Database: Database

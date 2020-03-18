@@ -114,13 +114,46 @@ export const EpisodeContent = {
 	}
 };
 
-export type MediaContent = (Content | MovieContent | EpisodeContent);
+export type UnknownContent = (Content & {
+	type: "unknown"
+});
+
+export const UnknownContent = {
+	as(subject: any, path: string = ""): UnknownContent {
+		return ((subject, path) => {
+			(Content.as)(subject, path);
+			((subject, path) => {
+				if ((subject != null) && (subject.constructor === globalThis.Object)) {
+					((subject, path) => {
+						if (subject === "unknown") {
+							return subject;
+						}
+						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
+					})(subject.type, path + "." + "type");
+					return subject;
+				}
+				throw "Type guard \"Object\" failed at \"" + path + "\"!";
+			})(subject, path);
+			return subject;
+		})(subject, path);
+	},
+	is(subject: any): subject is UnknownContent {
+		try {
+			UnknownContent.as(subject);
+		} catch (error) {
+			return false;
+		}
+		return true;
+	}
+};
+
+export type MediaContent = (UnknownContent | MovieContent | EpisodeContent);
 
 export const MediaContent = {
 	as(subject: any, path: string = ""): MediaContent {
 		return ((subject, path) => {
 			try {
-				return (Content.as)(subject, path);
+				return (UnknownContent.as)(subject, path);
 			} catch (error) {}
 			try {
 				return (MovieContent.as)(subject, path);
@@ -141,14 +174,22 @@ export const MediaContent = {
 	}
 };
 
-export type MediaType = ("dvd" | "bluray" | "neither");
+export type MediaType = ("paldvd" | "ntscdvd" | "bluray");
 
 export const MediaType = {
 	as(subject: any, path: string = ""): MediaType {
 		return ((subject, path) => {
 			try {
 				return ((subject, path) => {
-					if (subject === "dvd") {
+					if (subject === "paldvd") {
+						return subject;
+					}
+					throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
+				})(subject, path);
+			} catch (error) {}
+			try {
+				return ((subject, path) => {
+					if (subject === "ntscdvd") {
 						return subject;
 					}
 					throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
@@ -157,14 +198,6 @@ export const MediaType = {
 			try {
 				return ((subject, path) => {
 					if (subject === "bluray") {
-						return subject;
-					}
-					throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-				})(subject, path);
-			} catch (error) {}
-			try {
-				return ((subject, path) => {
-					if (subject === "neither") {
 						return subject;
 					}
 					throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
@@ -245,6 +278,7 @@ export type Autoguard = {
 	Content: Content,
 	MovieContent: MovieContent,
 	EpisodeContent: EpisodeContent,
+	UnknownContent: UnknownContent,
 	MediaContent: MediaContent,
 	MediaType: MediaType,
 	Media: Media,
@@ -255,6 +289,7 @@ export const Autoguard = {
 	Content: Content,
 	MovieContent: MovieContent,
 	EpisodeContent: EpisodeContent,
+	UnknownContent: UnknownContent,
 	MediaContent: MediaContent,
 	MediaType: MediaType,
 	Media: Media,

@@ -1,0 +1,30 @@
+{
+	ArtistCredit: {
+		name: string
+	},
+	Track: {
+		title: string,
+		artist-credit: @ArtistCredit[]
+	},
+	Disc: {
+		sectors: number,
+		offset-count: number,
+		id: string,
+		offsets: number[]
+	},
+	Media: {
+		position: number,
+		discs: @Disc[],
+		tracks: @Track[]
+	},
+	Release: {
+		id: string,
+		date: string,
+		title: string,
+		artist-credit: @ArtistCredit[],
+		media: @Media[]
+	},
+	DiscIdLookupResponse: {
+		releases: @Release[]
+	}
+}

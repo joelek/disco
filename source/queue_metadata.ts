@@ -44,117 +44,29 @@ export const FieldOrder = {
 	}
 };
 
-export type PictureSettings = {
-	dimx: number,
-	dimy: number,
-	parx: number,
-	pary: number,
-	darx: number,
-	dary: number,
-	farx: number,
-	fary: number,
-	fpsx: number,
-	fpsy: number,
-	color_range: (string | null),
-	color_space: (string | null),
-	color_transfer: (string | null),
-	color_primaries: (string | null),
-	aspect_filter: string
-};
-
-export const PictureSettings = {
-	as(subject: any, path: string = ""): PictureSettings {
-		return ((subject, path) => {
-			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.Number.as)(subject.dimx, path + "." + "dimx");
-				(autoguard.guards.Number.as)(subject.dimy, path + "." + "dimy");
-				(autoguard.guards.Number.as)(subject.parx, path + "." + "parx");
-				(autoguard.guards.Number.as)(subject.pary, path + "." + "pary");
-				(autoguard.guards.Number.as)(subject.darx, path + "." + "darx");
-				(autoguard.guards.Number.as)(subject.dary, path + "." + "dary");
-				(autoguard.guards.Number.as)(subject.farx, path + "." + "farx");
-				(autoguard.guards.Number.as)(subject.fary, path + "." + "fary");
-				(autoguard.guards.Number.as)(subject.fpsx, path + "." + "fpsx");
-				(autoguard.guards.Number.as)(subject.fpsy, path + "." + "fpsy");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.color_range, path + "." + "color_range");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.color_space, path + "." + "color_space");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.color_transfer, path + "." + "color_transfer");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.String.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Null.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.color_primaries, path + "." + "color_primaries");
-				(autoguard.guards.String.as)(subject.aspect_filter, path + "." + "aspect_filter");
-				return subject;
-			}
-			throw "Type guard \"Object\" failed at \"" + path + "\"!";
-		})(subject, path);
-	},
-	is(subject: any): subject is PictureSettings {
-		try {
-			PictureSettings.as(subject);
-		} catch (error) {
-			return false;
-		}
-		return true;
-	}
-};
-
-export type RectSettings = {
+export type CropSettings = {
 	w: number,
 	h: number,
 	x: number,
-	y: number,
-	darx: number,
-	dary: number
+	y: number
 };
 
-export const RectSettings = {
-	as(subject: any, path: string = ""): RectSettings {
+export const CropSettings = {
+	as(subject: any, path: string = ""): CropSettings {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				(autoguard.guards.Number.as)(subject.w, path + "." + "w");
 				(autoguard.guards.Number.as)(subject.h, path + "." + "h");
 				(autoguard.guards.Number.as)(subject.x, path + "." + "x");
 				(autoguard.guards.Number.as)(subject.y, path + "." + "y");
-				(autoguard.guards.Number.as)(subject.darx, path + "." + "darx");
-				(autoguard.guards.Number.as)(subject.dary, path + "." + "dary");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
 		})(subject, path);
 	},
-	is(subject: any): subject is RectSettings {
+	is(subject: any): subject is CropSettings {
 		try {
-			RectSettings.as(subject);
+			CropSettings.as(subject);
 		} catch (error) {
 			return false;
 		}
@@ -162,37 +74,27 @@ export const RectSettings = {
 	}
 };
 
-export type Settings = {
-	picture: PictureSettings,
-	rect: RectSettings,
-	imode: FieldOrder,
-	compressibility: (undefined | number)
+export type Setting = {
+	field_order: FieldOrder,
+	crop: CropSettings,
+	compressibility: number
 };
 
-export const Settings = {
-	as(subject: any, path: string = ""): Settings {
+export const Setting = {
+	as(subject: any, path: string = ""): Setting {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(PictureSettings.as)(subject.picture, path + "." + "picture");
-				(RectSettings.as)(subject.rect, path + "." + "rect");
-				(FieldOrder.as)(subject.imode, path + "." + "imode");
-				((subject, path) => {
-					try {
-						return (autoguard.guards.Undefined.as)(subject, path);
-					} catch (error) {}
-					try {
-						return (autoguard.guards.Number.as)(subject, path);
-					} catch (error) {}
-					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.compressibility, path + "." + "compressibility");
+				(FieldOrder.as)(subject.field_order, path + "." + "field_order");
+				(CropSettings.as)(subject.crop, path + "." + "crop");
+				(autoguard.guards.Number.as)(subject.compressibility, path + "." + "compressibility");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
 		})(subject, path);
 	},
-	is(subject: any): subject is Settings {
+	is(subject: any): subject is Setting {
 		try {
-			Settings.as(subject);
+			Setting.as(subject);
 		} catch (error) {
 			return false;
 		}
@@ -200,23 +102,23 @@ export const Settings = {
 	}
 };
 
-export type SettingsDatabase = { [key: string]: Settings };
+export type Database = { [key: string]: Setting };
 
-export const SettingsDatabase = {
-	as(subject: any, path: string = ""): SettingsDatabase {
+export const Database = {
+	as(subject: any, path: string = ""): Database {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
 				for (let key of globalThis.Object.keys(subject)) {
-					(Settings.as)(subject[key], path + "[\"" + key + "\"]");
+					(Setting.as)(subject[key], path + "[\"" + key + "\"]");
 				}
 				return subject;
 			}
 			throw "Type guard \"Record\" failed at \"" + path + "\"!";
 		})(subject, path);
 	},
-	is(subject: any): subject is SettingsDatabase {
+	is(subject: any): subject is Database {
 		try {
-			SettingsDatabase.as(subject);
+			Database.as(subject);
 		} catch (error) {
 			return false;
 		}
@@ -226,16 +128,14 @@ export const SettingsDatabase = {
 
 export type Autoguard = {
 	FieldOrder: FieldOrder,
-	PictureSettings: PictureSettings,
-	RectSettings: RectSettings,
-	Settings: Settings,
-	SettingsDatabase: SettingsDatabase
+	CropSettings: CropSettings,
+	Setting: Setting,
+	Database: Database
 };
 
 export const Autoguard = {
 	FieldOrder: FieldOrder,
-	PictureSettings: PictureSettings,
-	RectSettings: RectSettings,
-	Settings: Settings,
-	SettingsDatabase: SettingsDatabase
+	CropSettings: CropSettings,
+	Setting: Setting,
+	Database: Database
 };

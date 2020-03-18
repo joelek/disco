@@ -1,3 +1,4 @@
+import * as libhttp from "http";
 import * as libhttps from "https";
 import * as libfs from "fs";
 import * as libpath from "path";
@@ -836,7 +837,8 @@ function request(url: string, cb: Callback<Buffer>) {
 			setTimeout(() => {
 				last_request_ms = Date.now();
 				console.log("Requesting: " + url);
-				libhttps.request(url, {
+				let lib = url.startsWith("http://") ? libhttp : libhttps;
+				lib.request(url, {
 					method: "GET",
 					headers:  {
 						"accept-language": "en"
@@ -869,6 +871,14 @@ function getXML(url: string, cb: Callback<XMLDocument>): void {
 		cb(document);
 	});
 }
+
+export async function promiseXML(url: string): Promise<XMLDocument> {
+	return new Promise((resolve, reject) => {
+		getXML(url, (xml) => {
+			resolve(xml);
+		});
+	});
+};
 
 function getImageURL(url: string): string {
 	let parts = url.split(".");

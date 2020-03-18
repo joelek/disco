@@ -124,8 +124,20 @@ function getVideoStreamsToKeep(path: string, cb: Callback<Array<stream_types.Vid
 	});
 }
 
+async function getVideoStream(path: string): Promise<stream_types.VideoStream> {
+	return new Promise((resolve, reject) => {
+		getVideoStreamsToKeep(path, (video_streams) => {
+			if (video_streams.length !== 1) {
+				return reject("Expected exactly one video stream!");
+			}
+			return resolve(video_streams[0]);
+		});
+	});
+}
+
 export {
 	getAudioStreamsToKeep,
 	getSubtitleStreamsToKeep,
-	getVideoStreamsToKeep
+	getVideoStreamsToKeep,
+	getVideoStream
 };
