@@ -121,14 +121,14 @@ function get_disc_id(toc: Buffer): string {
 	return disc_id;
 }
 
-function get_disc_from_ws(toc: CDDA_TOC, cb: Callback<cddb.Disc | null>): void {
+function get_disc_from_ws(options: Arguments, toc: CDDA_TOC, cb: Callback<cddb.Disc | null>): void {
 	let mb_disc_id = get_mb_disc_id(toc);
 	log(`Disc id (Musicbrainz): ${mb_disc_id}`);
-	get_mb_data(mb_disc_id, (data) => {
+	get_mb_data(options, mb_disc_id, (data) => {
 		if (data == null) {
 			return cb(null);
 		}
-		let disc = get_disc_metadata_from_mb(mb_disc_id, data);
+		let disc = get_disc_metadata_from_mb(options, mb_disc_id, data);
 		if (disc == null) {
 			return cb(null);
 		}
@@ -136,7 +136,7 @@ function get_disc_from_ws(toc: CDDA_TOC, cb: Callback<cddb.Disc | null>): void {
 	});
 }
 
-function get_disc(cb: Callback<{ id: string, toc: CDDA_TOC, disc: cddb.Disc } | null>): void {
+function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, disc: cddb.Disc } | null>): void {
 	return get_toc((toc) => {
 		let id = toc.disc_id;
 		log(`Disc id determined as "${id}"`);
@@ -146,7 +146,7 @@ function get_disc(cb: Callback<{ id: string, toc: CDDA_TOC, disc: cddb.Disc } | 
 			return cb({id, toc, disc});
 		} else {
 			log(`Disc not recognized.`);
-			return get_disc_from_ws(toc, (disc) => {
+			return get_disc_from_ws(options, toc, (disc) => {
 				if (disc != null) {
 					return save_disc_to_db(id, disc, () => {
 						return cb({id, toc, disc});
@@ -428,13 +428,49 @@ function get_mb_disc_id(toc: CDDA_TOC): string {
 	return digest;
 }
 
-let disc_number: number | null = null;
-let release_id: string | null = null;
+type RequriedArguments = {
 
-function get_mb_data(mb_disc_id: string, cb: Callback<MB | null>): void {
+};
+
+type OptionalArguments = {
+	release_id: string,
+	disc_number: number
+};
+
+type Arguments = Partial<OptionalArguments> & RequriedArguments;
+
+async function parseCommandLine(): Promise<Arguments> {
+	let disc_number: number | undefined;
+	let release_id: string | undefined;
+	let found_unrecognized_argument = false;
+	for (let arg of process.argv.slice(2)) {
+		let parts;
+		if (false) {
+		} else if ((parts = /^--disc=([0-9]+)$/.exec(arg)) != null) {
+			disc_number = Number.parseInt(parts[1]);
+		} else if ((parts = /^--release=(.+)$/.exec(arg)) != null) {
+			release_id = parts[1];
+		} else {
+			found_unrecognized_argument = true;
+			process.stderr.write("Unrecognized argument \"" + arg + "\"!\n");
+		}
+	}
+	if (found_unrecognized_argument) {
+		process.stderr.write("Arguments:\n");
+		process.stderr.write("	--disc=number\n");
+		process.stderr.write("	--release=string\n");
+		process.exit(0);
+	}
+	return {
+		release_id,
+		disc_number
+	};
+}
+
+function get_mb_data(options: Arguments, mb_disc_id: string, cb: Callback<MB | null>): void {
 	let url = `https://musicbrainz.org/ws/2/discid/${mb_disc_id}?fmt=json&inc=artist-credits+recordings`;
-	if (release_id != null) {
-		url = `https://musicbrainz.org/ws/2/release/${release_id}?fmt=json&inc=artist-credits+recordings`;
+	if (options.release_id != null) {
+		url = `https://musicbrainz.org/ws/2/release/${options.release_id}?fmt=json&inc=artist-credits+recordings`;
 	}
 	libhttps.request(url, {
 		method: `GET`,
@@ -452,7 +488,7 @@ function get_mb_data(mb_disc_id: string, cb: Callback<MB | null>): void {
 			let string = buffer.toString('utf8');
 			try {
 				let json = JSON.parse(string);
-				if (release_id != null) {
+				if (options.release_id != null) {
 					json = {
 						releases: [json]
 					};
@@ -465,7 +501,7 @@ function get_mb_data(mb_disc_id: string, cb: Callback<MB | null>): void {
 	}).end();
 }
 
-function get_disc_metadata_from_mb(mb_disc_id: string, mb: MB): cddb.Disc | null {
+function get_disc_metadata_from_mb(options: Arguments, mb_disc_id: string, mb: MB): cddb.Disc | null {
 	let parts: RegExpExecArray | null;
 	if (mb.releases.length === 0) {
 		return null;
@@ -480,7 +516,7 @@ function get_disc_metadata_from_mb(mb_disc_id: string, mb: MB): cddb.Disc | null
 		});
 	});
 	if (media == null) {
-		media = release.media[disc_number != null ? disc_number : 0];
+		media = release.media[options.disc_number != null ? options.disc_number : 0];
 	}
 	let id = release.id;
 	let artists = release[`artist-credit`].map((ac) => ac.name);
@@ -512,12 +548,13 @@ function get_disc_metadata_from_mb(mb_disc_id: string, mb: MB): cddb.Disc | null
 	};
 }
 
-get_disc((val) => {
-	if (val != null) {
-		console.log(JSON.stringify(val.disc, null, "\t"));
-		backup_disc(val, () => {
-			process.exit(0);
-		});
-	}
+parseCommandLine().then((options) => {
+	get_disc(options, (val) => {
+		if (val != null) {
+			console.log(JSON.stringify(val.disc, null, "\t"));
+			backup_disc(val, () => {
+				process.exit(0);
+			});
+		}
+	});
 });
-
