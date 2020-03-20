@@ -455,8 +455,8 @@ let get_metadata = (filename: string, cb: Callback<{ picture: FormatDetectResult
 	let parts = libpath.basename(filename).split(".");
 	let key = parts.slice(0, -1).join(".");
 	process.stderr.write(`Database key: ${key}\n`);
-	let md = sdb[key];
-	if (md) {
+	const md = sdb[key];
+	if (md != undefined) {
 		format_detect(filename, (format) => {
 			cb({
 				picture: format,

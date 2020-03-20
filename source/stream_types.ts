@@ -3,15 +3,15 @@
 import * as autoguard from "@joelek/ts-autoguard";
 
 export type Stream = {
-	index: number,
-	codec_type: string,
-	codec_name: string,
-	time_base: string,
-	start_pts: number,
-	start_time: string,
-	extradata: string,
-	tags: ({ [key: string]: string } & {
-		language: string
+	"index": number,
+	"codec_type": string,
+	"codec_name": string,
+	"time_base": string,
+	"start_pts": number,
+	"start_time": string,
+	"extradata": string,
+	"tags": ({ [key: string]: undefined | string } & {
+		"language": string
 	})
 };
 
@@ -19,13 +19,13 @@ export const Stream = {
 	as(subject: any, path: string = ""): Stream {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.Number.as)(subject.index, path + "." + "index");
-				(autoguard.guards.String.as)(subject.codec_type, path + "." + "codec_type");
-				(autoguard.guards.String.as)(subject.codec_name, path + "." + "codec_name");
-				(autoguard.guards.String.as)(subject.time_base, path + "." + "time_base");
-				(autoguard.guards.Number.as)(subject.start_pts, path + "." + "start_pts");
-				(autoguard.guards.String.as)(subject.start_time, path + "." + "start_time");
-				(autoguard.guards.String.as)(subject.extradata, path + "." + "extradata");
+				(autoguard.guards.Number.as)(subject["index"], path + "[\"index\"]");
+				(autoguard.guards.String.as)(subject["codec_type"], path + "[\"codec_type\"]");
+				(autoguard.guards.String.as)(subject["codec_name"], path + "[\"codec_name\"]");
+				(autoguard.guards.String.as)(subject["time_base"], path + "[\"time_base\"]");
+				(autoguard.guards.Number.as)(subject["start_pts"], path + "[\"start_pts\"]");
+				(autoguard.guards.String.as)(subject["start_time"], path + "[\"start_time\"]");
+				(autoguard.guards.String.as)(subject["extradata"], path + "[\"extradata\"]");
 				((subject, path) => {
 					((subject, path) => {
 						if ((subject != null) && (subject.constructor === globalThis.Object)) {
@@ -38,13 +38,13 @@ export const Stream = {
 					})(subject, path);
 					((subject, path) => {
 						if ((subject != null) && (subject.constructor === globalThis.Object)) {
-							(autoguard.guards.String.as)(subject.language, path + "." + "language");
+							(autoguard.guards.String.as)(subject["language"], path + "[\"language\"]");
 							return subject;
 						}
 						throw "Type guard \"Object\" failed at \"" + path + "\"!";
 					})(subject, path);
 					return subject;
-				})(subject.tags, path + "." + "tags");
+				})(subject["tags"], path + "[\"tags\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -61,16 +61,16 @@ export const Stream = {
 };
 
 export type VideoStream = (Stream & {
-	codec_type: "video",
-	width: number,
-	height: number,
-	r_frame_rate: string,
-	sample_aspect_ratio: string,
-	display_aspect_ratio: string,
-	color_range: (undefined | string),
-	color_space: (undefined | string),
-	color_transfer: (undefined | string),
-	color_primaries: (undefined | string)
+	"codec_type": "video",
+	"width": number,
+	"height": number,
+	"r_frame_rate": string,
+	"sample_aspect_ratio": string,
+	"display_aspect_ratio": string,
+	"color_range"?: string,
+	"color_space"?: string,
+	"color_transfer"?: string,
+	"color_primaries"?: string
 });
 
 export const VideoStream = {
@@ -84,12 +84,12 @@ export const VideoStream = {
 							return subject;
 						}
 						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-					})(subject.codec_type, path + "." + "codec_type");
-					(autoguard.guards.Number.as)(subject.width, path + "." + "width");
-					(autoguard.guards.Number.as)(subject.height, path + "." + "height");
-					(autoguard.guards.String.as)(subject.r_frame_rate, path + "." + "r_frame_rate");
-					(autoguard.guards.String.as)(subject.sample_aspect_ratio, path + "." + "sample_aspect_ratio");
-					(autoguard.guards.String.as)(subject.display_aspect_ratio, path + "." + "display_aspect_ratio");
+					})(subject["codec_type"], path + "[\"codec_type\"]");
+					(autoguard.guards.Number.as)(subject["width"], path + "[\"width\"]");
+					(autoguard.guards.Number.as)(subject["height"], path + "[\"height\"]");
+					(autoguard.guards.String.as)(subject["r_frame_rate"], path + "[\"r_frame_rate\"]");
+					(autoguard.guards.String.as)(subject["sample_aspect_ratio"], path + "[\"sample_aspect_ratio\"]");
+					(autoguard.guards.String.as)(subject["display_aspect_ratio"], path + "[\"display_aspect_ratio\"]");
 					((subject, path) => {
 						try {
 							return (autoguard.guards.Undefined.as)(subject, path);
@@ -98,7 +98,7 @@ export const VideoStream = {
 							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
-					})(subject.color_range, path + "." + "color_range");
+					})(subject["color_range"], path + "[\"color_range\"]");
 					((subject, path) => {
 						try {
 							return (autoguard.guards.Undefined.as)(subject, path);
@@ -107,7 +107,7 @@ export const VideoStream = {
 							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
-					})(subject.color_space, path + "." + "color_space");
+					})(subject["color_space"], path + "[\"color_space\"]");
 					((subject, path) => {
 						try {
 							return (autoguard.guards.Undefined.as)(subject, path);
@@ -116,7 +116,7 @@ export const VideoStream = {
 							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
-					})(subject.color_transfer, path + "." + "color_transfer");
+					})(subject["color_transfer"], path + "[\"color_transfer\"]");
 					((subject, path) => {
 						try {
 							return (autoguard.guards.Undefined.as)(subject, path);
@@ -125,7 +125,7 @@ export const VideoStream = {
 							return (autoguard.guards.String.as)(subject, path);
 						} catch (error) {}
 						throw "Type guard \"Union\" failed at \"" + path + "\"!";
-					})(subject.color_primaries, path + "." + "color_primaries");
+					})(subject["color_primaries"], path + "[\"color_primaries\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -144,9 +144,9 @@ export const VideoStream = {
 };
 
 export type AudioStream = (Stream & {
-	codec_type: "audio",
-	sample_rate: string,
-	channels: number
+	"codec_type": "audio",
+	"sample_rate": string,
+	"channels": number
 });
 
 export const AudioStream = {
@@ -160,9 +160,9 @@ export const AudioStream = {
 							return subject;
 						}
 						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-					})(subject.codec_type, path + "." + "codec_type");
-					(autoguard.guards.String.as)(subject.sample_rate, path + "." + "sample_rate");
-					(autoguard.guards.Number.as)(subject.channels, path + "." + "channels");
+					})(subject["codec_type"], path + "[\"codec_type\"]");
+					(autoguard.guards.String.as)(subject["sample_rate"], path + "[\"sample_rate\"]");
+					(autoguard.guards.Number.as)(subject["channels"], path + "[\"channels\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -181,7 +181,7 @@ export const AudioStream = {
 };
 
 export type SubtitleStream = (Stream & {
-	codec_type: "subtitle"
+	"codec_type": "subtitle"
 });
 
 export const SubtitleStream = {
@@ -195,7 +195,7 @@ export const SubtitleStream = {
 							return subject;
 						}
 						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-					})(subject.codec_type, path + "." + "codec_type");
+					})(subject["codec_type"], path + "[\"codec_type\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -241,7 +241,7 @@ export const StreamType = {
 };
 
 export type FFProbe = {
-	streams: StreamType[]
+	"streams": StreamType[]
 };
 
 export const FFProbe = {
@@ -256,7 +256,7 @@ export const FFProbe = {
 						return subject;
 					}
 					throw "Type guard \"Array\" failed at \"" + path + "\"!";
-				})(subject.streams, path + "." + "streams");
+				})(subject["streams"], path + "[\"streams\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -273,19 +273,19 @@ export const FFProbe = {
 };
 
 export type Autoguard = {
-	Stream: Stream,
-	VideoStream: VideoStream,
-	AudioStream: AudioStream,
-	SubtitleStream: SubtitleStream,
-	StreamType: StreamType,
-	FFProbe: FFProbe
+	"Stream": Stream,
+	"VideoStream": VideoStream,
+	"AudioStream": AudioStream,
+	"SubtitleStream": SubtitleStream,
+	"StreamType": StreamType,
+	"FFProbe": FFProbe
 };
 
 export const Autoguard = {
-	Stream: Stream,
-	VideoStream: VideoStream,
-	AudioStream: AudioStream,
-	SubtitleStream: SubtitleStream,
-	StreamType: StreamType,
-	FFProbe: FFProbe
+	"Stream": Stream,
+	"VideoStream": VideoStream,
+	"AudioStream": AudioStream,
+	"SubtitleStream": SubtitleStream,
+	"StreamType": StreamType,
+	"FFProbe": FFProbe
 };

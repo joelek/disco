@@ -45,20 +45,20 @@ export const FieldOrder = {
 };
 
 export type CropSettings = {
-	w: number,
-	h: number,
-	x: number,
-	y: number
+	"w": number,
+	"h": number,
+	"x": number,
+	"y": number
 };
 
 export const CropSettings = {
 	as(subject: any, path: string = ""): CropSettings {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.Number.as)(subject.w, path + "." + "w");
-				(autoguard.guards.Number.as)(subject.h, path + "." + "h");
-				(autoguard.guards.Number.as)(subject.x, path + "." + "x");
-				(autoguard.guards.Number.as)(subject.y, path + "." + "y");
+				(autoguard.guards.Number.as)(subject["w"], path + "[\"w\"]");
+				(autoguard.guards.Number.as)(subject["h"], path + "[\"h\"]");
+				(autoguard.guards.Number.as)(subject["x"], path + "[\"x\"]");
+				(autoguard.guards.Number.as)(subject["y"], path + "[\"y\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -75,18 +75,18 @@ export const CropSettings = {
 };
 
 export type Setting = {
-	field_order: FieldOrder,
-	crop: CropSettings,
-	compressibility: number
+	"field_order": FieldOrder,
+	"crop": CropSettings,
+	"compressibility": number
 };
 
 export const Setting = {
 	as(subject: any, path: string = ""): Setting {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(FieldOrder.as)(subject.field_order, path + "." + "field_order");
-				(CropSettings.as)(subject.crop, path + "." + "crop");
-				(autoguard.guards.Number.as)(subject.compressibility, path + "." + "compressibility");
+				(FieldOrder.as)(subject["field_order"], path + "[\"field_order\"]");
+				(CropSettings.as)(subject["crop"], path + "[\"crop\"]");
+				(autoguard.guards.Number.as)(subject["compressibility"], path + "[\"compressibility\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -102,7 +102,7 @@ export const Setting = {
 	}
 };
 
-export type Database = { [key: string]: Setting };
+export type Database = { [key: string]: undefined | Setting };
 
 export const Database = {
 	as(subject: any, path: string = ""): Database {
@@ -127,15 +127,15 @@ export const Database = {
 };
 
 export type Autoguard = {
-	FieldOrder: FieldOrder,
-	CropSettings: CropSettings,
-	Setting: Setting,
-	Database: Database
+	"FieldOrder": FieldOrder,
+	"CropSettings": CropSettings,
+	"Setting": Setting,
+	"Database": Database
 };
 
 export const Autoguard = {
-	FieldOrder: FieldOrder,
-	CropSettings: CropSettings,
-	Setting: Setting,
-	Database: Database
+	"FieldOrder": FieldOrder,
+	"CropSettings": CropSettings,
+	"Setting": Setting,
+	"Database": Database
 };

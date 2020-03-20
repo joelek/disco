@@ -3,16 +3,16 @@
 import * as autoguard from "@joelek/ts-autoguard";
 
 export type Content = {
-	type: string,
-	selector: string
+	"type": string,
+	"selector": string
 };
 
 export const Content = {
 	as(subject: any, path: string = ""): Content {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.String.as)(subject.type, path + "." + "type");
-				(autoguard.guards.String.as)(subject.selector, path + "." + "selector");
+				(autoguard.guards.String.as)(subject["type"], path + "[\"type\"]");
+				(autoguard.guards.String.as)(subject["selector"], path + "[\"selector\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -29,11 +29,11 @@ export const Content = {
 };
 
 export type MovieContent = (Content & {
-	type: "movie",
-	title: string,
-	year: number,
-	part: number,
-	imdb: string
+	"type": "movie",
+	"title": string,
+	"year": number,
+	"part": number,
+	"imdb": string
 });
 
 export const MovieContent = {
@@ -47,11 +47,11 @@ export const MovieContent = {
 							return subject;
 						}
 						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-					})(subject.type, path + "." + "type");
-					(autoguard.guards.String.as)(subject.title, path + "." + "title");
-					(autoguard.guards.Number.as)(subject.year, path + "." + "year");
-					(autoguard.guards.Number.as)(subject.part, path + "." + "part");
-					(autoguard.guards.String.as)(subject.imdb, path + "." + "imdb");
+					})(subject["type"], path + "[\"type\"]");
+					(autoguard.guards.String.as)(subject["title"], path + "[\"title\"]");
+					(autoguard.guards.Number.as)(subject["year"], path + "[\"year\"]");
+					(autoguard.guards.Number.as)(subject["part"], path + "[\"part\"]");
+					(autoguard.guards.String.as)(subject["imdb"], path + "[\"imdb\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -70,13 +70,13 @@ export const MovieContent = {
 };
 
 export type EpisodeContent = (Content & {
-	type: "episode",
-	title: string,
-	show: string,
-	season: number,
-	episode: number,
-	imdb: string,
-	imdb_show: string
+	"type": "episode",
+	"title": string,
+	"show": string,
+	"season": number,
+	"episode": number,
+	"imdb": string,
+	"imdb_show": string
 });
 
 export const EpisodeContent = {
@@ -90,13 +90,13 @@ export const EpisodeContent = {
 							return subject;
 						}
 						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-					})(subject.type, path + "." + "type");
-					(autoguard.guards.String.as)(subject.title, path + "." + "title");
-					(autoguard.guards.String.as)(subject.show, path + "." + "show");
-					(autoguard.guards.Number.as)(subject.season, path + "." + "season");
-					(autoguard.guards.Number.as)(subject.episode, path + "." + "episode");
-					(autoguard.guards.String.as)(subject.imdb, path + "." + "imdb");
-					(autoguard.guards.String.as)(subject.imdb_show, path + "." + "imdb_show");
+					})(subject["type"], path + "[\"type\"]");
+					(autoguard.guards.String.as)(subject["title"], path + "[\"title\"]");
+					(autoguard.guards.String.as)(subject["show"], path + "[\"show\"]");
+					(autoguard.guards.Number.as)(subject["season"], path + "[\"season\"]");
+					(autoguard.guards.Number.as)(subject["episode"], path + "[\"episode\"]");
+					(autoguard.guards.String.as)(subject["imdb"], path + "[\"imdb\"]");
+					(autoguard.guards.String.as)(subject["imdb_show"], path + "[\"imdb_show\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -115,7 +115,7 @@ export const EpisodeContent = {
 };
 
 export type UnknownContent = (Content & {
-	type: "unknown"
+	"type": "unknown"
 });
 
 export const UnknownContent = {
@@ -129,7 +129,7 @@ export const UnknownContent = {
 							return subject;
 						}
 						throw "Type guard \"StringLiteral\" failed at \"" + path + "\"!";
-					})(subject.type, path + "." + "type");
+					})(subject["type"], path + "[\"type\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -217,15 +217,15 @@ export const MediaType = {
 };
 
 export type Media = {
-	type: MediaType,
-	content: MediaContent[]
+	"type": MediaType,
+	"content": MediaContent[]
 };
 
 export const Media = {
 	as(subject: any, path: string = ""): Media {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(MediaType.as)(subject.type, path + "." + "type");
+				(MediaType.as)(subject["type"], path + "[\"type\"]");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
@@ -234,7 +234,7 @@ export const Media = {
 						return subject;
 					}
 					throw "Type guard \"Array\" failed at \"" + path + "\"!";
-				})(subject.content, path + "." + "content");
+				})(subject["content"], path + "[\"content\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -250,7 +250,7 @@ export const Media = {
 	}
 };
 
-export type MediaDatabase = { [key: string]: Media };
+export type MediaDatabase = { [key: string]: undefined | Media };
 
 export const MediaDatabase = {
 	as(subject: any, path: string = ""): MediaDatabase {
@@ -275,23 +275,23 @@ export const MediaDatabase = {
 };
 
 export type Autoguard = {
-	Content: Content,
-	MovieContent: MovieContent,
-	EpisodeContent: EpisodeContent,
-	UnknownContent: UnknownContent,
-	MediaContent: MediaContent,
-	MediaType: MediaType,
-	Media: Media,
-	MediaDatabase: MediaDatabase
+	"Content": Content,
+	"MovieContent": MovieContent,
+	"EpisodeContent": EpisodeContent,
+	"UnknownContent": UnknownContent,
+	"MediaContent": MediaContent,
+	"MediaType": MediaType,
+	"Media": Media,
+	"MediaDatabase": MediaDatabase
 };
 
 export const Autoguard = {
-	Content: Content,
-	MovieContent: MovieContent,
-	EpisodeContent: EpisodeContent,
-	UnknownContent: UnknownContent,
-	MediaContent: MediaContent,
-	MediaType: MediaType,
-	Media: Media,
-	MediaDatabase: MediaDatabase
+	"Content": Content,
+	"MovieContent": MovieContent,
+	"EpisodeContent": EpisodeContent,
+	"UnknownContent": UnknownContent,
+	"MediaContent": MediaContent,
+	"MediaType": MediaType,
+	"Media": Media,
+	"MediaDatabase": MediaDatabase
 };

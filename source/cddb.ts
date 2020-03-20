@@ -3,20 +3,20 @@
 import * as autoguard from "@joelek/ts-autoguard";
 
 export type Volume = {
-	replaygain_gain: number,
-	replaygain_peak: number,
-	mean_volume: number,
-	peak_volume: number
+	"replaygain_gain": number,
+	"replaygain_peak": number,
+	"mean_volume": number,
+	"peak_volume": number
 };
 
 export const Volume = {
 	as(subject: any, path: string = ""): Volume {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.Number.as)(subject.replaygain_gain, path + "." + "replaygain_gain");
-				(autoguard.guards.Number.as)(subject.replaygain_peak, path + "." + "replaygain_peak");
-				(autoguard.guards.Number.as)(subject.mean_volume, path + "." + "mean_volume");
-				(autoguard.guards.Number.as)(subject.peak_volume, path + "." + "peak_volume");
+				(autoguard.guards.Number.as)(subject["replaygain_gain"], path + "[\"replaygain_gain\"]");
+				(autoguard.guards.Number.as)(subject["replaygain_peak"], path + "[\"replaygain_peak\"]");
+				(autoguard.guards.Number.as)(subject["mean_volume"], path + "[\"mean_volume\"]");
+				(autoguard.guards.Number.as)(subject["peak_volume"], path + "[\"peak_volume\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -33,16 +33,16 @@ export const Volume = {
 };
 
 export type Track = {
-	number: number,
-	artists: string[],
-	title: string
+	"number": number,
+	"artists": string[],
+	"title": string
 };
 
 export const Track = {
 	as(subject: any, path: string = ""): Track {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.Number.as)(subject.number, path + "." + "number");
+				(autoguard.guards.Number.as)(subject["number"], path + "[\"number\"]");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
@@ -51,8 +51,8 @@ export const Track = {
 						return subject;
 					}
 					throw "Type guard \"Array\" failed at \"" + path + "\"!";
-				})(subject.artists, path + "." + "artists");
-				(autoguard.guards.String.as)(subject.title, path + "." + "title");
+				})(subject["artists"], path + "[\"artists\"]");
+				(autoguard.guards.String.as)(subject["title"], path + "[\"title\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -69,20 +69,20 @@ export const Track = {
 };
 
 export type Disc = {
-	number: number,
-	artists: string[],
-	title: string,
-	year: number,
-	musicbrainz: string,
-	volume: (undefined | Volume),
-	tracks: Track[]
+	"number": number,
+	"artists": string[],
+	"title": string,
+	"year": number,
+	"musicbrainz": string,
+	"volume"?: Volume,
+	"tracks": Track[]
 };
 
 export const Disc = {
 	as(subject: any, path: string = ""): Disc {
 		return ((subject, path) => {
 			if ((subject != null) && (subject.constructor === globalThis.Object)) {
-				(autoguard.guards.Number.as)(subject.number, path + "." + "number");
+				(autoguard.guards.Number.as)(subject["number"], path + "[\"number\"]");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
@@ -91,10 +91,10 @@ export const Disc = {
 						return subject;
 					}
 					throw "Type guard \"Array\" failed at \"" + path + "\"!";
-				})(subject.artists, path + "." + "artists");
-				(autoguard.guards.String.as)(subject.title, path + "." + "title");
-				(autoguard.guards.Number.as)(subject.year, path + "." + "year");
-				(autoguard.guards.String.as)(subject.musicbrainz, path + "." + "musicbrainz");
+				})(subject["artists"], path + "[\"artists\"]");
+				(autoguard.guards.String.as)(subject["title"], path + "[\"title\"]");
+				(autoguard.guards.Number.as)(subject["year"], path + "[\"year\"]");
+				(autoguard.guards.String.as)(subject["musicbrainz"], path + "[\"musicbrainz\"]");
 				((subject, path) => {
 					try {
 						return (autoguard.guards.Undefined.as)(subject, path);
@@ -103,7 +103,7 @@ export const Disc = {
 						return (Volume.as)(subject, path);
 					} catch (error) {}
 					throw "Type guard \"Union\" failed at \"" + path + "\"!";
-				})(subject.volume, path + "." + "volume");
+				})(subject["volume"], path + "[\"volume\"]");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {
@@ -112,7 +112,7 @@ export const Disc = {
 						return subject;
 					}
 					throw "Type guard \"Array\" failed at \"" + path + "\"!";
-				})(subject.tracks, path + "." + "tracks");
+				})(subject["tracks"], path + "[\"tracks\"]");
 				return subject;
 			}
 			throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -128,7 +128,7 @@ export const Disc = {
 	}
 };
 
-export type Database = { [key: string]: Disc };
+export type Database = { [key: string]: undefined | Disc };
 
 export const Database = {
 	as(subject: any, path: string = ""): Database {
@@ -153,15 +153,15 @@ export const Database = {
 };
 
 export type Autoguard = {
-	Volume: Volume,
-	Track: Track,
-	Disc: Disc,
-	Database: Database
+	"Volume": Volume,
+	"Track": Track,
+	"Disc": Disc,
+	"Database": Database
 };
 
 export const Autoguard = {
-	Volume: Volume,
-	Track: Track,
-	Disc: Disc,
-	Database: Database
+	"Volume": Volume,
+	"Track": Track,
+	"Disc": Disc,
+	"Database": Database
 };
