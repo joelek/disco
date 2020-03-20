@@ -159,7 +159,8 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 	});
 }
 
-function backup_track(drive_offset: number, cb: Callback<Buffer>): void {
+function backup_track(read_offset: number, cb: Callback<Buffer>): void {
+	console.log({read_offset});
 	let chunks = new Array<Buffer>();
 	let cp = libcp.spawn(`main`, [ `ext`, `all` ], { cwd: "../disc_reader/build/targets/" });
 	cp.stderr.pipe(process.stderr);
@@ -169,7 +170,7 @@ function backup_track(drive_offset: number, cb: Callback<Buffer>): void {
 	});
 	cp.on(`close`, (code) => {
 		let data = Buffer.concat(chunks);
-		let byte_offset = drive_offset * 4;
+		let byte_offset = read_offset * 4;
 		let padding = Buffer.alloc(Math.abs(byte_offset));
 		if (byte_offset > 0) {
 			data = Buffer.concat([data.slice(byte_offset), padding]);
@@ -197,13 +198,12 @@ async function getDeviceDetails(): Promise<disc_reader.DeviceDetails> {
 	});
 }
 
-async function getDriveOffset(): Promise<number> {
+async function getDriveReadOffset(): Promise<number> {
 	let device_details = await getDeviceDetails();
 	console.log(device_details);
 	let xml = await metadata.promiseXML("http://www.accuraterip.com/driveoffsets.htm");
 	let rows = xml.querySelectorAll("tr");
 	let key = device_details.vendor_id + " - " + device_details.product_id;
-	let drive_offset = 0;
 	for (let row of rows) {
 		let children = Array.from(row.querySelectorAll("td"));
 		let font = children[0].querySelector("font");
@@ -211,17 +211,17 @@ async function getDriveOffset(): Promise<number> {
 			if (font.getText() === key) {
 				let font = children[1].querySelector("font");
 				if (font != null) {
-					drive_offset = Number.parseInt(font.getText());
+					let read_offset = Number.parseInt(font.getText());
+					return read_offset;
 				}
 				break;
 			}
 		}
 	}
-	console.log(drive_offset);
-	return drive_offset;
+	throw "Unable to fetch drive read offset!";
 }
 
-function backup_disc(val: { id: string, toc: CDDA_TOC, disc: cddb.Disc }, cb: Callback<void>): void {
+function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc: cddb.Disc }, cb: Callback<void>): void {
 	let folders = [
 		".",
 		"private",
@@ -310,8 +310,8 @@ function backup_disc(val: { id: string, toc: CDDA_TOC, disc: cddb.Disc }, cb: Ca
 	}
 	let reads = 0;
 	let max_reads = 8;
-	function getData(drive_offset: number): void {
-		backup_track(drive_offset, (data) => {
+	function getData(read_offset: number): void {
+		backup_track(read_offset, (data) => {
 			reads += 1;
 			console.log(`Reads: ${reads}/${max_reads}`);
 			let sectors = Math.floor(data.length / 2352);
@@ -363,15 +363,19 @@ function backup_disc(val: { id: string, toc: CDDA_TOC, disc: cddb.Disc }, cb: Ca
 				computeStats();
 			} else if ((accepted < total_sectors) && (reads < max_reads)) {
 				console.log(`Accepted: ${accepted}/${total_sectors}`);
-				getData(drive_offset);
+				getData(read_offset);
 			} else {
 				computeStats();
 			}
 		});
 	}
-	//getDriveOffset().then((drive_offset) => {
-		getData(6);
-	//});
+	if (options.read_offset != null) {
+		getData(options.read_offset);
+	} else {
+		getDriveReadOffset().then((read_offset) => {
+			getData(read_offset);
+		});
+	}
 }
 
 type MB_ARTIST_CREDIT = {
@@ -434,7 +438,8 @@ type RequriedArguments = {
 
 type OptionalArguments = {
 	release_id: string,
-	disc_number: number
+	disc_number: number,
+	read_offset: number
 };
 
 type Arguments = Partial<OptionalArguments> & RequriedArguments;
@@ -442,6 +447,7 @@ type Arguments = Partial<OptionalArguments> & RequriedArguments;
 async function parseCommandLine(): Promise<Arguments> {
 	let disc_number: number | undefined;
 	let release_id: string | undefined;
+	let read_offset: number | undefined;
 	let found_unrecognized_argument = false;
 	for (let arg of process.argv.slice(2)) {
 		let parts;
@@ -450,6 +456,8 @@ async function parseCommandLine(): Promise<Arguments> {
 			disc_number = Number.parseInt(parts[1]);
 		} else if ((parts = /^--release=(.+)$/.exec(arg)) != null) {
 			release_id = parts[1];
+		} else if ((parts = /^--read-offset=([0-9]+)$/.exec(arg)) != null) {
+			read_offset = Number.parseInt(parts[1]);
 		} else {
 			found_unrecognized_argument = true;
 			process.stderr.write("Unrecognized argument \"" + arg + "\"!\n");
@@ -459,11 +467,13 @@ async function parseCommandLine(): Promise<Arguments> {
 		process.stderr.write("Arguments:\n");
 		process.stderr.write("	--disc=number\n");
 		process.stderr.write("	--release=string\n");
+		process.stderr.write("	--read-offset=number\n");
 		process.exit(0);
 	}
 	return {
 		release_id,
-		disc_number
+		disc_number,
+		read_offset
 	};
 }
 
@@ -552,7 +562,7 @@ parseCommandLine().then((options) => {
 	get_disc(options, (val) => {
 		if (val != null) {
 			console.log(JSON.stringify(val.disc, null, "\t"));
-			backup_disc(val, () => {
+			backup_disc(options, val, () => {
 				process.exit(0);
 			});
 		}
