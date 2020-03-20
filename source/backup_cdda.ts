@@ -6,6 +6,7 @@ import * as librl from 'readline';
 import * as cddb from "./cddb";
 import * as disc_reader from "./disc_reader";
 import * as metadata from "./metadata";
+import * as musicbrainz from "./musicbrainz";
 import * as utils from "./utils";
 
 let db = utils.loadDatabase("./private/db/cddb.json", cddb.Database.as);
@@ -378,40 +379,6 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 	}
 }
 
-type MB_ARTIST_CREDIT = {
-	'name': string;
-};
-
-type MB_TRACK  = {
-	'title': string;
-	'artist-credit': Array<MB_ARTIST_CREDIT>;
-};
-
-type MB_DISC = {
-	"sectors": number,
-	"offset-count": number,
-	"id": string,
-	"offsets": number[]
-};
-
-type MB_MEDIA = {
-	'tracks': Array<MB_TRACK>;
-	'position': number;
-	"discs": MB_DISC[]
-};
-
-type MB_RELEASE = {
-	'id': string;
-	'date': string;
-	'title': string;
-	'artist-credit': Array<MB_ARTIST_CREDIT>;
-	'media': Array<MB_MEDIA>;
-};
-
-type MB = {
-	releases: Array<MB_RELEASE>;
-};
-
 function get_mb_disc_id(toc: CDDA_TOC): string {
 	let n = toc.tracks.length - 1;
 	let buffer = Buffer.alloc(6 + (4 * 99));
@@ -477,7 +444,7 @@ async function parseCommandLine(): Promise<Arguments> {
 	};
 }
 
-function get_mb_data(options: Arguments, mb_disc_id: string, cb: Callback<MB | null>): void {
+function get_mb_data(options: Arguments, mb_disc_id: string, cb: Callback<musicbrainz.DiscIdLookupResponse | null>): void {
 	let url = `https://musicbrainz.org/ws/2/discid/${mb_disc_id}?fmt=json&inc=artist-credits+recordings`;
 	if (options.release_id != null) {
 		url = `https://musicbrainz.org/ws/2/release/${options.release_id}?fmt=json&inc=artist-credits+recordings`;
@@ -503,7 +470,7 @@ function get_mb_data(options: Arguments, mb_disc_id: string, cb: Callback<MB | n
 						releases: [json]
 					};
 				}
-				cb(json); // TODO: Assert type compatibility.
+				cb(musicbrainz.DiscIdLookupResponse.as(json));
 			} catch (error) {
 				cb(null);
 			}
@@ -511,7 +478,7 @@ function get_mb_data(options: Arguments, mb_disc_id: string, cb: Callback<MB | n
 	}).end();
 }
 
-function get_disc_metadata_from_mb(options: Arguments, mb_disc_id: string, mb: MB): cddb.Disc | null {
+function get_disc_metadata_from_mb(options: Arguments, mb_disc_id: string, mb: musicbrainz.DiscIdLookupResponse): cddb.Disc | null {
 	let parts: RegExpExecArray | null;
 	if (mb.releases.length === 0) {
 		return null;

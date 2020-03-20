@@ -4,11 +4,11 @@
 	},
 	Track: {
 		title: string,
-		artist-credit: @ArtistCredit[]
+		"artist-credit": @ArtistCredit[]
 	},
 	Disc: {
 		sectors: number,
-		offset-count: number,
+		"offset-count": number,
 		id: string,
 		offsets: number[]
 	},
@@ -21,7 +21,7 @@
 		id: string,
 		date: string,
 		title: string,
-		artist-credit: @ArtistCredit[],
+		"artist-credit": @ArtistCredit[],
 		media: @Media[]
 	},
 	DiscIdLookupResponse: {
