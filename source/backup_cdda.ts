@@ -456,7 +456,7 @@ async function parseCommandLine(): Promise<Arguments> {
 			disc_number = Number.parseInt(parts[1]);
 		} else if ((parts = /^--release=(.+)$/.exec(arg)) != null) {
 			release_id = parts[1];
-		} else if ((parts = /^--read-offset=([0-9]+)$/.exec(arg)) != null) {
+		} else if ((parts = /^--read-offset=([+-]?[0-9]+)$/.exec(arg)) != null) {
 			read_offset = Number.parseInt(parts[1]);
 		} else {
 			found_unrecognized_argument = true;
