@@ -10,6 +10,27 @@ type Metadata = {
 	track: cddb.Track
 };
 
+function makePath(components_ordered: Array<{ value: string, flex: number }>): string {
+	let components = components_ordered.slice().sort((one, two) => {
+		return two.flex - one.flex;
+	});
+	while (true) {
+		let candidate = components_ordered.map((component) => {
+			return component.value;
+		}).join("-");
+		if (candidate.length <= 128) {
+			return candidate;
+		}
+		let component = components.find((component) => {
+			return component.flex >= 0 && component.value.length > 0;
+		});
+		if (component == null) {
+			throw "Unable to make path!";
+		}
+		component.value = component.value.split("_").slice(0, -1).join("_");
+	}
+}
+
 function getPaths(disc: cddb.Disc, track: cddb.Track): Array<string> {
 	let root = [
 		".",
@@ -29,7 +50,24 @@ function getPaths(disc: cddb.Disc, track: cddb.Track): Array<string> {
 		...root,
 		`${disc_artist}`,
 		`${disc_artist}-${disc_year}-${disc_title}-${disc_number}-${suffix}`,
-		`${track_number}-${track_artist}-${track_title}-${suffix}`
+		makePath([
+			{
+				value: track_number,
+				flex: 0
+			},
+			{
+				value: track_artist,
+				flex: 1
+			},
+			{
+				value: track_title,
+				flex: 2,
+			},
+			{
+				value: suffix,
+				flex: 0
+			}
+		])
 	];
 }
 
