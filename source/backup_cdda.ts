@@ -133,6 +133,10 @@ function get_disc_from_ws(options: Arguments, toc: CDDA_TOC, cb: Callback<cddb.D
 		if (disc == null) {
 			return cb(null);
 		}
+		if (disc.tracks.length !== toc.tracks.length) {
+			console.log(`Expected metadata for ${toc.tracks.length} tracks but found ${disc.tracks.length}!`);
+			return cb(null);
+		}
 		cb(disc);
 	});
 }
