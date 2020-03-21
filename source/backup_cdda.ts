@@ -451,7 +451,7 @@ async function parseCommandLine(): Promise<Arguments> {
 function get_mb_data(options: Arguments, mb_disc_id: string, cb: Callback<musicbrainz.DiscIdLookupResponse | null>): void {
 	let url = `https://musicbrainz.org/ws/2/discid/${mb_disc_id}?fmt=json&inc=artist-credits+recordings`;
 	if (options.release_id != null) {
-		url = `https://musicbrainz.org/ws/2/release/${options.release_id}?fmt=json&inc=artist-credits+recordings`;
+		url = `https://musicbrainz.org/ws/2/release/${options.release_id}?fmt=json&inc=artist-credits+discids+recordings`;
 	}
 	libhttps.request(url, {
 		method: `GET`,
