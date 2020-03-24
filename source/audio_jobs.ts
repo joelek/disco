@@ -22,7 +22,7 @@ function makePath(components_ordered: Array<{ value: string, flex: number }>): s
 			return candidate;
 		}
 		let component = components.find((component) => {
-			return component.flex >= 0 && component.value.length > 0;
+			return component.flex > 0 && component.value.length > 0;
 		});
 		if (component == null) {
 			throw "Unable to make path!";
