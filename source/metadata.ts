@@ -1092,7 +1092,7 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 			let air_date_timestamp: number | null = null;
 			element = container.querySelector(".airdate");
 			if (element !== null) {
-				air_date_timestamp = Date.parse(element.getText());
+				air_date_timestamp = Date.parse(element.getText() + "Z");
 			}
 			if (id != null && title != null && description != null && episode_number != null && air_date_timestamp != null) {
 				episodes.push({
