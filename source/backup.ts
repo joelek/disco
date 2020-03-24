@@ -315,6 +315,8 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 										if (episode !== undefined) {
 											value.imdb = episode.id;
 											value.title = episode.title;
+											value.year = new Date(episode.air_date_timestamp).getUTCFullYear();
+											value.summary = episode.description;
 										}
 										next();
 									}, () => {
@@ -333,6 +335,8 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 								value.title = title.title;
 								value.year = title.year;
 								value.imdb = a_imdb;
+								value.poster_url = title.image_url;
+								value.summary = title.description;
 							}
 							next();
 						}, () => {

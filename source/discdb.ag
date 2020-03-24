@@ -8,7 +8,9 @@
 		title: string,
 		year: number,
 		part: number,
-		imdb: string
+		imdb: string,
+		poster_url: string,
+		summary: string
 	}),
 	EpisodeContent: (@Content & {
 		type: "episode",
@@ -17,7 +19,9 @@
 		season: number,
 		episode: number,
 		imdb: string,
-		imdb_show: string
+		imdb_show: string,
+		year: number,
+		summary: string
 	}),
 	UnknownContent: (@Content & {
 		type: "unknown"

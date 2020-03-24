@@ -33,7 +33,9 @@ export type MovieContent = (Content & {
 	"title": string,
 	"year": number,
 	"part": number,
-	"imdb": string
+	"imdb": string,
+	"poster_url": string,
+	"summary": string
 });
 
 export const MovieContent = {
@@ -52,6 +54,8 @@ export const MovieContent = {
 					(autoguard.guards.Number.as)(subject["year"], path + "[\"year\"]");
 					(autoguard.guards.Number.as)(subject["part"], path + "[\"part\"]");
 					(autoguard.guards.String.as)(subject["imdb"], path + "[\"imdb\"]");
+					(autoguard.guards.String.as)(subject["poster_url"], path + "[\"poster_url\"]");
+					(autoguard.guards.String.as)(subject["summary"], path + "[\"summary\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
@@ -76,7 +80,9 @@ export type EpisodeContent = (Content & {
 	"season": number,
 	"episode": number,
 	"imdb": string,
-	"imdb_show": string
+	"imdb_show": string,
+	"year": number,
+	"summary": string
 });
 
 export const EpisodeContent = {
@@ -97,6 +103,8 @@ export const EpisodeContent = {
 					(autoguard.guards.Number.as)(subject["episode"], path + "[\"episode\"]");
 					(autoguard.guards.String.as)(subject["imdb"], path + "[\"imdb\"]");
 					(autoguard.guards.String.as)(subject["imdb_show"], path + "[\"imdb_show\"]");
+					(autoguard.guards.Number.as)(subject["year"], path + "[\"year\"]");
+					(autoguard.guards.String.as)(subject["summary"], path + "[\"summary\"]");
 					return subject;
 				}
 				throw "Type guard \"Object\" failed at \"" + path + "\"!";
