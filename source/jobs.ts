@@ -1,8 +1,9 @@
 import * as libfs from 'fs';
+import * as libcp from 'child_process';
 import * as libpath from 'path';
 import * as vobsub from './vobsub';
 import * as ffmpeg from './ffmpeg';
-import { MediaContent, MediaDatabase, MediaType } from './discdb';
+import { MediaContent, MediaDatabase, MediaType, MovieContent } from './discdb';
 import * as utils from './utils';
 import * as audio_jobs from './audio_jobs';
 
@@ -59,8 +60,32 @@ let get_media_info = (path: string): { type: MediaType, content: MediaContent } 
 };
 
 function checkForJobs() {
-	queue = generate_queue([], './private/archive/audio/');
+	queue = generate_queue([], './private/queue/');
 	pick_from_queue();
+}
+
+async function writeImage(buffer: Buffer, target_path: string): Promise<void> {
+	return new Promise((resolve, reject) => {
+		console.log(target_path);
+		let options = [
+			"-i", "pipe:",
+			"-vf", [
+				"scale=w=720:h=1080:force_original_aspect_ratio=increase",
+				"crop=720:1080",
+				"setsar=1:1"
+			].join(","),
+			"-q:v", "1",
+			"-f", "singlejpeg",
+			"-fflags", "+bitexact",
+			"-map_metadata", "-1",
+			target_path, "-y"
+		];
+		let ffmpeg = libcp.spawn("ffmpeg", options);
+		ffmpeg.on("error", reject);
+		ffmpeg.on("close", resolve);
+		ffmpeg.stdin.end(buffer);
+		ffmpeg.stderr.pipe(process.stderr);
+	});
 }
 
 let pick_from_queue = (): void => {
@@ -86,7 +111,15 @@ let pick_from_queue = (): void => {
 								});
 							}
 						}, () => {
-							pick_from_queue();
+							if (MovieContent.is(mi.content)) {
+								let url = mi.content.poster_url;
+								utils.request(url).then(async (buffer) => {
+									let basename = utils.getBasename(mi.type, mi.content);
+									await writeImage(buffer, basename + ".jpg");
+								}).finally(pick_from_queue);
+							} else {
+								pick_from_queue();
+							}
 						});
 					});
 				});

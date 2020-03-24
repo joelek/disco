@@ -1,5 +1,6 @@
 import * as discdb from "./discdb";
 import * as libfs from "fs";
+import * as libhttps from "https";
 
 function pathify(string: string): string {
 	return string
@@ -41,9 +42,32 @@ function loadDatabase<A>(path: string, guard: { (subject: any): A }): A {
 	return guard(JSON.parse(libfs.readFileSync(path, "utf8")));
 }
 
+async function request(url: string): Promise<Buffer> {
+	return new Promise((resolve, reject) => {
+		const client_request = libhttps.request(url);
+		client_request.on("response", (incoming_message) => {
+			incoming_message.setEncoding("binary");
+			const buffers = new Array<Buffer>();
+			incoming_message.on("data", (chunk) => {
+				const buffer = Buffer.from(chunk, "binary");
+				buffers.push(buffer);
+			});
+			incoming_message.on("end", () => {
+				const body = Buffer.concat(buffers);
+				return resolve(body);
+			});
+		});
+		client_request.on("error", (error) => {
+			return reject(error);
+		});
+		client_request.end();
+	});
+}
+
 export {
 	pathify,
 	foreach,
 	getBasename,
-	loadDatabase
+	loadDatabase,
+	request
 };
