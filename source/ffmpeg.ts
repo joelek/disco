@@ -323,17 +323,18 @@ let encode_hardware = (
 		if (EpisodeContent.is(opt_content)) {
 			md = [
 				'-metadata', `title=${opt_content.title}`,
+				'-metadata', `date=${opt_content.year}`,
 				'-metadata', `show=${opt_content.show}`,
 				'-metadata', `season_number=${opt_content.season}`,
 				'-metadata', `episode_sort=${opt_content.episode}`,
 				'-metadata', `episode_id=${opt_content.title}`,
-				"-metadata", "comment=" + JSON.stringify({ imdb: opt_content.imdb })
+				"-metadata", `comment=${opt_content.summary}`
 			];
 		} else if (MovieContent.is(opt_content)) {
 			md = [
 				'-metadata', `title=${opt_content.title}`,
 				'-metadata', `date=${opt_content.year}`,
-				"-metadata", "comment=" + JSON.stringify({ imdb: opt_content.imdb })
+				"-metadata", `comment=${opt_content.summary}`
 			];
 		}
 	}
