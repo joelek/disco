@@ -1046,12 +1046,22 @@ interface Episode {
 }
 
 interface Season {
+	image_url?: string,
 	episodes: Array<Episode>
 }
 
 export function getSeason(id: string, season: number, cb: Callback<Season>): void {
 	let url = "https://www.imdb.com/title/" + id + "/episodes?season=" + season;
 	getXML(url, (document) => {
+		let image_url: string | undefined = undefined;
+		let element: XMLElementNode | null;
+		element = document.querySelector("img.poster[src]");
+		if (element !== null) {
+			let src = element.getAttribute("src");
+			if (src != null) {
+				image_url = getImageURL(src);
+			}
+		}
 		let containers = document.querySelectorAll(".eplist .list_item");
 		let episodes = new Array<Episode>();
 		for (let container of containers) {
@@ -1095,6 +1105,7 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 			}
 		}
 		cb({
+			image_url,
 			episodes
 		});
 	});
