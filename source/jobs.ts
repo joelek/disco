@@ -1,11 +1,11 @@
 import * as libfs from 'fs';
-import * as libcp from 'child_process';
 import * as libpath from 'path';
 import * as vobsub from './vobsub';
 import * as ffmpeg from './ffmpeg';
-import { MediaContent, MediaDatabase, MediaType, MovieContent } from './discdb';
+import { MediaContent, MediaDatabase, MediaType } from './discdb';
 import * as utils from './utils';
 import * as audio_jobs from './audio_jobs';
+import * as poster_jobs from './poster_jobs';
 
 let move_files = (filenames: string[], basename: string): void => {
 	basename = libpath.join(basename);
@@ -64,30 +64,6 @@ function checkForJobs() {
 	pick_from_queue();
 }
 
-async function writeImage(buffer: Buffer, target_path: string): Promise<void> {
-	return new Promise((resolve, reject) => {
-		console.log(target_path);
-		let options = [
-			"-i", "pipe:",
-			"-vf", [
-				"scale=w=720:h=1080:force_original_aspect_ratio=increase",
-				"crop=720:1080",
-				"setsar=1:1"
-			].join(","),
-			"-q:v", "1",
-			"-f", "singlejpeg",
-			"-fflags", "+bitexact",
-			"-map_metadata", "-1",
-			target_path, "-y"
-		];
-		let ffmpeg = libcp.spawn("ffmpeg", options);
-		ffmpeg.on("error", reject);
-		ffmpeg.on("close", resolve);
-		ffmpeg.stdin.end(buffer);
-		ffmpeg.stderr.pipe(process.stderr);
-	});
-}
-
 let pick_from_queue = (): void => {
 	if (queue.length > 0) {
 		let index = (Math.random() * queue.length) | 0;
@@ -111,19 +87,7 @@ let pick_from_queue = (): void => {
 								});
 							}
 						}, () => {
-							if (MovieContent.is(mi.content)) {
-								let url = mi.content.poster_url;
-								let content = {
-									...mi.content,
-									part: 0
-								};
-								utils.request(url).then(async (buffer) => {
-									let basename = utils.getBasename(mi.type, content);
-									await writeImage(buffer, basename + ".jpg");
-								}).finally(pick_from_queue);
-							} else {
-								pick_from_queue();
-							}
+							pick_from_queue();
 						});
 					});
 				});
@@ -133,14 +97,26 @@ let pick_from_queue = (): void => {
 		audio_jobs.createJobList(input)
 			.then(async (jobs) => {
 				for (let job of jobs) {
-					await job.perform();
+					try {
+						await job.perform();
+					} catch (error) {}
 				}
 			})
 			.finally(() => {
 				pick_from_queue();
 			});
 	} else {
-		setTimeout(checkForJobs, 60000);
+		poster_jobs.createJobList()
+			.then(async (jobs) => {
+				for (let job of jobs) {
+					try {
+						await job.perform();
+					} catch (error) {}
+				}
+			})
+			.finally(() => {
+				setTimeout(checkForJobs, 60000);
+			});
 	}
 };
 
