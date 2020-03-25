@@ -113,8 +113,12 @@ let pick_from_queue = (): void => {
 						}, () => {
 							if (MovieContent.is(mi.content)) {
 								let url = mi.content.poster_url;
+								let content = {
+									...mi.content,
+									part: 0
+								};
 								utils.request(url).then(async (buffer) => {
-									let basename = utils.getBasename(mi.type, mi.content);
+									let basename = utils.getBasename(mi.type, content);
 									await writeImage(buffer, basename + ".jpg");
 								}).finally(pick_from_queue);
 							} else {

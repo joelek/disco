@@ -334,6 +334,7 @@ let encode_hardware = (
 			md = [
 				'-metadata', `title=${opt_content.title}`,
 				'-metadata', `date=${opt_content.year}`,
+				"-metadata", `track=${opt_content.part}`,
 				"-metadata", `comment=${opt_content.summary}`
 			];
 		}
