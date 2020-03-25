@@ -78,11 +78,11 @@ let pick_from_queue = (): void => {
 						utils.foreach(jobs, (job, next) => {
 							const path = job.getArtifactPath();
 							libfs.mkdirSync(path.split("/").slice(0, -1).join("/"), { recursive: true });
-							console.log(path);
 							if (libfs.existsSync(path)) {
 								next();
 							} else {
 								job.produceArtifact((path) => {
+									console.log(path);
 									next();
 								});
 							}
