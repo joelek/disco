@@ -41,12 +41,13 @@ function getPaths(disc: discdb.Media, track: discdb.MediaContent): Array<string>
 		let year = ("0000" + track.year).slice(-4);
 		let suffix = utils.pathify(disc.type);
 		let dir = title.substr(0, 1);
+		let part = ("00" + track.part).slice(-2);
 		return [
 			...root,
 			"movies",
 			`${dir}`,
 			`${title}-${year}-${suffix}`,
-			`${title}-${year}-${suffix}`,
+			`${part}-${title}-${year}-${suffix}`,
 		];
 	}
 	throw "Unable to get path!";
