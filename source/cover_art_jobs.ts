@@ -62,8 +62,6 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 						await rl.rateLimit();
 						const buffer = await utils.request(metadata.media.cover_art_url);
 						libfs.writeFileSync(path, buffer);
-					} else {
-						console.log("Missing " + metadata.media.title + " " + metadata.media.artists.join("; "));
 					}
 				}
 			}
