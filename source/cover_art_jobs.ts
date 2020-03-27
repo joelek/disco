@@ -44,7 +44,7 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 			]));
 			continue;
 		}
-		if (entry.isFile()) {
+		if (entry.isFile() && basename.endsWith(".wav")) {
 			async function perform(): Promise<void> {
 				const metadata = await getMetadata(database, basename);
 				const paths = [

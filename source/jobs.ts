@@ -8,6 +8,7 @@ import * as audio_jobs from './audio_jobs';
 import * as cover_art_jobs from './cover_art_jobs';
 import * as cover_art_transcode_jobs from './cover_art_transcode_jobs';
 import * as poster_jobs from './poster_jobs';
+import * as poster_transcode_jobs from './poster_transcode_jobs';
 
 let move_files = (filenames: string[], basename: string): void => {
 	basename = libpath.join(basename);
@@ -111,7 +112,8 @@ let pick_from_queue = (): void => {
 		(async () => {
 			let jobs = [
 				...await poster_jobs.createJobList(),
-				/*...await cover_art_jobs.createJobList(),*/
+				...await poster_transcode_jobs.createJobList(),
+				...await cover_art_jobs.createJobList(),
 				...await cover_art_transcode_jobs.createJobList()
 			];
 			for (let job of jobs) {

@@ -1,41 +1,50 @@
 import * as libcp from "child_process";
 import * as libfs from "fs";
-import * as cddb from "./cddb";
+import * as discdb from "./discdb";
 import * as job from "./job";
 import * as utils from "./utils";
 
-async function getMetadata(database: cddb.Database, basename: string): Promise<{
+async function getMetadata(database: discdb.MediaDatabase, basename: string): Promise<{
 	id: string,
-	media: cddb.Disc
+	index: number,
+	media: discdb.Media,
+	track: discdb.MediaContent
 }> {
 	const parts = basename.split(".");
 	if (parts.length === 2) {
 		const id = parts[0];
 		const media = database[id];
 		if (media != null) {
-			return {
-				id,
-				media
-			};
+			const index = 0;
+			const track = media.content[index];
+			if (track != null) {
+				return {
+					id,
+					index,
+					media,
+					track
+				};
+			}
 		}
 	}
 	throw "Unable to get metadata!";
 }
 
-async function getPaths(media: cddb.Disc): Promise<Array<string>> {
-	const disc_artist = utils.pathify(media.artists.join("; "));
-	const disc_year = ("0000" + media.year).slice(-4);
-	const disc_title = utils.pathify(media.title);
-	const disc_number = ("00" + media.number).slice(-2);
-	const suffix = "cd";
+async function getTargetPaths(media: discdb.Media, track: discdb.MovieContent): Promise<Array<string>> {
+	const title = utils.pathify(track.title);
+	const year = ("0000" + track.year).slice(-4);
+	const suffix = utils.pathify(media.type);
+	const dir = title.substr(0, 1);
+	const part = ("00" + 0).slice(-2);
 	return [
 		".",
 		"private",
 		"media",
-		"audio",
-		`${disc_artist}`,
-		`${disc_artist}-${disc_year}-${disc_title}-${disc_number}-${suffix}`,
-		`00-artwork`,
+		"video",
+		"movies",
+		`${dir}`,
+		`${title}-${year}-${suffix}`,
+		"00-artwork",
 	];
 }
 
@@ -44,8 +53,8 @@ async function writeBufferToDisk(buffer: Buffer, path: string): Promise<void> {
 		const options = [
 			"-i", "pipe:",
 			"-vf", [
-				"scale=w=1080:h=1080:force_original_aspect_ratio=increase",
-				"crop=1080:1080",
+				"scale=w=720:h=1080:force_original_aspect_ratio=increase",
+				"crop=720:1080",
 				"setsar=1:1"
 			].join(","),
 			"-q:v", "1",
@@ -61,7 +70,7 @@ async function writeBufferToDisk(buffer: Buffer, path: string): Promise<void> {
 	});
 }
 
-async function createJobListRecursively(database: cddb.Database, directories: Array<string>): Promise<Array<job.PromiseJob>> {
+async function createJobListRecursively(database: discdb.MediaDatabase, directories: Array<string>): Promise<Array<job.PromiseJob>> {
 	const jobs = new Array<job.PromiseJob>();
 	const entries = await libfs.promises.readdir(directories.join("/"), {
 		withFileTypes: true
@@ -78,7 +87,9 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 		if (entry.isFile() && basename.endsWith(".jpg")) {
 			async function perform(): Promise<void> {
 				const metadata = await getMetadata(database, basename);
-				const paths = await getPaths(metadata.media);
+				const media = metadata.media;
+				const track = discdb.MovieContent.as(metadata.track);
+				const paths = await getTargetPaths(media, track);
 				const path = paths.join("/") + ".jpg";
 				if (!libfs.existsSync(path)) {
 					console.log(path);
@@ -100,12 +111,12 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 }
 
 async function createJobList(): Promise<Array<job.PromiseJob>> {
-	const database = utils.loadDatabase("./private/db/cddb.json", cddb.Database.as);
+	const database = utils.loadDatabase("./private/db/discdb.json", discdb.MediaDatabase.as);
 	return createJobListRecursively(database, [
 		".",
 		"private",
 		"archive",
-		"audio"
+		"image"
 	]);
 }
 
