@@ -121,8 +121,7 @@ let pick_from_queue = (): void => {
 					await job.perform();
 				} catch (error) {}
 			}
-			console.log("done!");
-			setTimeout(checkForJobs, 60000);
+			process.exit(0);
 		})();
 	}
 };

@@ -913,6 +913,7 @@ export function getSearchResults(query: string, type: Array<SearchType>, year: n
 			let src = element.getAttribute("src");
 			let image_url = src != null ? getImageURL(src) : null;
 			if (id != null && title != null && image_url != null) {
+				title = title.normalize("NFC");
 				items.push({
 					id,
 					title,
@@ -972,6 +973,8 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 			title = element.getAttribute("data-title");
 		}
 		if (title !== null && description !== null && image_url !== null) {
+			title = title.normalize("NFC");
+			description = description.normalize("NFC");
 			cb({
 				id,
 				type,
@@ -1022,6 +1025,7 @@ export function getCredits(id: string, cb: Callback<Credits>): void {
 				image_url = getImageURL(loadlate);
 			}
 			if (id != null && title != null && image_url != null) {
+				title = title.normalize("NFC");
 				items.push({
 					id,
 					title,
@@ -1095,6 +1099,8 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 				air_date_timestamp = Date.parse(element.getText() + "Z");
 			}
 			if (id != null && title != null && description != null && episode_number != null && air_date_timestamp != null) {
+				title = title.normalize("NFC");
+				description = description.normalize("NFC");
 				episodes.push({
 					id,
 					title,

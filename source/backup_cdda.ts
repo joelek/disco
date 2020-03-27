@@ -515,16 +515,16 @@ function get_disc_metadata_from_mb(options: Arguments, mb_disc_id: string, mb: m
 		media = release.media[options.disc_number != null ? options.disc_number : 0];
 	}
 	let id = release.id;
-	let artists = release[`artist-credit`].map((ac) => ac.name);
-	let title = release.title;
+	let artists = release[`artist-credit`].map((ac) => ac.name.normalize("NFC"));
+	let title = release.title.normalize("NFC");
 	let number = media.position;
 	let year = 0;
 	if ((parts = /^([0-9]{4})/.exec(release.date)) !== null) {
 		year = Number.parseInt(parts[1]);
 	}
 	let tracks = media.tracks.map((track, index) => {
-		let title = track.title;
-		let artists = track[`artist-credit`].map((ac) => ac.name);
+		let title = track.title.normalize("NFC");
+		let artists = track[`artist-credit`].map((ac) => ac.name.normalize("NFC"));
 		let number = index + 1;
 		return {
 			number,
