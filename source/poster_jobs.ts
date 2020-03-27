@@ -66,16 +66,16 @@ async function writeBufferToDisk(buffer: Buffer, path: string): Promise<void> {
 	});
 }
 
-async function createJobListRecursively(database: discdb.MediaDatabase, paths: Array<string>): Promise<Array<job.PromiseJob>> {
+async function createJobListRecursively(database: discdb.MediaDatabase, directories: Array<string>): Promise<Array<job.PromiseJob>> {
 	const jobs = new Array<job.PromiseJob>();
-	const entries = await libfs.promises.readdir(paths.join("/"), {
+	const entries = await libfs.promises.readdir(directories.join("/"), {
 		withFileTypes: true
 	});
 	for (const entry of entries) {
 		const basename = entry.name;
 		if (entry.isDirectory()) {
 			jobs.push(...await createJobListRecursively(database, [
-				...paths,
+				...directories,
 				basename
 			]));
 			continue;
