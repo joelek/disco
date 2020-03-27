@@ -94,9 +94,6 @@ async function createAudioJob(source_path: string, metadata: Metadata): Promise<
 	async function perform(): Promise<void> {
 		libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
 		return new Promise((resolve, reject) => {
-			let comment = JSON.stringify({
-				musicbrainz: disc.musicbrainz
-			});
 			let options = [
 				"-i", source_path,
 				"-af", `volume=${getVolumeAdjustmentDecibels(metadata.disc.volume)}dB`,
@@ -113,7 +110,6 @@ async function createAudioJob(source_path: string, metadata: Metadata): Promise<
 				"-metadata", `track=${track.number}`,
 				"-metadata", `artist=${track.artists.join("; ")}`,
 				"-metadata", `title=${track.title}`,
-				"-metadata", `comment=${comment}`,
 				target_path, "-y"
 			];
 			console.log(`${source_path} --> ${target_path}`);
