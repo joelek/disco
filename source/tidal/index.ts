@@ -48,7 +48,36 @@ async function request(request: Request<Buffer>): Promise<Response<Buffer>> {
 	});
 }
 
+class RateLimiter {
+	private average_request_time_ms: number;
+	private last_request_timestamp_ms: number;
+
+	constructor(average_request_time_ms: number) {
+		this.average_request_time_ms = average_request_time_ms;
+		this.last_request_timestamp_ms = 0;
+	}
+
+	async rateLimit(): Promise<void> {
+		return new Promise((resolve, reject) => {
+			const next_request_delay = Math.round(this.average_request_time_ms * (0.5 + Math.random()));
+			const next_request_timestamp_ms = this.last_request_timestamp_ms + next_request_delay;
+			const delay_ms = next_request_timestamp_ms - Date.now();
+			if (delay_ms > 0) {
+				setTimeout(() => {
+					this.last_request_timestamp_ms = Date.now();
+					return resolve();
+				}, delay_ms);
+			} else {
+				return resolve();
+			}
+		});
+	}
+}
+
+const rate_limiter = new RateLimiter(10000);
+
 async function getSearchResults(query: string, types: Array<search.EntityType>, token?: string): Promise<search.SearchResponse> {
+	await rate_limiter.rateLimit();
 	let response = await request({
 		url: "https://api.tidal.com/v1/search?query=" + encodeURIComponent(query) + "&limit=3&offset=0&types=" + types.join(",") + "&includeContributors=true&countryCode=SE",
 		headers: {
