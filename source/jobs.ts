@@ -5,6 +5,7 @@ import * as ffmpeg from './ffmpeg';
 import { MediaContent, MediaDatabase, MediaType } from './discdb';
 import * as utils from './utils';
 import * as audio_jobs from './audio_jobs';
+import * as cover_art_jobs from './cover_art_jobs';
 import * as poster_jobs from './poster_jobs';
 
 let move_files = (filenames: string[], basename: string): void => {
@@ -106,17 +107,19 @@ let pick_from_queue = (): void => {
 				pick_from_queue();
 			});
 	} else {
-		poster_jobs.createJobList()
-			.then(async (jobs) => {
-				for (let job of jobs) {
-					try {
-						await job.perform();
-					} catch (error) {}
-				}
-			})
-			.finally(() => {
-				setTimeout(checkForJobs, 60000);
-			});
+		(async () => {
+			let jobs = [
+				...await poster_jobs.createJobList(),
+				...await cover_art_jobs.createJobList()
+			];
+			for (let job of jobs) {
+				try {
+					await job.perform();
+				} catch (error) {}
+			}
+			console.log("done!");
+			setTimeout(checkForJobs, 60000);
+		})();
 	}
 };
 
