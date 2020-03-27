@@ -8,6 +8,7 @@ import * as disc_reader from "./disc_reader";
 import * as metadata from "./metadata";
 import * as musicbrainz from "./musicbrainz";
 import * as utils from "./utils";
+import * as tidal from "./tidal";
 
 let db = utils.loadDatabase("./private/db/cddb.json", cddb.Database.as);
 
@@ -153,9 +154,23 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 			log(`Disc not recognized.`);
 			return get_disc_from_ws(options, toc, (disc) => {
 				if (disc != null) {
-					return save_disc_to_db(id, disc, () => {
-						return cb({id, toc, disc});
-					});
+					(async () => {
+						const query = [
+							disc.title,
+							...disc.artists,
+						].join(" ");
+						try {
+							const results = await tidal.getSearchResults(query, ["ALBUMS"]);
+							const album = results.albums.items[0];
+							if (album != null) {
+								const url = await tidal.getCoverArtURL(album.cover);
+								disc.cover_art_url = url;
+							}
+						} catch (error) {}
+						return save_disc_to_db(id, disc, () => {
+							return cb({id, toc, disc});
+						});
+					})();
 				} else {
 					return cb(null);
 				}

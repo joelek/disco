@@ -3,6 +3,7 @@ import * as cddb from "./cddb";
 import * as job from "./job";
 import * as tidal from "./tidal";
 import * as utils from "./utils";
+import * as rate_limiter from "./rate_limiter";
 
 async function getMetadata(database: cddb.Database, basename: string): Promise<{
 	id: string,
@@ -30,6 +31,8 @@ async function getMetadata(database: cddb.Database, basename: string): Promise<{
 	throw "Unable to get metadata!";
 }
 
+const rl = new rate_limiter.RateLimiter(10000);
+
 async function createJobListRecursively(database: cddb.Database, directories: Array<string>): Promise<Array<job.PromiseJob>> {
 	const jobs = new Array<job.PromiseJob>();
 	const entries = await libfs.promises.readdir(directories.join("/"), {
@@ -53,20 +56,15 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 				];
 				const path = paths.join("/") + ".jpg";
 				if (!libfs.existsSync(path)) {
-					console.log(path);
-					const query = [
-						metadata.media.title,
-						...metadata.media.artists,
-					].join(" ");
-					const results = await tidal.getSearchResults(query, ["ALBUMS"]);
-					const album = results.albums.items[0];
-					if (album == null) {
-						throw "Expected a matching album!";
+					if (metadata.media.cover_art_url != null) {
+						console.log(path);
+						libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
+						await rl.rateLimit();
+						const buffer = await utils.request(metadata.media.cover_art_url);
+						libfs.writeFileSync(path, buffer);
+					} else {
+						console.log("Missing " + metadata.media.title + " " + metadata.media.artists.join("; "));
 					}
-					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
-					const url = await tidal.getCoverArtURL(album.cover);
-					const buffer = await utils.request(url);
-					libfs.writeFileSync(path, buffer);
 				}
 			}
 			jobs.push({
