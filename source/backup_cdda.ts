@@ -519,7 +519,7 @@ function get_disc_metadata_from_mb(options: Arguments, mb_disc_id: string, mb: m
 	});
 	let volume = undefined;
 	return {
-		musicbrainz: mb_disc_id,
+		musicbrainz: id,
 		volume,
 		artists,
 		title,

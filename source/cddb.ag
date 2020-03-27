@@ -15,7 +15,7 @@
 		artists: string[],
 		title: string,
 		year: number,
-		musicbrainz: string,
+		musicbrainz?: string,
 		volume?: @Volume,
 		tracks: @Track[]
 	},

@@ -73,7 +73,7 @@ export type Disc = {
 	"artists": string[],
 	"title": string,
 	"year": number,
-	"musicbrainz": string,
+	"musicbrainz"?: string,
 	"volume"?: Volume,
 	"tracks": Track[]
 };
@@ -94,7 +94,15 @@ export const Disc = {
 				})(subject["artists"], path + "[\"artists\"]");
 				(autoguard.guards.String.as)(subject["title"], path + "[\"title\"]");
 				(autoguard.guards.Number.as)(subject["year"], path + "[\"year\"]");
-				(autoguard.guards.String.as)(subject["musicbrainz"], path + "[\"musicbrainz\"]");
+				((subject, path) => {
+					try {
+						return (autoguard.guards.Undefined.as)(subject, path);
+					} catch (error) {}
+					try {
+						return (autoguard.guards.String.as)(subject, path);
+					} catch (error) {}
+					throw "Type guard \"Union\" failed at \"" + path + "\"!";
+				})(subject["musicbrainz"], path + "[\"musicbrainz\"]");
 				((subject, path) => {
 					try {
 						return (autoguard.guards.Undefined.as)(subject, path);
