@@ -6,6 +6,7 @@ import { MediaContent, MediaDatabase, MediaType } from './discdb';
 import * as utils from './utils';
 import * as audio_jobs from './audio_jobs';
 import * as cover_art_jobs from './cover_art_jobs';
+import * as cover_art_transcode_jobs from './cover_art_transcode_jobs';
 import * as poster_jobs from './poster_jobs';
 
 let move_files = (filenames: string[], basename: string): void => {
@@ -110,7 +111,8 @@ let pick_from_queue = (): void => {
 		(async () => {
 			let jobs = [
 				...await poster_jobs.createJobList(),
-				...await cover_art_jobs.createJobList()
+				/*...await cover_art_jobs.createJobList(),*/
+				...await cover_art_transcode_jobs.createJobList()
 			];
 			for (let job of jobs) {
 				try {
