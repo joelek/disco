@@ -53,7 +53,6 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 				];
 				const path = paths.join("/") + ".jpg";
 				if (!libfs.existsSync(path)) {
-					console.log(path);
 					const query = [
 						metadata.media.title,
 						...metadata.media.artists,
@@ -68,6 +67,7 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
 					const buffer = await tidal.getCoverArt(album.cover);
 					libfs.writeFileSync(path, buffer);
+					console.log(path);
 				}
 			}
 			jobs.push({
@@ -85,8 +85,7 @@ async function createJobList(): Promise<Array<job.PromiseJob>> {
 		".",
 		"private",
 		"archive",
-		"audio",
-		"1285083c40c26ca240de9455296e334a99bc2bf6dbc1d5a78b922a9dc0a74eaa"
+		"audio"
 	]);
 }
 

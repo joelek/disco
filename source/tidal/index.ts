@@ -61,30 +61,35 @@ class RateLimiter {
 		return new Promise((resolve, reject) => {
 			const next_request_delay = Math.round(this.average_request_time_ms * (0.5 + Math.random()));
 			const next_request_timestamp_ms = this.last_request_timestamp_ms + next_request_delay;
-			const delay_ms = next_request_timestamp_ms - Date.now();
-			if (delay_ms > 0) {
-				setTimeout(() => {
-					this.last_request_timestamp_ms = Date.now();
-					return resolve();
-				}, delay_ms);
-			} else {
+			const now_timestamp_ms = Date.now();
+			const delay_ms = now_timestamp_ms >= next_request_timestamp_ms ? 0 : next_request_timestamp_ms - now_timestamp_ms;
+			setTimeout(() => {
+				this.last_request_timestamp_ms = Date.now();
 				return resolve();
-			}
+			}, delay_ms);
 		});
 	}
 }
 
 const rate_limiter = new RateLimiter(10000);
+const cache: { [key: string]: undefined | Buffer } = {};
 
 async function getSearchResults(query: string, types: Array<search.EntityType>, token?: string): Promise<search.SearchResponse> {
-	await rate_limiter.rateLimit();
-	let response = await request({
-		url: "https://api.tidal.com/v1/search?query=" + encodeURIComponent(query) + "&limit=3&offset=0&types=" + types.join(",") + "&includeContributors=true&countryCode=SE",
-		headers: {
-			"x-tidal-token": token || "gsFXkJqGrUNoYMQPZe4k3WKwijnrp8iGSwn3bApe"
-		}
-	});
-	let string = response.body.toString();
+	let url = "https://api.tidal.com/v1/search?query=" + encodeURIComponent(query) + "&limit=3&offset=0&types=" + types.join(",") + "&includeContributors=true&countryCode=SE";
+	let buffer = cache[url];
+	if (buffer == null) {
+		await rate_limiter.rateLimit();
+		console.log(url);
+		let response = await request({
+			url: url,
+			headers: {
+				"x-tidal-token": token || "gsFXkJqGrUNoYMQPZe4k3WKwijnrp8iGSwn3bApe"
+			}
+		});
+		buffer = response.body;
+		cache[url] = buffer;
+	}
+	let string = (buffer as Buffer).toString();
 	let json = JSON.parse(string);
 	return search.SearchResponse.as(json);
 }
