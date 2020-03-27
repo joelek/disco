@@ -53,21 +53,19 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 				];
 				const path = paths.join("/") + ".jpg";
 				if (!libfs.existsSync(path)) {
+					console.log(path);
 					const query = [
 						metadata.media.title,
 						...metadata.media.artists,
 					].join(" ");
 					const results = await tidal.getSearchResults(query, ["ALBUMS"]);
-					const album = results.albums.items.find((album) => {
-						return album.numberOfTracks === metadata.media.tracks.length;
-					});
+					const album = results.albums.items[0];
 					if (album == null) {
 						throw "Expected a matching album!";
 					}
 					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
 					const buffer = await tidal.getCoverArt(album.cover);
 					libfs.writeFileSync(path, buffer);
-					console.log(path);
 				}
 			}
 			jobs.push({
