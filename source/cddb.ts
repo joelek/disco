@@ -75,6 +75,7 @@ export type Disc = {
 	"year": number,
 	"musicbrainz"?: string,
 	"volume"?: Volume,
+	"cover_art_url"?: string,
 	"tracks": Track[]
 };
 
@@ -112,6 +113,15 @@ export const Disc = {
 					} catch (error) {}
 					throw "Type guard \"Union\" failed at \"" + path + "\"!";
 				})(subject["volume"], path + "[\"volume\"]");
+				((subject, path) => {
+					try {
+						return (autoguard.guards.Undefined.as)(subject, path);
+					} catch (error) {}
+					try {
+						return (autoguard.guards.String.as)(subject, path);
+					} catch (error) {}
+					throw "Type guard \"Union\" failed at \"" + path + "\"!";
+				})(subject["cover_art_url"], path + "[\"cover_art_url\"]");
 				((subject, path) => {
 					if ((subject != null) && (subject.constructor === globalThis.Array)) {
 						for (let i = 0; i < subject.length; i++) {

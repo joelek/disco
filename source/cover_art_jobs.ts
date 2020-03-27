@@ -64,7 +64,8 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 						throw "Expected a matching album!";
 					}
 					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
-					const buffer = await tidal.getCoverArt(album.cover);
+					const url = await tidal.getCoverArtURL(album.cover);
+					const buffer = await utils.request(url);
 					libfs.writeFileSync(path, buffer);
 				}
 			}

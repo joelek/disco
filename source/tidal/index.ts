@@ -72,14 +72,11 @@ async function getSearchResults(query: string, types: Array<search.EntityType>, 
 	return search.SearchResponse.as(json);
 }
 
-async function getCoverArt(id: string): Promise<Buffer> {
-	let response = await request({
-		url: "https://resources.tidal.com/images/" + id.split("-").join("/") + "/1280x1280.jpg"
-	});
-	return response.body;
+async function getCoverArtURL(id: string): Promise<string> {
+	return "https://resources.tidal.com/images/" + id.split("-").join("/") + "/1280x1280.jpg";
 }
 
 export {
 	getSearchResults,
-	getCoverArt
+	getCoverArtURL
 };
