@@ -145,10 +145,12 @@ async function getMetadata(source_path: string): Promise<Metadata> {
 
 async function createJobList(source_path: string): Promise<Array<job.PromiseJob>> {
 	let jobs = new Array<job.PromiseJob>();
-	let metadata = await getMetadata(source_path);
-	try {
-		jobs.push(await createAudioJob(source_path, metadata));
-	} catch (error) {}
+	if (source_path.endsWith(".wav")) {
+		let metadata = await getMetadata(source_path);
+		try {
+			jobs.push(await createAudioJob(source_path, metadata));
+		} catch (error) {}
+	}
 	return jobs;
 }
 
