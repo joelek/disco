@@ -63,7 +63,7 @@ let get_media_info = (path: string): { type: MediaType, content: MediaContent } 
 };
 
 function checkForJobs() {
-	queue = generate_queue([], './private/archive/audio/');
+	queue = generate_queue([], './private/queue/');
 	pick_from_queue();
 }
 
