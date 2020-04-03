@@ -354,7 +354,7 @@ let encode_hardware = (
 	let cp = libcp.spawn('ffmpeg', [
 		...extraopts,
 		'-i', filename,
-		'-vf', `format=yuv420p16le,${interlace}${frameselect}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:7:7,scale=${frame_size.w}:${frame_size.h}`,
+		'-vf', `format=yuv420p16le,${interlace}${frameselect}crop=${rect.w}:${rect.h}:${rect.x}:${rect.y},hqdn3d=1:1:5:5,scale=${frame_size.w}:${frame_size.h}`,
 		'-an',
 		'-v', 'quiet',
 		'-f', 'rawvideo',
@@ -482,7 +482,7 @@ function getArtifactPath(stream: stream_types.VideoStream, basename: string): st
 function transcodeSingleStream(path: string, stream: stream_types.VideoStream, basename: string, content: MediaContent, cb: Callback<string>): void {
 	let outfile = getArtifactPath(stream, basename);
 	get_metadata(path, (md) => {
-		let extraopts = new Array<string>()
+		let extraopts = new Array<string>();
 		// extraopts = ['-ss', '0:15:00', '-t', '60'];
 		ffprobe.getAudioStreamsToKeep(path, (audio_streams) => {
 			encode_hardware(path, outfile, md.picture, md.settings.crop, md.settings.field_order, md.settings.compressibility, audio_streams, cb, 1, 1, extraopts, [], stream, content);
