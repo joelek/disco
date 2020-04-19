@@ -937,7 +937,8 @@ type Title = {
 	title: string,
 	year: number | null,
 	description: string,
-	image_url: string
+	image_url: string,
+	genres: string[]
 };
 
 export function getTitle(id: string, cb: Callback<Title | null>): void {
@@ -972,6 +973,14 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		if (element !== null) {
 			title = element.getAttribute("data-title");
 		}
+		let genres = new Array<string>();
+		let links = document.querySelectorAll(".see-more a[href]");
+		for (let link of links) {
+			let href = link.getAttribute("href");
+			if (href != null && href.indexOf("genre") >= 0) {
+				genres.push(link.getText().normalize("NFC"));
+			}
+		}
 		if (title !== null && description !== null && image_url !== null) {
 			title = title.normalize("NFC");
 			description = description.normalize("NFC");
@@ -981,7 +990,8 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				title,
 				year,
 				description,
-				image_url
+				image_url,
+				genres
 			});
 		} else {
 			cb(null);
