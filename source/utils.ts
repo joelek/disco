@@ -2,14 +2,18 @@ import * as discdb from "./discdb";
 import * as libfs from "fs";
 import * as libhttps from "https";
 
-function pathify(string: string): string {
+function wordify(string: string): string[] {
 	return string
 		.toLowerCase()
 		.normalize("NFKD")
 		.replace(/[\|\/\\\_\-]/g, " ")
 		.replace(/[^a-z0-9 ]/g, "")
 		.trim()
-		.replace(/[ ]+/g, "_");
+		.split(/[ ]+/g);
+}
+
+function pathify(string: string): string {
+	return wordify(string).join("_");
 }
 
 function foreach<A>(array: Array<A>, next: { (value: A, cb: { (): void }): void }, done: { (): void }): void {
