@@ -304,6 +304,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 								value.type = "episode";
 								value.show = title.title;
 								value.imdb_show = a_imdb;
+								value.genres_show = title.genres;
 							}
 							next();
 						}, () => {
@@ -337,6 +338,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 								value.imdb = a_imdb;
 								value.poster_url = title.image_url;
 								value.summary = title.description;
+								value.genres = title.genres;
 							}
 							next();
 						}, () => {
