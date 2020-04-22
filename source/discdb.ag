@@ -11,7 +11,8 @@
 		imdb: string,
 		poster_url: string,
 		summary: string,
-		genres: string[]
+		genres: string[],
+		actors?: string[]
 	}),
 	EpisodeContent: (@Content & {
 		type: "episode",
@@ -23,7 +24,8 @@
 		imdb_show: string,
 		year: number,
 		summary: string,
-		genres_show: string[]
+		genres_show: string[],
+		actors_show?: string[]
 	}),
 	UnknownContent: (@Content & {
 		type: "unknown"

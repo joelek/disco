@@ -305,6 +305,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 								value.show = title.title;
 								value.imdb_show = a_imdb;
 								value.genres_show = title.genres;
+								value.actors_show = title.stars.map((star) => star.name);
 							}
 							next();
 						}, () => {
@@ -339,6 +340,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 								value.poster_url = title.image_url;
 								value.summary = title.description;
 								value.genres = title.genres;
+								value.actors = title.stars.map((star) => star.name);
 							}
 							next();
 						}, () => {
