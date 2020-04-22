@@ -1100,7 +1100,15 @@ interface Season {
 	episodes: Array<Episode>
 }
 
+let sscache: {
+	[key: string]: Season | undefined
+} = {};
+
 export function getSeason(id: string, season: number, cb: Callback<Season>): void {
+	let cached = sscache[id + ":" + season];
+	if (cached) {
+		return cb(cached);
+	}
 	let url = "https://www.imdb.com/title/" + id + "/episodes?season=" + season;
 	getXML(url, (document) => {
 		let image_url: string | undefined = undefined;
@@ -1156,10 +1164,12 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 				});
 			}
 		}
-		cb({
+		let obj = {
 			image_url,
 			episodes
-		});
+		};
+		sscache[id + ":" + season] = obj;
+		cb(obj);
 	});
 }
 
