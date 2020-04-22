@@ -949,7 +949,15 @@ type Title = {
 	}[]
 };
 
+let ttcache: {
+	[key: string]: Title | undefined
+} = {};
+
 export function getTitle(id: string, cb: Callback<Title | null>): void {
+	let cached = ttcache[id];
+	if (cached) {
+		return cb(cached);
+	}
 	let url = "https://www.imdb.com/title/" + id + "/";
 	getXML(url, (document) => {
 		let type: TitleType = "movie";
@@ -1009,7 +1017,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		if (title !== null && description !== null && image_url !== null) {
 			title = title.normalize("NFC");
 			description = description.normalize("NFC");
-			cb({
+			let titleobj: Title = {
 				id,
 				type,
 				title,
@@ -1018,7 +1026,9 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				image_url,
 				genres,
 				stars
-			});
+			};
+			ttcache[id] = titleobj;
+			cb(titleobj);
 		} else {
 			cb(null);
 		}
