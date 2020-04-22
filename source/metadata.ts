@@ -164,6 +164,10 @@ class XMLNode implements Visitable<XMLNode> {
 		throw "";
 	}
 
+	getTrimmedText(): string {
+		return this.getText().trim();
+	}
+
 	getParent(): XMLElementNode | null {
 		return this.parent;
 	}
@@ -202,7 +206,7 @@ class XMLTextNode extends XMLNode {
 	}
 
 	getText(): string {
-		return this.string.replace("&nbsp;", " ").replace("&quot;", "\"").replace("&lt;", "<").replace("&gt;", ">").trim();
+		return this.string.replace("&nbsp;", " ").replace("&quot;", "\"").replace("&lt;", "<").replace("&gt;", ">");
 	}
 
 	toString(): string {
@@ -956,7 +960,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		}
 		element = document.querySelector("#titleYear a");
 		if (element !== null) {
-			year = Number.parseInt(element.getText());
+			year = Number.parseInt(element.getTrimmedText());
 		}
 		element = document.querySelector(".poster img[src]");
 		if (element !== null) {
@@ -967,7 +971,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		}
 		element = document.querySelector(".plot_summary_wrapper .summary_text");
 		if (element !== null) {
-			description = element.getText();
+			description = element.getTrimmedText();
 		}
 		element = document.querySelector("#star-rating-widget[data-title]");
 		if (element !== null) {
@@ -978,7 +982,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		for (let link of links) {
 			let href = link.getAttribute("href");
 			if (href != null && href.indexOf("genre") >= 0) {
-				genres.push(link.getText().normalize("NFC"));
+				genres.push(link.getTrimmedText().normalize("NFC"));
 			}
 		}
 		if (title !== null && description !== null && image_url !== null) {
@@ -1093,7 +1097,7 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 			let description: string | null = null;
 			element = container.querySelector(".item_description[itemprop]");
 			if (element !== null) {
-				description = element.getText();
+				description = element.getTrimmedText();
 			}
 			let episode_number: number | null = null;
 			element = container.querySelector("meta[itemprop][content]");
@@ -1106,7 +1110,7 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 			let air_date_timestamp: number | null = null;
 			element = container.querySelector(".airdate");
 			if (element !== null) {
-				air_date_timestamp = Date.parse(element.getText() + "Z");
+				air_date_timestamp = Date.parse(element.getTrimmedText() + "Z");
 			}
 			if (id != null && title != null && description != null && episode_number != null && air_date_timestamp != null) {
 				title = title.normalize("NFC");

@@ -403,8 +403,6 @@ let encode_hardware = (
 		'-y'
 	]);
 	cp.stdout.pipe(cpx.stdin);
-	cp.stderr.pipe(process.stderr);
-	cpx.stderr.pipe(process.stderr);
 	cpx.stdout.pipe(cp2.stdin);
 	cp2.stdout.pipe(process.stdout);
 	cp2.stderr.pipe(process.stderr);
