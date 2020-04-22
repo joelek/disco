@@ -942,7 +942,11 @@ type Title = {
 	year: number | null,
 	description: string,
 	image_url: string,
-	genres: string[]
+	genres: string[],
+	stars: {
+		id: string,
+		name: string
+	}[]
 };
 
 export function getTitle(id: string, cb: Callback<Title | null>): void {
@@ -985,6 +989,23 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				genres.push(link.getTrimmedText().normalize("NFC"));
 			}
 		}
+		let stars = new Array<{ id: string, name: string }>();
+		let links2 = document.querySelectorAll(".credit_summary_item a[href]");
+		for (let link of links2) {
+			let href = link.getAttribute("href");
+			if (href != null) {
+				"/name/nm0705356/?ref_=tt_ov_st_sm"
+				let parts = /^[/]name[/](nm[0-9]+)[/][?]ref_[=](.+)$/.exec(href);
+				if (parts != null && parts[2] === "tt_ov_st_sm") {
+					let id = parts[1];
+					let name = link.getTrimmedText().normalize("NFC");
+					stars.push({
+						id,
+						name
+					});
+				}
+			}
+		}
 		if (title !== null && description !== null && image_url !== null) {
 			title = title.normalize("NFC");
 			description = description.normalize("NFC");
@@ -995,7 +1016,8 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				year,
 				description,
 				image_url,
-				genres
+				genres,
+				stars
 			});
 		} else {
 			cb(null);
