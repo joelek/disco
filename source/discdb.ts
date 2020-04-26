@@ -37,7 +37,7 @@ export type MovieContent = (Content & {
 	"poster_url": string,
 	"summary": string,
 	"genres": string[],
-	"actors"?: string[]
+	"actors": string[]
 });
 
 export const MovieContent = {
@@ -68,21 +68,13 @@ export const MovieContent = {
 						throw "Type guard \"Array\" failed at \"" + path + "\"!";
 					})(subject["genres"], path + "[\"genres\"]");
 					((subject, path) => {
-						try {
-							return (autoguard.guards.Undefined.as)(subject, path);
-						} catch (error) {}
-						try {
-							return ((subject, path) => {
-								if ((subject != null) && (subject.constructor === globalThis.Array)) {
-									for (let i = 0; i < subject.length; i++) {
-										(autoguard.guards.String.as)(subject[i], path + "[" + i + "]");
-									}
-									return subject;
-								}
-								throw "Type guard \"Array\" failed at \"" + path + "\"!";
-							})(subject, path);
-						} catch (error) {}
-						throw "Type guard \"Union\" failed at \"" + path + "\"!";
+						if ((subject != null) && (subject.constructor === globalThis.Array)) {
+							for (let i = 0; i < subject.length; i++) {
+								(autoguard.guards.String.as)(subject[i], path + "[" + i + "]");
+							}
+							return subject;
+						}
+						throw "Type guard \"Array\" failed at \"" + path + "\"!";
 					})(subject["actors"], path + "[\"actors\"]");
 					return subject;
 				}
@@ -112,7 +104,7 @@ export type EpisodeContent = (Content & {
 	"year": number,
 	"summary": string,
 	"genres_show": string[],
-	"actors_show"?: string[]
+	"actors_show": string[]
 });
 
 export const EpisodeContent = {
@@ -145,21 +137,13 @@ export const EpisodeContent = {
 						throw "Type guard \"Array\" failed at \"" + path + "\"!";
 					})(subject["genres_show"], path + "[\"genres_show\"]");
 					((subject, path) => {
-						try {
-							return (autoguard.guards.Undefined.as)(subject, path);
-						} catch (error) {}
-						try {
-							return ((subject, path) => {
-								if ((subject != null) && (subject.constructor === globalThis.Array)) {
-									for (let i = 0; i < subject.length; i++) {
-										(autoguard.guards.String.as)(subject[i], path + "[" + i + "]");
-									}
-									return subject;
-								}
-								throw "Type guard \"Array\" failed at \"" + path + "\"!";
-							})(subject, path);
-						} catch (error) {}
-						throw "Type guard \"Union\" failed at \"" + path + "\"!";
+						if ((subject != null) && (subject.constructor === globalThis.Array)) {
+							for (let i = 0; i < subject.length; i++) {
+								(autoguard.guards.String.as)(subject[i], path + "[" + i + "]");
+							}
+							return subject;
+						}
+						throw "Type guard \"Array\" failed at \"" + path + "\"!";
 					})(subject["actors_show"], path + "[\"actors_show\"]");
 					return subject;
 				}

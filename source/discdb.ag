@@ -12,7 +12,7 @@
 		poster_url: string,
 		summary: string,
 		genres: string[],
-		actors?: string[]
+		actors: string[]
 	}),
 	EpisodeContent: (@Content & {
 		type: "episode",
@@ -25,7 +25,7 @@
 		year: number,
 		summary: string,
 		genres_show: string[],
-		actors_show?: string[]
+		actors_show: string[]
 	}),
 	UnknownContent: (@Content & {
 		type: "unknown"
