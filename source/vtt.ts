@@ -170,6 +170,9 @@ function encode(track: Track): string {
 }
 
 export {
+	Cue,
+	Body,
+	Head,
 	Track,
 	Options,
 	decode,

@@ -389,7 +389,8 @@ let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): voi
 		'-an',
 		'-c:s', 'copy',
 		'-frame_pts', '1',
-		`./private/temp/${jobid}/raw/%08d.raw`
+		`./private/temp/${jobid}/raw/%08d.raw`,
+		"-v", "quiet"
 	]);
 	cp.stdout.pipe(process.stdout);
 	cp.stderr.pipe(process.stderr);
@@ -408,7 +409,8 @@ function extractSubrip(filename: string, subn: number, cb: Callback<string>): vo
 		'-map', `0:${subn}`,
 		'-c:s', 'webvtt',
 		"-f", "webvtt",
-		'pipe:'
+		'pipe:',
+		"-v", "quiet"
 	].join(" "), (error, stdout, stderr) => {
 		cb(stdout);
 	});
@@ -450,7 +452,7 @@ let ocr = (jobid: string, language: string, cb: { (st: Subtitle[]): void }): voi
 			let name = subnode.split('.').slice(0, -1).join('.');
 			let pts_start = parseInt(name.split('_')[0], 10);
 			let pts_end = parseInt(name.split('_')[1], 10);
-			//process.stdout.write(pts_start + ' to ' + pts_end + '\r\n' + text);
+			console.log(lines.join("\n") + "\n");
 			subtitles.push({ pts_start, pts_end, lines });
 		});
 	} catch (error) {}
@@ -527,11 +529,23 @@ function extractSingleStream(path: string, stream: stream_types.SubtitleStream, 
 	extract_vobsub(path, stream.index, (jobid) => {
 		convert_to_bmp(jobid, stream.extradata, stream.codec_name, () => {
 			ocr(jobid, stream.tags.language, (subtitles) => {
-				let webvtt = `WEBVTT {"language":"${stream.tags.language}"}\r\n\r\n`;
-				for (let i = 0; i < subtitles.length; i++) {
-					webvtt += to_timecode(subtitles[i].pts_start) + ' --> ' + to_timecode(subtitles[i].pts_end) + '\r\n';
-					webvtt += subtitles[i].lines.join('\r\n') + '\r\n\r\n';
-				}
+				let track = {
+					head: {
+						metadata: JSON.stringify({
+							language: stream.tags.language
+						})
+					},
+					body: {
+						cues: subtitles.map((subtitle) => {
+							return {
+								start_ms: subtitle.pts_start,
+								duration_ms: Math.max(0, subtitle.pts_end - subtitle.pts_start),
+								lines: subtitle.lines
+							};
+						})
+					}
+				};
+				let webvtt = vtt.encode(track);
 				let outfile = getArtifactPath(stream, basename);
 				let fd = libfs.openSync(outfile, 'w');
 				libfs.writeSync(fd, webvtt);
@@ -558,7 +572,7 @@ function generateJobs(path: string, type: MediaType, content: MediaContent, cb: 
 				}
 			});
 		}
-		return cb([]);
+		return cb(jobs);
 	});
 }
 
