@@ -148,7 +148,7 @@ async function createJobListRecursively(database: discdb.MediaDatabase, director
 					console.log(path);
 					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
 					const json = await getJson(media, track);
-					libfs.writeFileSync(path, JSON.stringify(json, null, "\t"));
+					libfs.writeFileSync(path, JSON.stringify(json, null, "\t") + "\n");
 				}
 			}
 			jobs.push({

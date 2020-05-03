@@ -318,6 +318,11 @@ let write_file = (image: Image, directory: string, ed: string): void => {
 	image.h = newh;
 	for (let i = 0; i < palette.length / 4; i++) {
 		let o = palette[i*4+3];
+		/*
+		if (i !== 1) {
+			o = 0;
+		}
+		*/
 		if (o !== 0xFF) {
 			let r = palette[i*4+0];
 			let g = palette[i*4+1];

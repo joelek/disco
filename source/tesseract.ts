@@ -53,7 +53,8 @@ function recognizeText(path: string, language: string): Array<string> {
 			line = line.replace(/\-+/g, "-");
 			line = line.replace(/\'+/g, "'");
 			line = line.replace(/\"+/g, "\"");
-			line = line.replace(/^(-?)(l|1) [^0-9]/g, "$1I $3");
+			line = line.replace(/^(-?)l /g, "$1I ");
+			line = line.replace(/^(-?)1 ([^0-9])/g, "$1I $2");
 			return line;
 		});
 	return lines;
