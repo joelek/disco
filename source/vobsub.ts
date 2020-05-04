@@ -450,32 +450,47 @@ let ocr = (jobid: string, language: string, cb: { (st: Subtitle[]): void }): voi
 	process.stdout.write(`Recognizing "${language}" subtitles...\n`);
 	let node = libpath.join('./private/temp/', jobid, 'bmp');
 	let subtitles: Array<Subtitle> = [];
-	try {
-		libfs.readdirSync(node).map((subnode) => {
-			let input = libpath.join(node, subnode);
-			let lines = tesseract.recognizeText(input, language);
+	let subnodes = libfs.readdirSync(node);
+	let expected = subnodes.length;
+	function finish(): void {
+		subtitles = subtitles.sort((a, b) => {
+			return a.pts_start - b.pts_start;
+		});
+		if (subtitles.length > 0) {
+			for (let i = 0; i < subtitles.length - 1; i++) {
+				if (subtitles[i].pts_start === subtitles[i].pts_end) {
+					subtitles[i].pts_end = subtitles[i+1].pts_start;
+				}
+			}
+			if (subtitles[subtitles.length - 1].pts_start === subtitles[subtitles.length - 1].pts_end) {
+				//subtitles[subtitles.length - 1].pts_end = duration;
+			}
+		}
+		subtitles = subtitles.filter(st => st.lines.length > 0);
+		cb(subtitles);
+	}
+	function pick(thread: number): void {
+		if (subnodes.length > 0) {
+			let subnode = subnodes.shift() as string;
 			let name = subnode.split('.').slice(0, -1).join('.');
 			let pts_start = parseInt(name.split('_')[0], 10);
 			let pts_end = parseInt(name.split('_')[1], 10);
-			console.log(lines.join("\n") + "\n");
-			subtitles.push({ pts_start, pts_end, lines });
-		});
-	} catch (error) {}
-	subtitles = subtitles.sort((a, b) => {
-		return a.pts_start - b.pts_start;
-	});
-	if (subtitles.length > 0) {
-		for (let i = 0; i < subtitles.length - 1; i++) {
-			if (subtitles[i].pts_start === subtitles[i].pts_end) {
-				subtitles[i].pts_end = subtitles[i+1].pts_start;
+			let input = libpath.join(node, subnode);
+			tesseract.recognizeText(input, language, (lines) => {
+				subtitles.push({ pts_start, pts_end, lines });
+				pick(thread);
+			});
+		} else {
+			if (subtitles.length === expected) {
+				finish();
 			}
 		}
-		if (subtitles[subtitles.length - 1].pts_start === subtitles[subtitles.length - 1].pts_end) {
-			//subtitles[subtitles.length - 1].pts_end = duration;
-		}
 	}
-	subtitles = subtitles.filter(st => st.lines.length > 0);
-	cb(subtitles);
+	for (let i = 0; i < expected && i < 4; i++) {
+		setTimeout(() => {
+			pick(i);
+		});
+	}
 };
 
 let parse_extradata = (ed: string): string => {

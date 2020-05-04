@@ -21,7 +21,7 @@ function getSupportedLanguages(cb: Callback<Array<string>>): void {
 	});
 }
 
-function recognizeText(path: string, language: string): Array<string> {
+function recognizeText(path: string, language: string, cb: { (lines: Array<string>): void }): void {
 	let options = [
 		"tesseract",
 		path,
@@ -31,33 +31,34 @@ function recognizeText(path: string, language: string): Array<string> {
 		"-l", language,
 		"quiet"
 	];
-	let lines = new Array<string>();
-	try {
-		let string = libcp.execSync(options.join(" ")).toString("utf8");
-		lines = string.split(/\r\n|\n\r|\n|\r/);
-	} catch (error) {}
-	lines = lines.map((line) => {
-			return line.trim();
-		})
-		.filter((line) => {
-			return line.length > 0;
-		})
-		.map((line) => {
-			line = line.replace(/\|/g, "I");
-			line = line.replace(/\~/g, "-");
-			line = line.replace(/\=/g, "-");
-			line = line.replace(/\«/g, "-");
-			line = line.replace(/\»/g, "-");
-			line = line.replace(/\{/g, "(");
-			line = line.replace(/\}/g, ")");
-			line = line.replace(/\-+/g, "-");
-			line = line.replace(/\'+/g, "'");
-			line = line.replace(/\"+/g, "\"");
-			line = line.replace(/^(-?)l /g, "$1I ");
-			line = line.replace(/^(-?)1 ([^0-9])/g, "$1I $2");
-			return line;
-		});
-	return lines;
+	libcp.exec(options.join(" "), (error, stdout, stderr) => {
+		if (error) {
+			return cb([]);
+		}
+		let lines = stdout.split(/\r\n|\n\r|\n|\r/)
+			.map((line) => {
+				return line.trim();
+			})
+			.filter((line) => {
+				return line.length > 0;
+			})
+			.map((line) => {
+				line = line.replace(/\|/g, "I");
+				line = line.replace(/\~/g, "-");
+				line = line.replace(/\=/g, "-");
+				line = line.replace(/\«/g, "-");
+				line = line.replace(/\»/g, "-");
+				line = line.replace(/\{/g, "(");
+				line = line.replace(/\}/g, ")");
+				line = line.replace(/\-+/g, "-");
+				line = line.replace(/\'+/g, "'");
+				line = line.replace(/\"+/g, "\"");
+				line = line.replace(/^(-?)l /g, "$1I ");
+				line = line.replace(/^(-?)1 ([^0-9])/g, "$1I $2");
+				return line;
+			});
+		return cb(lines);
+	});
 }
 
 export {
