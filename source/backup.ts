@@ -315,6 +315,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 										let value = orig_value as EpisodeContent;
 										let episode = season.episodes.find((episode) => episode.episode_number === value.episode);
 										if (episode !== undefined) {
+											value.season = a_season as number;
 											value.imdb = episode.id;
 											value.title = episode.title;
 											value.year = new Date(episode.air_date_timestamp).getUTCFullYear();
