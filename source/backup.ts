@@ -503,7 +503,7 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 let dir = "F:\\";
 
 get_content(dir, (hash, type, content) => {
-	let content_to_rip = content.filter((ct) => ['movie', 'episode'].indexOf(ct.type) >= 0);
+	let content_to_rip = content;
 	console.log(JSON.stringify(content_to_rip, null, "\t"));
 	let callback = () => {
 		process.exit(0);
