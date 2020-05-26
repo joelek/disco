@@ -311,6 +311,9 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 						}, () => {
 							if (a_season !== null && a_imdb != null) {
 								imdb.getSeason(a_imdb, a_season, (season) => {
+									if (season == null) {
+										return cb(media_type, content);
+									}
 									foreach(content, (orig_value, next) => {
 										let value = orig_value as EpisodeContent;
 										let episode = season.episodes.find((episode) => episode.episode_number === value.episode);

@@ -933,9 +933,9 @@ export function getSearchResults(query: string, type: Array<SearchType>, year: n
 
 //getSearchResults("south park", [ "tv_series" ], null, (results) => { console.log(results); });
 
-type TitleType = "show" | "movie" | "neither";
+export type TitleType = "show" | "movie" | "neither";
 
-type Title = {
+export type Title = {
 	id: string,
 	type: TitleType,
 	title: string,
@@ -1037,13 +1037,13 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 
 // getTitle("tt0121955", (results) => { console.log(results); });
 
-interface Credit {
+export interface Credit {
 	id: string,
 	title: string,
 	image_url: string
 }
 
-interface Credits {
+export interface Credits {
 	items: Array<Credit>
 }
 
@@ -1087,7 +1087,7 @@ export function getCredits(id: string, cb: Callback<Credits>): void {
 
 // getCredits("tt0121955", (results) => { console.log(results); });
 
-interface Episode {
+export interface Episode {
 	id: string,
 	title: string,
 	description: string,
@@ -1095,8 +1095,9 @@ interface Episode {
 	air_date_timestamp: number
 }
 
-interface Season {
+export interface Season {
 	image_url?: string,
+	season_number: number,
 	episodes: Array<Episode>
 }
 
@@ -1104,7 +1105,7 @@ let sscache: {
 	[key: string]: Season | undefined
 } = {};
 
-export function getSeason(id: string, season: number, cb: Callback<Season>): void {
+export function getSeason(id: string, season: number, cb: Callback<Season | null>): void {
 	let cached = sscache[id + ":" + season];
 	if (cached) {
 		return cb(cached);
@@ -1113,12 +1114,24 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 	getXML(url, (document) => {
 		let image_url: string | undefined = undefined;
 		let element: XMLElementNode | null;
+		let season_number = null as number | null;
 		element = document.querySelector("img.poster[src]");
 		if (element !== null) {
 			let src = element.getAttribute("src");
 			if (src != null) {
 				image_url = getImageURL(src);
 			}
+		}
+		element = document.querySelector("#episode_top");
+		if (element != null) {
+			let text = element.getTrimmedText();
+			let parts = /^Season\s+([0-9]+)$/.exec(text);
+			if (parts != null) {
+				season_number = Number.parseInt(parts[1]);
+			}
+		}
+		if (season_number !== season) {
+			return cb(null);
 		}
 		let containers = document.querySelectorAll(".eplist .list_item");
 		let episodes = new Array<Episode>();
@@ -1166,6 +1179,7 @@ export function getSeason(id: string, season: number, cb: Callback<Season>): voi
 		}
 		let obj = {
 			image_url,
+			season_number,
 			episodes
 		};
 		sscache[id + ":" + season] = obj;
