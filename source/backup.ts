@@ -4,10 +4,9 @@ import * as libpath from 'path';
 import * as librl from 'readline';
 import * as libcrypto from 'crypto';
 import * as delete_tree from './delete_tree';
-import * as imdb from './metadata';
+import * as imdb from './imdb';
 import { compute_digest } from "./discid";
 import { MediaDatabase, MediaContent, MediaType, MovieContent, EpisodeContent } from './discdb';
-import { foreach } from './utils';
 import { Readable, Writable } from 'stream';
 
 let a_type: string = 'neither';
@@ -94,7 +93,7 @@ type MediaMetadata = {
 }
 
 let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>): void }) => {
-	libcp.exec(`makemkvcon info disc:0 --robot --minlength=0`, (error, stdout, stderr) => {
+	libcp.exec(`makemkvcon info disc:0 --robot --minlength=0`, async (error, stdout, stderr) => {
 		let detected_disc_type = "neither" as "bluray" | "dvd" | "neither";
 		let detected_resolution = "neither" as "720x480" | "720x576" | "neither";
 		let detected_frame_rate = "neither" as "30000/1001" | "25/1" | "neither";
@@ -285,79 +284,46 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 		let content = metadata.filter((ct) => ct.length <= a_max && ct.length >= a_min && ct.angle === 1).map((ct) => {
 			return ct.content
 		});
-		if (a_episode != null) {
-			let episode = a_episode;
-			content = content.map((content) => {
-				return {
-					...content,
-					episode: episode++
-				};
-			});
-		}
-		if (a_imdb !== null) {
-			imdb.getTitle(a_imdb, (title) => {
-				if (title !== null) {
-					if (title.type === "show") {
-						foreach(content, (orig_value, next) => {
-							if (a_imdb != null) {
-								let value = orig_value as EpisodeContent;
-								value.type = "episode";
-								value.show = title.title;
-								value.imdb_show = a_imdb;
-								value.genres_show = title.genres;
-								value.actors_show = title.stars.map((star) => star.name);
-							}
-							next();
-						}, () => {
-							if (a_season !== null && a_imdb != null) {
-								imdb.getSeason(a_imdb, a_season, (season) => {
-									if (season == null) {
-										return cb(media_type, content);
-									}
-									foreach(content, (orig_value, next) => {
-										let value = orig_value as EpisodeContent;
-										let episode = season.episodes.find((episode) => episode.episode_number === value.episode);
-										if (episode !== undefined) {
-											value.season = a_season as number;
-											value.imdb = episode.id;
-											value.title = episode.title;
-											value.year = new Date(episode.air_date_timestamp).getUTCFullYear();
-											value.summary = episode.description;
-										}
-										next();
-									}, () => {
-										cb(media_type, content);
-									});
-								});
-							} else {
-								cb(media_type, content);
-							}
-						});
-					} else {
-						foreach(content, (orig_value, next) => {
-							if (title.year != null && a_imdb != null) {
-								let value = orig_value as MovieContent;
-								value.type = "movie";
-								value.title = title.title;
-								value.year = title.year;
-								value.imdb = a_imdb;
-								value.poster_url = title.image_url;
-								value.summary = title.description;
-								value.genres = title.genres;
-								value.actors = title.stars.map((star) => star.name);
-							}
-							next();
-						}, () => {
-							cb(media_type, content);
-						});
+		if (a_imdb != null) {
+			if (a_season != null && a_episode != null) {
+				let show = await imdb.handler.getShow(a_imdb);
+				for (let media of content) {
+					let episodes = show.episodes.filter((episode) => episode.season === a_season && episode.episode === a_episode);
+					if (episodes.length !== 1) {
+						throw "Expected exactly one episode!";
 					}
-				} else {
-					cb(media_type, content);
+					let episode = episodes.shift() as imdb.db.Episode;
+					let value = media as EpisodeContent;
+					value.type = "episode";
+					value.title = episode.title;
+					value.show = show.title;
+					value.season = episode.season;
+					value.episode = episode.episode;
+					value.imdb = episode.id;
+					value.imdb_show = show.id;
+					value.year = new Date(episode.air_date).getUTCFullYear();
+					value.summary = episode.summary;
+					value.genres_show = show.genres;
+					value.actors_show = show.actors;
+					a_episode += 1;
 				}
-			});
-		} else {
-			cb(media_type, content);
+			} else {
+				let movie = await imdb.handler.getMovie(a_imdb);
+				for (let media of content) {
+					let value = media as MovieContent;
+					value.type = "movie";
+					value.title = movie.title;
+					value.year = movie.year;
+					value.part = 1;
+					value.imdb = movie.id;
+					value.poster_url = movie.poster_url;
+					value.summary = movie.summary;
+					value.genres = movie.genres;
+					value.actors = movie.actors;
+				}
+			}
 		}
+		return cb(media_type, content);
 	});
 };
 
