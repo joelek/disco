@@ -290,7 +290,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 				for (let media of content) {
 					let episodes = show.episodes.filter((episode) => episode.season === a_season && episode.episode === a_episode);
 					if (episodes.length !== 1) {
-						throw "Expected exactly one episode!";
+						continue;
 					}
 					let episode = episodes.shift() as imdb.db.Episode;
 					let value = media as EpisodeContent;
