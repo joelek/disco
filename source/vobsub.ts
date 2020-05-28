@@ -486,6 +486,9 @@ let ocr = (jobid: string, language: string, cb: { (st: Subtitle[]): void }): voi
 			}
 		}
 	}
+	if (expected === 0) {
+		return finish();
+	}
 	for (let i = 0; i < expected && i < 4; i++) {
 		setTimeout(() => {
 			pick(i);
@@ -549,27 +552,29 @@ function extractSingleStream(path: string, stream: stream_types.SubtitleStream, 
 	extract_vobsub(path, stream.index, (jobid) => {
 		convert_to_bmp(jobid, stream.extradata, stream.codec_name, () => {
 			ocr(jobid, stream.tags.language, (subtitles) => {
-				let track = {
-					head: {
-						metadata: JSON.stringify({
-							language: stream.tags.language
-						})
-					},
-					body: {
-						cues: subtitles.map((subtitle) => {
-							return {
-								start_ms: subtitle.pts_start,
-								duration_ms: Math.max(0, subtitle.pts_end - subtitle.pts_start),
-								lines: subtitle.lines
-							};
-						})
-					}
-				};
-				let webvtt = vtt.encode(track);
 				let outfile = getArtifactPath(stream, basename);
-				let fd = libfs.openSync(outfile, 'w');
-				libfs.writeSync(fd, webvtt);
-				libfs.closeSync(fd);
+				if (subtitles.length > 0) {
+					let track = {
+						head: {
+							metadata: JSON.stringify({
+								language: stream.tags.language
+							})
+						},
+						body: {
+							cues: subtitles.map((subtitle) => {
+								return {
+									start_ms: subtitle.pts_start,
+									duration_ms: Math.max(0, subtitle.pts_end - subtitle.pts_start),
+									lines: subtitle.lines
+								};
+							})
+						}
+					};
+					let webvtt = vtt.encode(track);
+					let fd = libfs.openSync(outfile, 'w');
+					libfs.writeSync(fd, webvtt);
+					libfs.closeSync(fd);
+				}
 				delete_tree.async(libpath.join('./private/temp/', jobid), () => {
 					cb(outfile);
 				});
