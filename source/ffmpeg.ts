@@ -461,10 +461,22 @@ let get_metadata = (filename: string, cb: Callback<{ picture: FormatDetectResult
 	const md = sdb[key];
 	if (md != undefined) {
 		format_detect(filename, (format) => {
-			cb({
-				picture: format,
-				settings: md
-			});
+			if (md.compressibility === 0) {
+				compute_compressibility(filename, format, md.crop, md.field_order, (comp) => {
+					md.compressibility = comp;
+					save_queue_metadata(() => {
+						cb({
+							picture: format,
+							settings: md
+						});
+					});
+				});
+			} else {
+				cb({
+					picture: format,
+					settings: md
+				});
+			}
 		});
 	} else {
 		determine_metadata(filename, (md) => {
