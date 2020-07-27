@@ -93,7 +93,7 @@ type MediaMetadata = {
 }
 
 let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>): void }) => {
-	libcp.exec(`makemkvcon info disc:0 --robot --minlength=0`, async (error, stdout, stderr) => {
+	libcp.exec(`makemkvcon64 info disc:0 --robot --minlength=0`, async (error, stdout, stderr) => {
 		let detected_disc_type = "neither" as "bluray" | "dvd" | "neither";
 		let detected_resolution = "neither" as "720x480" | "720x576" | "neither";
 		let detected_frame_rate = "neither" as "30000/1001" | "25/1" | "neither";
@@ -383,7 +383,7 @@ let backup_dvd = (hash: string, content: Array<MediaContent>, cb: { (): void }) 
 	let jobwd = "./private/jobs/" + jobid + "/";
 	libfs.mkdirSync(jobwd, { recursive: true });
 	let selector = content.map(ct => ct.selector).join(' ');
-	let cp = libcp.spawn('makemkvcon', [
+	let cp = libcp.spawn('makemkvcon64', [
 		'mkv',
 		`disc:0`,
 		'all',
@@ -450,7 +450,7 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 	let next = () => {
 		if (index < content.length) {
 			let ct = content[index++];
-			let cp = libcp.spawn('makemkvcon', [
+			let cp = libcp.spawn('makemkvcon64', [
 				'mkv',
 				`disc:0`,
 				`${ct.selector.split(' ')[0]}`,
