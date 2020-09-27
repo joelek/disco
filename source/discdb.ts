@@ -7,7 +7,10 @@ export type Content = {
 	"selector": string
 };
 
-export const Content = autoguard.Object.of({
+export const Content = autoguard.Object.of<{
+	"type": string,
+	"selector": string
+}>({
 	"type": autoguard.String,
 	"selector": autoguard.String
 });
@@ -26,7 +29,17 @@ export type MovieContent = (Content & {
 
 export const MovieContent = autoguard.Intersection.of(
 	Content,
-	autoguard.Object.of({
+	autoguard.Object.of<{
+		"type": "movie",
+		"title": string,
+		"year": number,
+		"part": number,
+		"imdb": string,
+		"poster_url": string,
+		"summary": string,
+		"genres": string[],
+		"actors": string[]
+	}>({
 		"type": autoguard.StringLiteral.of("movie"),
 		"title": autoguard.String,
 		"year": autoguard.Number,
@@ -55,7 +68,19 @@ export type EpisodeContent = (Content & {
 
 export const EpisodeContent = autoguard.Intersection.of(
 	Content,
-	autoguard.Object.of({
+	autoguard.Object.of<{
+		"type": "episode",
+		"title": string,
+		"show": string,
+		"season": number,
+		"episode": number,
+		"imdb": string,
+		"imdb_show": string,
+		"year": number,
+		"summary": string,
+		"genres_show": string[],
+		"actors_show": string[]
+	}>({
 		"type": autoguard.StringLiteral.of("episode"),
 		"title": autoguard.String,
 		"show": autoguard.String,
@@ -76,7 +101,9 @@ export type UnknownContent = (Content & {
 
 export const UnknownContent = autoguard.Intersection.of(
 	Content,
-	autoguard.Object.of({
+	autoguard.Object.of<{
+		"type": "unknown"
+	}>({
 		"type": autoguard.StringLiteral.of("unknown")
 	})
 );
@@ -102,7 +129,10 @@ export type Media = {
 	"content": MediaContent[]
 };
 
-export const Media = autoguard.Object.of({
+export const Media = autoguard.Object.of<{
+	"type": MediaType,
+	"content": MediaContent[]
+}>({
 	"type": MediaType,
 	"content": autoguard.Array.of(MediaContent)
 });

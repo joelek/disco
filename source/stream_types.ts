@@ -15,7 +15,18 @@ export type Stream = {
 	})
 };
 
-export const Stream = autoguard.Object.of({
+export const Stream = autoguard.Object.of<{
+	"index": number,
+	"codec_type": string,
+	"codec_name": string,
+	"time_base": string,
+	"start_pts": number,
+	"start_time": string,
+	"extradata": string,
+	"tags": (Record<string, undefined | string> & {
+		"language": string
+	})
+}>({
 	"index": autoguard.Number,
 	"codec_type": autoguard.String,
 	"codec_name": autoguard.String,
@@ -25,7 +36,9 @@ export const Stream = autoguard.Object.of({
 	"extradata": autoguard.String,
 	"tags": autoguard.Intersection.of(
 		autoguard.Record.of(autoguard.String),
-		autoguard.Object.of({
+		autoguard.Object.of<{
+			"language": string
+		}>({
 			"language": autoguard.String
 		})
 	)
@@ -46,7 +59,18 @@ export type VideoStream = (Stream & {
 
 export const VideoStream = autoguard.Intersection.of(
 	Stream,
-	autoguard.Object.of({
+	autoguard.Object.of<{
+		"codec_type": "video",
+		"width": number,
+		"height": number,
+		"r_frame_rate": string,
+		"sample_aspect_ratio": string,
+		"display_aspect_ratio": string,
+		"color_range"?: string,
+		"color_space"?: string,
+		"color_transfer"?: string,
+		"color_primaries"?: string
+	}>({
 		"codec_type": autoguard.StringLiteral.of("video"),
 		"width": autoguard.Number,
 		"height": autoguard.Number,
@@ -80,7 +104,11 @@ export type AudioStream = (Stream & {
 
 export const AudioStream = autoguard.Intersection.of(
 	Stream,
-	autoguard.Object.of({
+	autoguard.Object.of<{
+		"codec_type": "audio",
+		"sample_rate": string,
+		"channels": number
+	}>({
 		"codec_type": autoguard.StringLiteral.of("audio"),
 		"sample_rate": autoguard.String,
 		"channels": autoguard.Number
@@ -93,7 +121,9 @@ export type SubtitleStream = (Stream & {
 
 export const SubtitleStream = autoguard.Intersection.of(
 	Stream,
-	autoguard.Object.of({
+	autoguard.Object.of<{
+		"codec_type": "subtitle"
+	}>({
 		"codec_type": autoguard.StringLiteral.of("subtitle")
 	})
 );
@@ -110,7 +140,9 @@ export type FFProbe = {
 	"streams": StreamType[]
 };
 
-export const FFProbe = autoguard.Object.of({
+export const FFProbe = autoguard.Object.of<{
+	"streams": StreamType[]
+}>({
 	"streams": autoguard.Array.of(StreamType)
 });
 

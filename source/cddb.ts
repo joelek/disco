@@ -9,7 +9,12 @@ export type Volume = {
 	"peak_volume": number
 };
 
-export const Volume = autoguard.Object.of({
+export const Volume = autoguard.Object.of<{
+	"replaygain_gain": number,
+	"replaygain_peak": number,
+	"mean_volume": number,
+	"peak_volume": number
+}>({
 	"replaygain_gain": autoguard.Number,
 	"replaygain_peak": autoguard.Number,
 	"mean_volume": autoguard.Number,
@@ -22,7 +27,11 @@ export type Track = {
 	"title": string
 };
 
-export const Track = autoguard.Object.of({
+export const Track = autoguard.Object.of<{
+	"number": number,
+	"artists": string[],
+	"title": string
+}>({
 	"number": autoguard.Number,
 	"artists": autoguard.Array.of(autoguard.String),
 	"title": autoguard.String
@@ -39,7 +48,16 @@ export type Disc = {
 	"tracks": Track[]
 };
 
-export const Disc = autoguard.Object.of({
+export const Disc = autoguard.Object.of<{
+	"number": number,
+	"artists": string[],
+	"title": string,
+	"year": number,
+	"musicbrainz"?: string,
+	"volume"?: Volume,
+	"cover_art_url"?: string,
+	"tracks": Track[]
+}>({
 	"number": autoguard.Number,
 	"artists": autoguard.Array.of(autoguard.String),
 	"title": autoguard.String,

@@ -6,7 +6,9 @@ export type ArtistCredit = {
 	"name": string
 };
 
-export const ArtistCredit = autoguard.Object.of({
+export const ArtistCredit = autoguard.Object.of<{
+	"name": string
+}>({
 	"name": autoguard.String
 });
 
@@ -15,7 +17,10 @@ export type Track = {
 	"artist-credit": ArtistCredit[]
 };
 
-export const Track = autoguard.Object.of({
+export const Track = autoguard.Object.of<{
+	"title": string,
+	"artist-credit": ArtistCredit[]
+}>({
 	"title": autoguard.String,
 	"artist-credit": autoguard.Array.of(ArtistCredit)
 });
@@ -27,7 +32,12 @@ export type Disc = {
 	"offsets": number[]
 };
 
-export const Disc = autoguard.Object.of({
+export const Disc = autoguard.Object.of<{
+	"sectors": number,
+	"offset-count": number,
+	"id": string,
+	"offsets": number[]
+}>({
 	"sectors": autoguard.Number,
 	"offset-count": autoguard.Number,
 	"id": autoguard.String,
@@ -40,7 +50,11 @@ export type Media = {
 	"tracks": Track[]
 };
 
-export const Media = autoguard.Object.of({
+export const Media = autoguard.Object.of<{
+	"position": number,
+	"discs": Disc[],
+	"tracks": Track[]
+}>({
 	"position": autoguard.Number,
 	"discs": autoguard.Array.of(Disc),
 	"tracks": autoguard.Array.of(Track)
@@ -54,7 +68,13 @@ export type Release = {
 	"media": Media[]
 };
 
-export const Release = autoguard.Object.of({
+export const Release = autoguard.Object.of<{
+	"id": string,
+	"date": string,
+	"title": string,
+	"artist-credit": ArtistCredit[],
+	"media": Media[]
+}>({
 	"id": autoguard.String,
 	"date": autoguard.String,
 	"title": autoguard.String,
@@ -66,7 +86,9 @@ export type DiscIdLookupResponse = {
 	"releases": Release[]
 };
 
-export const DiscIdLookupResponse = autoguard.Object.of({
+export const DiscIdLookupResponse = autoguard.Object.of<{
+	"releases": Release[]
+}>({
 	"releases": autoguard.Array.of(Release)
 });
 

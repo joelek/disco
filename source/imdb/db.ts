@@ -12,7 +12,15 @@ export type Movie = {
 	"actors": string[]
 };
 
-export const Movie = autoguard.Object.of({
+export const Movie = autoguard.Object.of<{
+	"id": string,
+	"title": string,
+	"year": number,
+	"summary": string,
+	"poster_url": string,
+	"genres": string[],
+	"actors": string[]
+}>({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"year": autoguard.Number,
@@ -30,7 +38,13 @@ export type Show = {
 	"actors": string[]
 };
 
-export const Show = autoguard.Object.of({
+export const Show = autoguard.Object.of<{
+	"id": string,
+	"title": string,
+	"summary": string,
+	"genres": string[],
+	"actors": string[]
+}>({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"summary": autoguard.String,
@@ -48,7 +62,15 @@ export type Episode = {
 	"episode": number
 };
 
-export const Episode = autoguard.Object.of({
+export const Episode = autoguard.Object.of<{
+	"id": string,
+	"title": string,
+	"air_date": number,
+	"summary": string,
+	"show_id": string,
+	"season": number,
+	"episode": number
+}>({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"air_date": autoguard.Number,
@@ -64,7 +86,11 @@ export type Database = {
 	"episodes": Episode[]
 };
 
-export const Database = autoguard.Object.of({
+export const Database = autoguard.Object.of<{
+	"movies": Movie[],
+	"shows": Show[],
+	"episodes": Episode[]
+}>({
 	"movies": autoguard.Array.of(Movie),
 	"shows": autoguard.Array.of(Show),
 	"episodes": autoguard.Array.of(Episode)

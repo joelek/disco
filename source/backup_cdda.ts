@@ -35,7 +35,7 @@ function log(string: string): void {
 }
 
 function save_disc_to_db(disc_id: string, disc: cddb.Disc, cb: Callback<void>): void {
-	db[disc_id] = disc as any;
+	db[disc_id] = disc;
 	libfs.writeFile(`./private/db/cddb.json`, JSON.stringify(db, null, `\t`), (error) => {
 		cb();
 	});

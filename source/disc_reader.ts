@@ -7,7 +7,10 @@ export type DeviceDetails = {
 	"product_id": string
 };
 
-export const DeviceDetails = autoguard.Object.of({
+export const DeviceDetails = autoguard.Object.of<{
+	"vendor_id": string,
+	"product_id": string
+}>({
 	"vendor_id": autoguard.String,
 	"product_id": autoguard.String
 });

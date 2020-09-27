@@ -17,7 +17,12 @@ export type CropSettings = {
 	"y": number
 };
 
-export const CropSettings = autoguard.Object.of({
+export const CropSettings = autoguard.Object.of<{
+	"w": number,
+	"h": number,
+	"x": number,
+	"y": number
+}>({
 	"w": autoguard.Number,
 	"h": autoguard.Number,
 	"x": autoguard.Number,
@@ -30,7 +35,11 @@ export type Setting = {
 	"compressibility": number
 };
 
-export const Setting = autoguard.Object.of({
+export const Setting = autoguard.Object.of<{
+	"field_order": FieldOrder,
+	"crop": CropSettings,
+	"compressibility": number
+}>({
 	"field_order": FieldOrder,
 	"crop": CropSettings,
 	"compressibility": autoguard.Number
