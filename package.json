@@ -14,8 +14,7 @@
 	"scripts": {
 		"build": "rm -rf ./build/ && npm run codegen && npx tsc --build",
 		"clean": "rm -rf ./build/ ./node_modules/",
-		"codegen": "npx autoguard --standalone=false",
-		"install": "npm run build"
+		"codegen": "npx autoguard --standalone=false"
 	},
 	"version": "1.0.0"
 }
