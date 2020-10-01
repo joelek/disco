@@ -12,15 +12,7 @@ export type Movie = {
 	"actors": string[]
 };
 
-export const Movie = autoguard.Object.of<{
-	"id": string,
-	"title": string,
-	"year": number,
-	"summary": string,
-	"poster_url": string,
-	"genres": string[],
-	"actors": string[]
-}>({
+export const Movie = autoguard.Object.of({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"year": autoguard.Number,
@@ -28,7 +20,7 @@ export const Movie = autoguard.Object.of<{
 	"poster_url": autoguard.String,
 	"genres": autoguard.Array.of(autoguard.String),
 	"actors": autoguard.Array.of(autoguard.String)
-});
+}, {});
 
 export type Show = {
 	"id": string,
@@ -38,19 +30,13 @@ export type Show = {
 	"actors": string[]
 };
 
-export const Show = autoguard.Object.of<{
-	"id": string,
-	"title": string,
-	"summary": string,
-	"genres": string[],
-	"actors": string[]
-}>({
+export const Show = autoguard.Object.of({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"summary": autoguard.String,
 	"genres": autoguard.Array.of(autoguard.String),
 	"actors": autoguard.Array.of(autoguard.String)
-});
+}, {});
 
 export type Episode = {
 	"id": string,
@@ -62,15 +48,7 @@ export type Episode = {
 	"episode": number
 };
 
-export const Episode = autoguard.Object.of<{
-	"id": string,
-	"title": string,
-	"air_date": number,
-	"summary": string,
-	"show_id": string,
-	"season": number,
-	"episode": number
-}>({
+export const Episode = autoguard.Object.of({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"air_date": autoguard.Number,
@@ -78,7 +56,7 @@ export const Episode = autoguard.Object.of<{
 	"show_id": autoguard.String,
 	"season": autoguard.Number,
 	"episode": autoguard.Number
-});
+}, {});
 
 export type Database = {
 	"movies": Movie[],
@@ -86,15 +64,11 @@ export type Database = {
 	"episodes": Episode[]
 };
 
-export const Database = autoguard.Object.of<{
-	"movies": Movie[],
-	"shows": Show[],
-	"episodes": Episode[]
-}>({
+export const Database = autoguard.Object.of({
 	"movies": autoguard.Array.of(Movie),
 	"shows": autoguard.Array.of(Show),
 	"episodes": autoguard.Array.of(Episode)
-});
+}, {});
 
 export type Autoguard = {
 	"Movie": Movie,

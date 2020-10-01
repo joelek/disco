@@ -9,17 +9,12 @@ export type Volume = {
 	"peak_volume": number
 };
 
-export const Volume = autoguard.Object.of<{
-	"replaygain_gain": number,
-	"replaygain_peak": number,
-	"mean_volume": number,
-	"peak_volume": number
-}>({
+export const Volume = autoguard.Object.of({
 	"replaygain_gain": autoguard.Number,
 	"replaygain_peak": autoguard.Number,
 	"mean_volume": autoguard.Number,
 	"peak_volume": autoguard.Number
-});
+}, {});
 
 export type Track = {
 	"number": number,
@@ -27,15 +22,11 @@ export type Track = {
 	"title": string
 };
 
-export const Track = autoguard.Object.of<{
-	"number": number,
-	"artists": string[],
-	"title": string
-}>({
+export const Track = autoguard.Object.of({
 	"number": autoguard.Number,
 	"artists": autoguard.Array.of(autoguard.String),
 	"title": autoguard.String
-});
+}, {});
 
 export type Disc = {
 	"number": number,
@@ -48,20 +39,13 @@ export type Disc = {
 	"tracks": Track[]
 };
 
-export const Disc = autoguard.Object.of<{
-	"number": number,
-	"artists": string[],
-	"title": string,
-	"year": number,
-	"musicbrainz"?: string,
-	"volume"?: Volume,
-	"cover_art_url"?: string,
-	"tracks": Track[]
-}>({
+export const Disc = autoguard.Object.of({
 	"number": autoguard.Number,
 	"artists": autoguard.Array.of(autoguard.String),
 	"title": autoguard.String,
 	"year": autoguard.Number,
+	"tracks": autoguard.Array.of(Track)
+}, {
 	"musicbrainz": autoguard.Union.of(
 		autoguard.Undefined,
 		autoguard.String
@@ -73,8 +57,7 @@ export const Disc = autoguard.Object.of<{
 	"cover_art_url": autoguard.Union.of(
 		autoguard.Undefined,
 		autoguard.String
-	),
-	"tracks": autoguard.Array.of(Track)
+	)
 });
 
 export type Database = Record<string, undefined | Disc>;

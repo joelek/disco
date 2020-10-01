@@ -7,13 +7,10 @@ export type Content = {
 	"selector": string
 };
 
-export const Content = autoguard.Object.of<{
-	"type": string,
-	"selector": string
-}>({
+export const Content = autoguard.Object.of({
 	"type": autoguard.String,
 	"selector": autoguard.String
-});
+}, {});
 
 export type MovieContent = (Content & {
 	"type": "movie",
@@ -29,17 +26,7 @@ export type MovieContent = (Content & {
 
 export const MovieContent = autoguard.Intersection.of(
 	Content,
-	autoguard.Object.of<{
-		"type": "movie",
-		"title": string,
-		"year": number,
-		"part": number,
-		"imdb": string,
-		"poster_url": string,
-		"summary": string,
-		"genres": string[],
-		"actors": string[]
-	}>({
+	autoguard.Object.of({
 		"type": autoguard.StringLiteral.of("movie"),
 		"title": autoguard.String,
 		"year": autoguard.Number,
@@ -49,7 +36,7 @@ export const MovieContent = autoguard.Intersection.of(
 		"summary": autoguard.String,
 		"genres": autoguard.Array.of(autoguard.String),
 		"actors": autoguard.Array.of(autoguard.String)
-	})
+	}, {})
 );
 
 export type EpisodeContent = (Content & {
@@ -68,19 +55,7 @@ export type EpisodeContent = (Content & {
 
 export const EpisodeContent = autoguard.Intersection.of(
 	Content,
-	autoguard.Object.of<{
-		"type": "episode",
-		"title": string,
-		"show": string,
-		"season": number,
-		"episode": number,
-		"imdb": string,
-		"imdb_show": string,
-		"year": number,
-		"summary": string,
-		"genres_show": string[],
-		"actors_show": string[]
-	}>({
+	autoguard.Object.of({
 		"type": autoguard.StringLiteral.of("episode"),
 		"title": autoguard.String,
 		"show": autoguard.String,
@@ -92,7 +67,7 @@ export const EpisodeContent = autoguard.Intersection.of(
 		"summary": autoguard.String,
 		"genres_show": autoguard.Array.of(autoguard.String),
 		"actors_show": autoguard.Array.of(autoguard.String)
-	})
+	}, {})
 );
 
 export type UnknownContent = (Content & {
@@ -101,11 +76,9 @@ export type UnknownContent = (Content & {
 
 export const UnknownContent = autoguard.Intersection.of(
 	Content,
-	autoguard.Object.of<{
-		"type": "unknown"
-	}>({
+	autoguard.Object.of({
 		"type": autoguard.StringLiteral.of("unknown")
-	})
+	}, {})
 );
 
 export type MediaContent = (UnknownContent | MovieContent | EpisodeContent);
@@ -129,13 +102,10 @@ export type Media = {
 	"content": MediaContent[]
 };
 
-export const Media = autoguard.Object.of<{
-	"type": MediaType,
-	"content": MediaContent[]
-}>({
+export const Media = autoguard.Object.of({
 	"type": MediaType,
 	"content": autoguard.Array.of(MediaContent)
-});
+}, {});
 
 export type MediaDatabase = Record<string, undefined | Media>;
 

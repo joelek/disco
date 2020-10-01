@@ -15,18 +15,7 @@ export type Stream = {
 	})
 };
 
-export const Stream = autoguard.Object.of<{
-	"index": number,
-	"codec_type": string,
-	"codec_name": string,
-	"time_base": string,
-	"start_pts": number,
-	"start_time": string,
-	"extradata": string,
-	"tags": (Record<string, undefined | string> & {
-		"language": string
-	})
-}>({
+export const Stream = autoguard.Object.of({
 	"index": autoguard.Number,
 	"codec_type": autoguard.String,
 	"codec_name": autoguard.String,
@@ -36,13 +25,11 @@ export const Stream = autoguard.Object.of<{
 	"extradata": autoguard.String,
 	"tags": autoguard.Intersection.of(
 		autoguard.Record.of(autoguard.String),
-		autoguard.Object.of<{
-			"language": string
-		}>({
+		autoguard.Object.of({
 			"language": autoguard.String
-		})
+		}, {})
 	)
-});
+}, {});
 
 export type VideoStream = (Stream & {
 	"codec_type": "video",
@@ -59,24 +46,14 @@ export type VideoStream = (Stream & {
 
 export const VideoStream = autoguard.Intersection.of(
 	Stream,
-	autoguard.Object.of<{
-		"codec_type": "video",
-		"width": number,
-		"height": number,
-		"r_frame_rate": string,
-		"sample_aspect_ratio": string,
-		"display_aspect_ratio": string,
-		"color_range"?: string,
-		"color_space"?: string,
-		"color_transfer"?: string,
-		"color_primaries"?: string
-	}>({
+	autoguard.Object.of({
 		"codec_type": autoguard.StringLiteral.of("video"),
 		"width": autoguard.Number,
 		"height": autoguard.Number,
 		"r_frame_rate": autoguard.String,
 		"sample_aspect_ratio": autoguard.String,
-		"display_aspect_ratio": autoguard.String,
+		"display_aspect_ratio": autoguard.String
+	}, {
 		"color_range": autoguard.Union.of(
 			autoguard.Undefined,
 			autoguard.String
@@ -104,15 +81,11 @@ export type AudioStream = (Stream & {
 
 export const AudioStream = autoguard.Intersection.of(
 	Stream,
-	autoguard.Object.of<{
-		"codec_type": "audio",
-		"sample_rate": string,
-		"channels": number
-	}>({
+	autoguard.Object.of({
 		"codec_type": autoguard.StringLiteral.of("audio"),
 		"sample_rate": autoguard.String,
 		"channels": autoguard.Number
-	})
+	}, {})
 );
 
 export type SubtitleStream = (Stream & {
@@ -121,11 +94,9 @@ export type SubtitleStream = (Stream & {
 
 export const SubtitleStream = autoguard.Intersection.of(
 	Stream,
-	autoguard.Object.of<{
-		"codec_type": "subtitle"
-	}>({
+	autoguard.Object.of({
 		"codec_type": autoguard.StringLiteral.of("subtitle")
-	})
+	}, {})
 );
 
 export type StreamType = (VideoStream | AudioStream | SubtitleStream);
@@ -140,11 +111,9 @@ export type FFProbe = {
 	"streams": StreamType[]
 };
 
-export const FFProbe = autoguard.Object.of<{
-	"streams": StreamType[]
-}>({
+export const FFProbe = autoguard.Object.of({
 	"streams": autoguard.Array.of(StreamType)
-});
+}, {});
 
 export type Autoguard = {
 	"Stream": Stream,
