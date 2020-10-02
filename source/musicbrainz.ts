@@ -6,19 +6,19 @@ export type ArtistCredit = {
 	"name": string
 };
 
-export const ArtistCredit = autoguard.Object.of({
+export const ArtistCredit = autoguard.Object.of<ArtistCredit>({
 	"name": autoguard.String
-}, {});
+});
 
 export type Track = {
 	"title": string,
 	"artist-credit": ArtistCredit[]
 };
 
-export const Track = autoguard.Object.of({
+export const Track = autoguard.Object.of<Track>({
 	"title": autoguard.String,
-	"artist-credit": autoguard.Array.of(ArtistCredit)
-}, {});
+	"artist-credit": autoguard.Array.of(autoguard.Reference.of<ArtistCredit>(() => ArtistCredit))
+});
 
 export type Disc = {
 	"sectors": number,
@@ -27,12 +27,12 @@ export type Disc = {
 	"offsets": number[]
 };
 
-export const Disc = autoguard.Object.of({
+export const Disc = autoguard.Object.of<Disc>({
 	"sectors": autoguard.Number,
 	"offset-count": autoguard.Number,
 	"id": autoguard.String,
 	"offsets": autoguard.Array.of(autoguard.Number)
-}, {});
+});
 
 export type Media = {
 	"position": number,
@@ -40,11 +40,11 @@ export type Media = {
 	"tracks": Track[]
 };
 
-export const Media = autoguard.Object.of({
+export const Media = autoguard.Object.of<Media>({
 	"position": autoguard.Number,
-	"discs": autoguard.Array.of(Disc),
-	"tracks": autoguard.Array.of(Track)
-}, {});
+	"discs": autoguard.Array.of(autoguard.Reference.of<Disc>(() => Disc)),
+	"tracks": autoguard.Array.of(autoguard.Reference.of<Track>(() => Track))
+});
 
 export type Release = {
 	"id": string,
@@ -54,21 +54,21 @@ export type Release = {
 	"media": Media[]
 };
 
-export const Release = autoguard.Object.of({
+export const Release = autoguard.Object.of<Release>({
 	"id": autoguard.String,
 	"date": autoguard.String,
 	"title": autoguard.String,
-	"artist-credit": autoguard.Array.of(ArtistCredit),
-	"media": autoguard.Array.of(Media)
-}, {});
+	"artist-credit": autoguard.Array.of(autoguard.Reference.of<ArtistCredit>(() => ArtistCredit)),
+	"media": autoguard.Array.of(autoguard.Reference.of<Media>(() => Media))
+});
 
 export type DiscIdLookupResponse = {
 	"releases": Release[]
 };
 
-export const DiscIdLookupResponse = autoguard.Object.of({
-	"releases": autoguard.Array.of(Release)
-}, {});
+export const DiscIdLookupResponse = autoguard.Object.of<DiscIdLookupResponse>({
+	"releases": autoguard.Array.of(autoguard.Reference.of<Release>(() => Release))
+});
 
 export type Autoguard = {
 	"ArtistCredit": ArtistCredit,

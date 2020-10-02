@@ -12,7 +12,7 @@ export type Movie = {
 	"actors": string[]
 };
 
-export const Movie = autoguard.Object.of({
+export const Movie = autoguard.Object.of<Movie>({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"year": autoguard.Number,
@@ -20,7 +20,7 @@ export const Movie = autoguard.Object.of({
 	"poster_url": autoguard.String,
 	"genres": autoguard.Array.of(autoguard.String),
 	"actors": autoguard.Array.of(autoguard.String)
-}, {});
+});
 
 export type Show = {
 	"id": string,
@@ -30,13 +30,13 @@ export type Show = {
 	"actors": string[]
 };
 
-export const Show = autoguard.Object.of({
+export const Show = autoguard.Object.of<Show>({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"summary": autoguard.String,
 	"genres": autoguard.Array.of(autoguard.String),
 	"actors": autoguard.Array.of(autoguard.String)
-}, {});
+});
 
 export type Episode = {
 	"id": string,
@@ -48,7 +48,7 @@ export type Episode = {
 	"episode": number
 };
 
-export const Episode = autoguard.Object.of({
+export const Episode = autoguard.Object.of<Episode>({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"air_date": autoguard.Number,
@@ -56,7 +56,7 @@ export const Episode = autoguard.Object.of({
 	"show_id": autoguard.String,
 	"season": autoguard.Number,
 	"episode": autoguard.Number
-}, {});
+});
 
 export type Database = {
 	"movies": Movie[],
@@ -64,11 +64,11 @@ export type Database = {
 	"episodes": Episode[]
 };
 
-export const Database = autoguard.Object.of({
-	"movies": autoguard.Array.of(Movie),
-	"shows": autoguard.Array.of(Show),
-	"episodes": autoguard.Array.of(Episode)
-}, {});
+export const Database = autoguard.Object.of<Database>({
+	"movies": autoguard.Array.of(autoguard.Reference.of<Movie>(() => Movie)),
+	"shows": autoguard.Array.of(autoguard.Reference.of<Show>(() => Show)),
+	"episodes": autoguard.Array.of(autoguard.Reference.of<Episode>(() => Episode))
+});
 
 export type Autoguard = {
 	"Movie": Movie,

@@ -9,12 +9,12 @@ export type Volume = {
 	"peak_volume": number
 };
 
-export const Volume = autoguard.Object.of({
+export const Volume = autoguard.Object.of<Volume>({
 	"replaygain_gain": autoguard.Number,
 	"replaygain_peak": autoguard.Number,
 	"mean_volume": autoguard.Number,
 	"peak_volume": autoguard.Number
-}, {});
+});
 
 export type Track = {
 	"number": number,
@@ -22,11 +22,11 @@ export type Track = {
 	"title": string
 };
 
-export const Track = autoguard.Object.of({
+export const Track = autoguard.Object.of<Track>({
 	"number": autoguard.Number,
 	"artists": autoguard.Array.of(autoguard.String),
 	"title": autoguard.String
-}, {});
+});
 
 export type Disc = {
 	"number": number,
@@ -39,30 +39,29 @@ export type Disc = {
 	"tracks": Track[]
 };
 
-export const Disc = autoguard.Object.of({
+export const Disc = autoguard.Object.of<Disc>({
 	"number": autoguard.Number,
 	"artists": autoguard.Array.of(autoguard.String),
 	"title": autoguard.String,
 	"year": autoguard.Number,
-	"tracks": autoguard.Array.of(Track)
-}, {
 	"musicbrainz": autoguard.Union.of(
 		autoguard.Undefined,
 		autoguard.String
 	),
 	"volume": autoguard.Union.of(
 		autoguard.Undefined,
-		Volume
+		autoguard.Reference.of<Volume>(() => Volume)
 	),
 	"cover_art_url": autoguard.Union.of(
 		autoguard.Undefined,
 		autoguard.String
-	)
+	),
+	"tracks": autoguard.Array.of(autoguard.Reference.of<Track>(() => Track))
 });
 
 export type Database = Record<string, undefined | Disc>;
 
-export const Database = autoguard.Record.of(Disc);
+export const Database = autoguard.Record.of(autoguard.Reference.of<Disc>(() => Disc));
 
 export type Autoguard = {
 	"Volume": Volume,

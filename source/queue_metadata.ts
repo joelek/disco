@@ -17,12 +17,12 @@ export type CropSettings = {
 	"y": number
 };
 
-export const CropSettings = autoguard.Object.of({
+export const CropSettings = autoguard.Object.of<CropSettings>({
 	"w": autoguard.Number,
 	"h": autoguard.Number,
 	"x": autoguard.Number,
 	"y": autoguard.Number
-}, {});
+});
 
 export type Setting = {
 	"field_order": FieldOrder,
@@ -30,15 +30,15 @@ export type Setting = {
 	"compressibility": number
 };
 
-export const Setting = autoguard.Object.of({
-	"field_order": FieldOrder,
-	"crop": CropSettings,
+export const Setting = autoguard.Object.of<Setting>({
+	"field_order": autoguard.Reference.of<FieldOrder>(() => FieldOrder),
+	"crop": autoguard.Reference.of<CropSettings>(() => CropSettings),
 	"compressibility": autoguard.Number
-}, {});
+});
 
 export type Database = Record<string, undefined | Setting>;
 
-export const Database = autoguard.Record.of(Setting);
+export const Database = autoguard.Record.of(autoguard.Reference.of<Setting>(() => Setting));
 
 export type Autoguard = {
 	"FieldOrder": FieldOrder,

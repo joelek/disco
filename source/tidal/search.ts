@@ -19,14 +19,14 @@ export type SearchResponseArtist = {
 	"popularity": number
 };
 
-export const SearchResponseArtist = autoguard.Object.of({
+export const SearchResponseArtist = autoguard.Object.of<SearchResponseArtist>({
 	"id": autoguard.Number,
 	"name": autoguard.String,
-	"artistTypes": autoguard.Array.of(ArtistType),
+	"artistTypes": autoguard.Array.of(autoguard.Reference.of<ArtistType>(() => ArtistType)),
 	"url": autoguard.String,
 	"picture": autoguard.String,
 	"popularity": autoguard.Number
-}, {});
+});
 
 export type AlbumType = ("ALBUM" | string);
 
@@ -64,11 +64,11 @@ export type SearchResponseArtistRelation = {
 	"type": ArtistRelationType
 };
 
-export const SearchResponseArtistRelation = autoguard.Object.of({
+export const SearchResponseArtistRelation = autoguard.Object.of<SearchResponseArtistRelation>({
 	"id": autoguard.Number,
 	"name": autoguard.String,
-	"type": ArtistRelationType
-}, {});
+	"type": autoguard.Reference.of<ArtistRelationType>(() => ArtistRelationType)
+});
 
 export type AlbumRelation = {
 	"id": number,
@@ -78,7 +78,7 @@ export type AlbumRelation = {
 	"releaseDate": string
 };
 
-export const AlbumRelation = autoguard.Object.of({
+export const AlbumRelation = autoguard.Object.of<AlbumRelation>({
 	"id": autoguard.Number,
 	"title": autoguard.String,
 	"cover": autoguard.String,
@@ -87,7 +87,7 @@ export const AlbumRelation = autoguard.Object.of({
 		autoguard.Any
 	),
 	"releaseDate": autoguard.String
-}, {});
+});
 
 export type SearchResponseAlbum = {
 	"id": number,
@@ -115,7 +115,7 @@ export type SearchResponseAlbum = {
 	"artists": SearchResponseArtistRelation[]
 };
 
-export const SearchResponseAlbum = autoguard.Object.of({
+export const SearchResponseAlbum = autoguard.Object.of<SearchResponseAlbum>({
 	"id": autoguard.Number,
 	"title": autoguard.String,
 	"duration": autoguard.Number,
@@ -128,7 +128,7 @@ export const SearchResponseAlbum = autoguard.Object.of({
 	"numberOfVolumes": autoguard.Number,
 	"releaseDate": autoguard.String,
 	"copyright": autoguard.String,
-	"type": AlbumType,
+	"type": autoguard.Reference.of<AlbumType>(() => AlbumType),
 	"version": autoguard.Union.of(
 		autoguard.Any,
 		autoguard.Null
@@ -142,10 +142,10 @@ export const SearchResponseAlbum = autoguard.Object.of({
 	"explicit": autoguard.Boolean,
 	"upc": autoguard.String,
 	"popularity": autoguard.Number,
-	"audioQuality": AudioQualityType,
-	"audioModes": autoguard.Array.of(AudioModeType),
-	"artists": autoguard.Array.of(SearchResponseArtistRelation)
-}, {});
+	"audioQuality": autoguard.Reference.of<AudioQualityType>(() => AudioQualityType),
+	"audioModes": autoguard.Array.of(autoguard.Reference.of<AudioModeType>(() => AudioModeType)),
+	"artists": autoguard.Array.of(autoguard.Reference.of<SearchResponseArtistRelation>(() => SearchResponseArtistRelation))
+});
 
 export type PlaylistType = ("ARTIST" | "EDITORIAL" | string);
 
@@ -164,7 +164,7 @@ export type PlaylistCreator = {
 	"popularity": number
 };
 
-export const PlaylistCreator = autoguard.Object.of({
+export const PlaylistCreator = autoguard.Object.of<PlaylistCreator>({
 	"id": autoguard.Number,
 	"name": autoguard.String,
 	"artistTypes": autoguard.Union.of(
@@ -180,7 +180,7 @@ export const PlaylistCreator = autoguard.Object.of({
 		autoguard.Any
 	),
 	"popularity": autoguard.Number
-}, {});
+});
 
 export type SearchResponsePlaylist = {
 	"uuid": string,
@@ -202,31 +202,31 @@ export type SearchResponsePlaylist = {
 	"lastItemAddedAt": (null | any)
 };
 
-export const SearchResponsePlaylist = autoguard.Object.of({
+export const SearchResponsePlaylist = autoguard.Object.of<SearchResponsePlaylist>({
 	"uuid": autoguard.String,
 	"title": autoguard.String,
 	"numberOfTracks": autoguard.Number,
 	"numberOfVideos": autoguard.Number,
 	"creator": autoguard.Union.of(
-		autoguard.Object.of({}, {}),
-		PlaylistCreator
+		autoguard.Object.of<{}>({}),
+		autoguard.Reference.of<PlaylistCreator>(() => PlaylistCreator)
 	),
 	"description": autoguard.String,
 	"duration": autoguard.Number,
 	"lastUpdated": autoguard.String,
 	"created": autoguard.String,
-	"type": PlaylistType,
+	"type": autoguard.Reference.of<PlaylistType>(() => PlaylistType),
 	"publicPlaylist": autoguard.Boolean,
 	"url": autoguard.String,
 	"image": autoguard.String,
 	"popularity": autoguard.Number,
 	"squareImage": autoguard.String,
-	"promotedArtists": autoguard.Array.of(SearchResponseArtistRelation),
+	"promotedArtists": autoguard.Array.of(autoguard.Reference.of<SearchResponseArtistRelation>(() => SearchResponseArtistRelation)),
 	"lastItemAddedAt": autoguard.Union.of(
 		autoguard.Null,
 		autoguard.Any
 	)
-}, {});
+});
 
 export type SearchResponseTrack = {
 	"id": number,
@@ -253,7 +253,7 @@ export type SearchResponseTrack = {
 	"album": AlbumRelation
 };
 
-export const SearchResponseTrack = autoguard.Object.of({
+export const SearchResponseTrack = autoguard.Object.of<SearchResponseTrack>({
 	"id": autoguard.Number,
 	"title": autoguard.String,
 	"duration": autoguard.Number,
@@ -275,11 +275,11 @@ export const SearchResponseTrack = autoguard.Object.of({
 	"isrc": autoguard.String,
 	"editable": autoguard.Boolean,
 	"explicit": autoguard.Boolean,
-	"audioQuality": AudioQualityType,
-	"audioModes": autoguard.Array.of(AudioModeType),
-	"artists": autoguard.Array.of(SearchResponseArtistRelation),
-	"album": AlbumRelation
-}, {});
+	"audioQuality": autoguard.Reference.of<AudioQualityType>(() => AudioQualityType),
+	"audioModes": autoguard.Array.of(autoguard.Reference.of<AudioModeType>(() => AudioModeType)),
+	"artists": autoguard.Array.of(autoguard.Reference.of<SearchResponseArtistRelation>(() => SearchResponseArtistRelation)),
+	"album": autoguard.Reference.of<AlbumRelation>(() => AlbumRelation)
+});
 
 export type SearchResponseVideoQualityType = ("MP4_1080P" | string);
 
@@ -310,7 +310,7 @@ export type SearchResponseVideo = {
 	"album": (null | any)
 };
 
-export const SearchResponseVideo = autoguard.Object.of({
+export const SearchResponseVideo = autoguard.Object.of<SearchResponseVideo>({
 	"id": autoguard.Number,
 	"title": autoguard.String,
 	"volumeNumber": autoguard.Number,
@@ -322,7 +322,7 @@ export const SearchResponseVideo = autoguard.Object.of({
 	),
 	"imageId": autoguard.String,
 	"duration": autoguard.Number,
-	"quality": SearchResponseVideoQualityType,
+	"quality": autoguard.Reference.of<SearchResponseVideoQualityType>(() => SearchResponseVideoQualityType),
 	"streamReady": autoguard.Boolean,
 	"streamStartDate": autoguard.String,
 	"allowStreaming": autoguard.Boolean,
@@ -334,12 +334,12 @@ export const SearchResponseVideo = autoguard.Object.of({
 		autoguard.Any
 	),
 	"adsPrePaywallOnly": autoguard.Boolean,
-	"artists": autoguard.Array.of(SearchResponseArtistRelation),
+	"artists": autoguard.Array.of(autoguard.Reference.of<SearchResponseArtistRelation>(() => SearchResponseArtistRelation)),
 	"album": autoguard.Union.of(
 		autoguard.Null,
 		autoguard.Any
 	)
-}, {});
+});
 
 export type EntityType = ("ARTISTS" | "ALBUMS" | "PLAYLISTS" | "TRACKS" | "VIDEOS");
 
@@ -356,50 +356,50 @@ export type SearchResponseTopHitArtist = {
 	"type": "ARTISTS"
 };
 
-export const SearchResponseTopHitArtist = autoguard.Object.of({
-	"value": SearchResponseArtist,
+export const SearchResponseTopHitArtist = autoguard.Object.of<SearchResponseTopHitArtist>({
+	"value": autoguard.Reference.of<SearchResponseArtist>(() => SearchResponseArtist),
 	"type": autoguard.StringLiteral.of("ARTISTS")
-}, {});
+});
 
 export type SearchResponseTopHitAlbum = {
 	"value": SearchResponseAlbum,
 	"type": "ALBUMS"
 };
 
-export const SearchResponseTopHitAlbum = autoguard.Object.of({
-	"value": SearchResponseAlbum,
+export const SearchResponseTopHitAlbum = autoguard.Object.of<SearchResponseTopHitAlbum>({
+	"value": autoguard.Reference.of<SearchResponseAlbum>(() => SearchResponseAlbum),
 	"type": autoguard.StringLiteral.of("ALBUMS")
-}, {});
+});
 
 export type SearchResponseTopHitPlaylist = {
 	"value": SearchResponsePlaylist,
 	"type": "PLAYLISTS"
 };
 
-export const SearchResponseTopHitPlaylist = autoguard.Object.of({
-	"value": SearchResponsePlaylist,
+export const SearchResponseTopHitPlaylist = autoguard.Object.of<SearchResponseTopHitPlaylist>({
+	"value": autoguard.Reference.of<SearchResponsePlaylist>(() => SearchResponsePlaylist),
 	"type": autoguard.StringLiteral.of("PLAYLISTS")
-}, {});
+});
 
 export type SearchResponseTopHitTrack = {
 	"value": SearchResponseTrack,
 	"type": "TRACKS"
 };
 
-export const SearchResponseTopHitTrack = autoguard.Object.of({
-	"value": SearchResponseTrack,
+export const SearchResponseTopHitTrack = autoguard.Object.of<SearchResponseTopHitTrack>({
+	"value": autoguard.Reference.of<SearchResponseTrack>(() => SearchResponseTrack),
 	"type": autoguard.StringLiteral.of("TRACKS")
-}, {});
+});
 
 export type SearchResponseTopHitVideo = {
 	"value": SearchResponseVideo,
 	"type": "VIDEOS"
 };
 
-export const SearchResponseTopHitVideo = autoguard.Object.of({
-	"value": SearchResponseVideo,
+export const SearchResponseTopHitVideo = autoguard.Object.of<SearchResponseTopHitVideo>({
+	"value": autoguard.Reference.of<SearchResponseVideo>(() => SearchResponseVideo),
 	"type": autoguard.StringLiteral.of("VIDEOS")
-}, {});
+});
 
 export type SearchResponse = {
 	"artists": {
@@ -435,46 +435,71 @@ export type SearchResponse = {
 	"topHit": (SearchResponseTopHitArtist | SearchResponseTopHitAlbum | SearchResponseTopHitPlaylist | SearchResponseTopHitTrack | SearchResponseTopHitVideo | null)
 };
 
-export const SearchResponse = autoguard.Object.of({
-	"artists": autoguard.Object.of({
+export const SearchResponse = autoguard.Object.of<SearchResponse>({
+	"artists": autoguard.Object.of<{
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseArtist[]
+	}>({
 		"limit": autoguard.Number,
 		"offset": autoguard.Number,
 		"totalNumberOfItems": autoguard.Number,
-		"items": autoguard.Array.of(SearchResponseArtist)
-	}, {}),
-	"albums": autoguard.Object.of({
+		"items": autoguard.Array.of(autoguard.Reference.of<SearchResponseArtist>(() => SearchResponseArtist))
+	}),
+	"albums": autoguard.Object.of<{
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseAlbum[]
+	}>({
 		"limit": autoguard.Number,
 		"offset": autoguard.Number,
 		"totalNumberOfItems": autoguard.Number,
-		"items": autoguard.Array.of(SearchResponseAlbum)
-	}, {}),
-	"playlists": autoguard.Object.of({
+		"items": autoguard.Array.of(autoguard.Reference.of<SearchResponseAlbum>(() => SearchResponseAlbum))
+	}),
+	"playlists": autoguard.Object.of<{
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponsePlaylist[]
+	}>({
 		"limit": autoguard.Number,
 		"offset": autoguard.Number,
 		"totalNumberOfItems": autoguard.Number,
-		"items": autoguard.Array.of(SearchResponsePlaylist)
-	}, {}),
-	"tracks": autoguard.Object.of({
+		"items": autoguard.Array.of(autoguard.Reference.of<SearchResponsePlaylist>(() => SearchResponsePlaylist))
+	}),
+	"tracks": autoguard.Object.of<{
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseTrack[]
+	}>({
 		"limit": autoguard.Number,
 		"offset": autoguard.Number,
 		"totalNumberOfItems": autoguard.Number,
-		"items": autoguard.Array.of(SearchResponseTrack)
-	}, {}),
-	"videos": autoguard.Object.of({
+		"items": autoguard.Array.of(autoguard.Reference.of<SearchResponseTrack>(() => SearchResponseTrack))
+	}),
+	"videos": autoguard.Object.of<{
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseVideo[]
+	}>({
 		"limit": autoguard.Number,
 		"offset": autoguard.Number,
 		"totalNumberOfItems": autoguard.Number,
-		"items": autoguard.Array.of(SearchResponseVideo)
-	}, {}),
+		"items": autoguard.Array.of(autoguard.Reference.of<SearchResponseVideo>(() => SearchResponseVideo))
+	}),
 	"topHit": autoguard.Union.of(
-		SearchResponseTopHitArtist,
-		SearchResponseTopHitAlbum,
-		SearchResponseTopHitPlaylist,
-		SearchResponseTopHitTrack,
-		SearchResponseTopHitVideo,
+		autoguard.Reference.of<SearchResponseTopHitArtist>(() => SearchResponseTopHitArtist),
+		autoguard.Reference.of<SearchResponseTopHitAlbum>(() => SearchResponseTopHitAlbum),
+		autoguard.Reference.of<SearchResponseTopHitPlaylist>(() => SearchResponseTopHitPlaylist),
+		autoguard.Reference.of<SearchResponseTopHitTrack>(() => SearchResponseTopHitTrack),
+		autoguard.Reference.of<SearchResponseTopHitVideo>(() => SearchResponseTopHitVideo),
 		autoguard.Null
 	)
-}, {});
+});
 
 export type Autoguard = {
 	"ArtistType": ArtistType,
