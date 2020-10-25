@@ -23,6 +23,8 @@
 		imdb: string,
 		imdb_show: string,
 		year: number,
+		poster_url_show?: string,
+		summary_show: string,
 		summary: string,
 		genres_show: string[],
 		actors_show: string[]

@@ -9,6 +9,8 @@ import * as cover_art_jobs from './cover_art_jobs';
 import * as cover_art_transcode_jobs from './cover_art_transcode_jobs';
 import * as poster_jobs from './poster_jobs';
 import * as poster_transcode_jobs from './poster_transcode_jobs';
+import * as show_poster_jobs from './show_poster_jobs';
+import * as show_poster_transcode_jobs from './show_poster_transcode_jobs';
 import * as json_metadata_jobs from './json_metadata_jobs';
 
 let move_files = (filenames: string[], basename: string): void => {
@@ -115,6 +117,8 @@ let pick_from_queue = (): void => {
 				...await json_metadata_jobs.createJobList(),
 				...await poster_jobs.createJobList(),
 				...await poster_transcode_jobs.createJobList(),
+				...await show_poster_jobs.createJobList(),
+				...await show_poster_transcode_jobs.createJobList(),
 				...await cover_art_jobs.createJobList(),
 				...await cover_art_transcode_jobs.createJobList()
 			];

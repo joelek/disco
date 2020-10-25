@@ -58,6 +58,8 @@ export type EpisodeContent = (Content & {
 	"imdb": string,
 	"imdb_show": string,
 	"year": number,
+	"poster_url_show"?: string,
+	"summary_show": string,
 	"summary": string,
 	"genres_show": string[],
 	"actors_show": string[]
@@ -74,6 +76,8 @@ export const EpisodeContent = autoguard.Intersection.of(
 		"imdb": string,
 		"imdb_show": string,
 		"year": number,
+		"poster_url_show"?: string,
+		"summary_show": string,
 		"summary": string,
 		"genres_show": string[],
 		"actors_show": string[]
@@ -86,6 +90,11 @@ export const EpisodeContent = autoguard.Intersection.of(
 		"imdb": autoguard.String,
 		"imdb_show": autoguard.String,
 		"year": autoguard.Number,
+		"poster_url_show": autoguard.Union.of(
+			autoguard.Undefined,
+			autoguard.String
+		),
+		"summary_show": autoguard.String,
 		"summary": autoguard.String,
 		"genres_show": autoguard.Array.of(autoguard.String),
 		"actors_show": autoguard.Array.of(autoguard.String)

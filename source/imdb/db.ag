@@ -12,6 +12,7 @@
 		id: string,
 		title: string,
 		summary: string,
+		poster_url: string,
 		genres: string[],
 		actors: string[]
 	},

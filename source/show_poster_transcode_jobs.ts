@@ -4,46 +4,21 @@ import * as discdb from "./discdb";
 import * as job from "./job";
 import * as utils from "./utils";
 
-async function getMetadata(database: discdb.MediaDatabase, basename: string): Promise<{
-	id: string,
-	index: number,
-	media: discdb.Media,
-	track: discdb.MediaContent
-}> {
-	const parts = basename.split(".");
-	if (parts.length === 2) {
-		const id = parts[0];
-		const media = database[id];
-		if (media != null) {
-			const index = 0;
-			const track = media.content[index];
-			if (track != null) {
-				return {
-					id,
-					index,
-					media,
-					track
-				};
-			}
-		}
-	}
-	throw "Unable to get metadata!";
-}
-
-async function getTargetPaths(media: discdb.Media, track: discdb.MovieContent): Promise<Array<string>> {
+async function getTargetPaths(media: discdb.Media, track: discdb.EpisodeContent): Promise<Array<string>> {
+	const show = utils.pathify(track.show);
 	const title = utils.pathify(track.title);
-	const year = ("0000" + track.year).slice(-4);
+	const season = ("00" + track.season).slice(-2);
+	const episode = ("00" + track.episode).slice(-2);
 	const suffix = utils.pathify(media.type);
-	const dir = title.substr(0, 1);
-	const part = ("00" + 0).slice(-2);
 	return [
 		".",
 		"private",
 		"media",
 		"video",
-		"movies",
-		`${dir}`,
-		`${title}-${year}-${suffix}`,
+		"shows",
+		`${show}`,
+		`s${season}`,
+		`${show}-s${season}e${episode}-${title}-${suffix}`,
 		"00-artwork",
 	];
 }
@@ -85,25 +60,41 @@ async function createJobListRecursively(database: discdb.MediaDatabase, director
 			continue;
 		}
 		if (entry.isFile() && basename.endsWith(".jpg")) {
-			async function perform(): Promise<void> {
-				const metadata = await getMetadata(database, basename);
-				const media = metadata.media;
-				const track = discdb.MovieContent.as(metadata.track);
-				const paths = await getTargetPaths(media, track);
-				const path = paths.join("/") + ".jpg";
-				if (!libfs.existsSync(path)) {
-					console.log(path);
-					const buffer = libfs.readFileSync([
-						...directories,
-						basename
-					].join("/"));
-					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
-					await writeBufferToDisk(buffer, path);
+			let parts = basename.split(".");
+			if (parts.length !== 2) {
+				continue;
+			}
+			let imdb_show = parts[0];
+			for (let value of Object.values(database)) {
+				if (value == null) {
+					continue;
+				}
+				let media = value;
+				for (let content of value.content) {
+					if (discdb.EpisodeContent.is(content)) {
+						let track = content;
+						if (track.imdb_show !== imdb_show) {
+							continue;
+						}
+						async function perform(): Promise<void> {
+							const paths = await getTargetPaths(media, track);
+							const path = paths.join("/") + ".jpg";
+							if (!libfs.existsSync(path)) {
+								console.log(path);
+								const buffer = libfs.readFileSync([
+									...directories,
+									basename
+								].join("/"));
+								libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
+								await writeBufferToDisk(buffer, path);
+							}
+						}
+						jobs.push({
+							perform
+						});
+					}
 				}
 			}
-			jobs.push({
-				perform
-			});
 			continue;
 		}
 	}
@@ -117,7 +108,7 @@ async function createJobList(): Promise<Array<job.PromiseJob>> {
 		"private",
 		"archive",
 		"image",
-		"movies"
+		"shows"
 	]);
 }
 

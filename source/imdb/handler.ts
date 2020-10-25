@@ -90,6 +90,7 @@ export async function getShow(id: string): Promise<Show> {
 		id: title.id,
 		title: title.title,
 		summary: title.description,
+		poster_url: title.image_url,
 		genres: title.genres,
 		actors: title.stars.map((star) => star.name)
 	});

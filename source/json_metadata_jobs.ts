@@ -76,7 +76,9 @@ type EpisodeMetadata = {
 	show: {
 		imdb: string,
 		title: string,
-		genres: string[]
+		summary: string,
+		genres: string[],
+		actors: string[]
 	},
 	season: number,
 	episode: number
@@ -88,7 +90,8 @@ type MovieMetadata = {
 	title: string,
 	year: number,
 	summary: string,
-	genres: string[]
+	genres: string[],
+	actors: string[]
 };
 
 async function getJson(media: discdb.Media, track: discdb.MediaContent): Promise<EpisodeMetadata | MovieMetadata> {
@@ -102,7 +105,9 @@ async function getJson(media: discdb.Media, track: discdb.MediaContent): Promise
 			show: {
 				imdb: track.imdb_show,
 				title: track.show,
-				genres: track.genres_show
+				summary: track.summary_show,
+				genres: track.genres_show,
+				actors: track.actors_show
 			},
 			season: track.season,
 			episode: track.episode
@@ -116,7 +121,8 @@ async function getJson(media: discdb.Media, track: discdb.MediaContent): Promise
 			title: track.title,
 			year: track.year,
 			summary: track.summary,
-			genres: track.genres
+			genres: track.genres,
+			actors: track.actors
 		};
 		return json;
 	}

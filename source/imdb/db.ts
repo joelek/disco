@@ -26,6 +26,7 @@ export type Show = {
 	"id": string,
 	"title": string,
 	"summary": string,
+	"poster_url": string,
 	"genres": string[],
 	"actors": string[]
 };
@@ -34,6 +35,7 @@ export const Show = autoguard.Object.of<Show>({
 	"id": autoguard.String,
 	"title": autoguard.String,
 	"summary": autoguard.String,
+	"poster_url": autoguard.String,
 	"genres": autoguard.Array.of(autoguard.String),
 	"actors": autoguard.Array.of(autoguard.String)
 });

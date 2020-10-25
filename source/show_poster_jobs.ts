@@ -49,21 +49,21 @@ async function createJobListRecursively(database: discdb.MediaDatabase, director
 		if (entry.isFile() && basename.endsWith(".mkv")) {
 			async function perform(): Promise<void> {
 				const metadata = await getMetadata(database, basename);
-				const track = discdb.MovieContent.as(metadata.track);
+				const track = discdb.EpisodeContent.as(metadata.track);
 				const paths = [
 					".",
 					"private",
 					"archive",
 					"image",
-					"movies",
-					metadata.id
+					"shows",
+					track.imdb_show
 				];
 				const path = paths.join("/") + ".jpg";
-				if (!libfs.existsSync(path)) {
+				if (!libfs.existsSync(path) && track.poster_url_show != null) {
 					console.log(path);
 					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
 					await rl.rateLimit();
-					const buffer = await utils.request(track.poster_url);
+					const buffer = await utils.request(track.poster_url_show);
 					libfs.writeFileSync(path, buffer);
 				}
 			}
@@ -83,7 +83,7 @@ async function createJobList(): Promise<Array<job.PromiseJob>> {
 		"private",
 		"archive",
 		"video",
-		"movies"
+		"shows"
 	]);
 }
 
