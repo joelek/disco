@@ -13,7 +13,7 @@ const MATCHERS = {
 	"/>": /^([/][>])/isu,
 	"TEXT_NODE": /^([^<>]+)[<]/isu,
 	"IDENTIFIER": /^([a-z][a-z0-9_-]*)/isu,
-	"STRING_LITERAL": /^("[^"]*"|'[^']*'|)/isu,
+	"STRING_LITERAL": /^("[^"<]*"|'[^'<]*'|)/isu,
 	"NUMERIC_LITERAL": /^([0-9]+)/isu,
 	"BOOLEAN_LITERAL": /^(true|false)/isu,
 	"COMMENT": /^([<][!][-][-].*?([-][-][>]))/isu,
@@ -167,9 +167,9 @@ export abstract class XMLNode {
 	}
 };
 
-function parseNode(tokenizer: Tokenizer): XMLNode {
+function parseNode(tokenizer: Tokenizer, indent: string = ""): XMLNode {
 	try {
-		return parseElement(tokenizer);
+		return parseElement(tokenizer, indent);
 	} catch (error) {}
 	try {
 		return parseText(tokenizer);
@@ -307,7 +307,7 @@ export class XMLElement extends XMLNode {
 const VOID_ELEMENTS = [ "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr" ];
 const OMITTABLE_ELEMENTS = [ "li" ];
 
-function parseElement(tokenizer: Tokenizer): XMLElement {
+function parseElement(tokenizer: Tokenizer, indent: string = ""): XMLElement {
 	return tokenizer.newContext((read, peek) => {
 		if (peek()?.type === "SCRIPT_NODE") {
 			read();
@@ -326,12 +326,13 @@ function parseElement(tokenizer: Tokenizer): XMLElement {
 		}
 		let children = new Array<XMLNode>();
 		let token = expect(read(), [">", "/>"]);
+		console.log(`${indent}<${tag.name}>`);
 		if (token.type === ">" && !VOID_ELEMENTS.includes(tag.name)) {
 			while (peek()?.type !== "</") {
 				while (peek()?.type === "COMMENT") {
 					read();
 				}
-				let child = parseNode(tokenizer);
+				let child = parseNode(tokenizer, indent + "\t");
 				children.push(child);
 				while (peek()?.type === "COMMENT") {
 					read();
@@ -349,6 +350,7 @@ function parseElement(tokenizer: Tokenizer): XMLElement {
 				throw `Expected a closing tag!`;
 			}
 		}
+		console.log(`${indent}</${tag.name}>`);
 		return new XMLElement(tag.name, attributes, children);
 	});
 }
