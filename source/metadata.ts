@@ -3,6 +3,7 @@ import * as libhttps from "https";
 import * as libfs from "fs";
 import * as libpath from "path";
 import { Reader } from "./reader";
+import * as xml from "./xml";
 
 class XMLAttribute {
 	readonly document: XMLDocument | null;
@@ -867,12 +868,32 @@ function request(url: string, cb: Callback<Buffer>) {
 	});
 }
 
+function translate(node: xml.XMLNode): XMLNode {
+	if (node.isElement()) {
+		let element = node.asElement();
+		let tag = element.tag();
+		let attributes = new Array<XMLAttribute>();
+		for (let attribute of element.attributes()) {
+			attributes.push(new XMLAttribute(null, attribute.key(), attribute.value()));
+		}
+		let children = new Array<XMLNode>();
+		for (let child of element.children()) {
+			children.push(translate(child));
+		}
+		return new XMLElementNode(tag, attributes, children);
+	}
+	if (node.isText()) {
+		let text = node.asText();
+		return new XMLTextNode(text.value());
+	}
+	throw ``;
+}
+
 function getXML(url: string, cb: Callback<XMLDocument>): void {
 	request(url, (buffer) => {
 		let string = buffer.toString("utf8");
-		let reader = new Reader(string);
-		let document = readXMLDocument(reader);
-		cb(document);
+		let doc = xml.parse(string);
+		cb(new XMLDocument([ translate(doc.root) ]));
 	});
 }
 
