@@ -281,7 +281,6 @@ export class XMLElement extends XMLNode {
 		this.$tag = tag;
 		this.$attributes = new XMLArray(attributes);
 		this.$children = new XMLArray(children);
-		console.log(this.$tag, this.$attributes);
 	}
 
 	asElement() {
