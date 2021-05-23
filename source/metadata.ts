@@ -4,6 +4,7 @@ import * as libfs from "fs";
 import * as libpath from "path";
 import { Reader } from "./reader";
 import * as xml from "./xml";
+import * as is from "./is";
 
 class XMLAttribute {
 	readonly document: XMLDocument | null;
@@ -970,6 +971,21 @@ export type Title = {
 	}[]
 };
 
+export function getTitleSummary(id: string): Promise<string | undefined> {
+	return new Promise((resolve, reject) => {
+		let url = `https://www.imdb.com/title/${id}/plotsummary`;
+		getXML(url, (document) => {
+			let element = document.querySelector("#plot-summaries-content p");
+			if (is.absent(element)) {
+				return reject();
+			}
+			resolve(element.getTrimmedText());
+		});
+	});
+};
+
+/* getTitleSummary("tt0201265").then(console.log); */
+
 let ttcache: {
 	[key: string]: Title | undefined
 } = {};
@@ -980,7 +996,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		return cb(cached);
 	}
 	let url = "https://www.imdb.com/title/" + id + "/";
-	getXML(url, (document) => {
+	getXML(url, async (document) => {
 		let type: TitleType = "movie";
 		let title: string | null = null;
 		let year: number | null = null;
@@ -1002,10 +1018,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				image_url = getImageURL(src);
 			}
 		}
-		element = document.querySelector(".plot_summary_wrapper .summary_text");
-		if (element !== null) {
-			description = element.getTrimmedText();
-		}
+		description = await getTitleSummary(id) ?? null;
 		element = document.querySelector("#star-rating-widget[data-title]");
 		if (element !== null) {
 			title = element.getAttribute("data-title");
@@ -1056,7 +1069,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 	});
 }
 
-// getTitle("tt0121955", (results) => { console.log(results); });
+/* getTitle("tt0201265", (results) => { console.log(results); }); */
 
 export interface Credit {
 	id: string,

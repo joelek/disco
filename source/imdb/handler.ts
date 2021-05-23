@@ -58,6 +58,8 @@ export async function getMovie(id: string): Promise<Movie> {
 	return getMovieFromDatabase(id);
 };
 
+/* getMovie("tt0201265").then(console.log); */
+
 export async function getShowFromDatabase(id: string): Promise<Show> {
 	let shows = db.shows.filter((show) => show.id === id);
 	if (shows.length !== 1) {

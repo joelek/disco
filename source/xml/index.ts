@@ -1,5 +1,6 @@
-import { Console } from "console";
 import * as is from "../is";
+
+const DEBUG = false;
 
 const MATCHERS = {
 	"WS": /^([\t\r\n ]+)/isu,
@@ -13,10 +14,10 @@ const MATCHERS = {
 	"/>": /^([/][>])/isu,
 	"TEXT_NODE": /^([^<>]+)[<]/isu,
 	"IDENTIFIER": /^([a-z][a-z0-9_-]*)/isu,
-	"STRING_LITERAL": /^("[^"<]*"|'[^'<]*'|)/isu,
+	"STRING_LITERAL": /^("[^"<]*"|'[^'<]*')/isu,
 	"NUMERIC_LITERAL": /^([0-9]+)/isu,
 	"BOOLEAN_LITERAL": /^(true|false)/isu,
-	"COMMENT": /^([<][!][-][-].*?([-][-][>]))/isu,
+	"COMMENT": /^([<]\s*[!]\s*[-]\s*[-].*?([-]\s*[-]\s*[>]))/isu,
 	"SCRIPT_NODE": /^([<]script[^>]*[>].*?([<][/]script[>]))/isu,
 	"STYLE_NODE": /^([<]style[^>]*[>].*?([<][/]style[>]))/isu
 };
@@ -326,7 +327,9 @@ function parseElement(tokenizer: Tokenizer, indent: string = ""): XMLElement {
 		}
 		let children = new Array<XMLNode>();
 		let token = expect(read(), [">", "/>"]);
-		console.log(`${indent}<${tag.name}>`);
+		if (DEBUG) {
+			console.log(`${indent}<${tag.name}>`);
+		}
 		if (token.type === ">" && !VOID_ELEMENTS.includes(tag.name)) {
 			while (peek()?.type !== "</") {
 				while (peek()?.type === "COMMENT") {
@@ -350,7 +353,9 @@ function parseElement(tokenizer: Tokenizer, indent: string = ""): XMLElement {
 				throw `Expected a closing tag!`;
 			}
 		}
-		console.log(`${indent}</${tag.name}>`);
+		if (DEBUG) {
+			console.log(`${indent}</${tag.name}>`);
+		}
 		return new XMLElement(tag.name, attributes, children);
 	});
 }
