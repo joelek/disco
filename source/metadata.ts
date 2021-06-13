@@ -208,7 +208,15 @@ class XMLTextNode extends XMLNode {
 	}
 
 	getText(): string {
-		return this.string.replace("&nbsp;", " ").replace("&quot;", "\"").replace("&lt;", "<").replace("&gt;", ">");
+		return this.string
+			.replace("&nbsp;", " ")
+			.replace("&quot;", "\"")
+			.replace("&lt;", "<")
+			.replace("&gt;", ">")
+			.replace("&amp;", "&")
+			.replace(/[&][#]([0-9]+)[;]/g, (match, decimal) => {
+				return String.fromCharCode(Number.parseInt(decimal, 10))
+			});
 	}
 
 	toString(): string {
