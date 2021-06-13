@@ -216,6 +216,9 @@ class XMLTextNode extends XMLNode {
 			.replace("&amp;", "&")
 			.replace(/[&][#]([0-9]+)[;]/g, (match, decimal) => {
 				return String.fromCharCode(Number.parseInt(decimal, 10))
+			})
+			.replace(/[&][#]x([0-9a-fA-F]+)[;]/g, (match, hex) => {
+				return String.fromCharCode(Number.parseInt(hex, 16))
 			});
 	}
 
