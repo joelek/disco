@@ -383,18 +383,20 @@ function parseHeader(tokenizer: Tokenizer): void {
 }
 
 function parseDoctype(tokenizer: Tokenizer): void {
-	return tokenizer.newContext((read, peek) => {
-		expect(read(), "<");
-		expect(read(), "!");
-		if (expect(read(), "IDENTIFIER").value !== "DOCTYPE") { throw ``; }
-		let name = expect(read(), "IDENTIFIER").value;
-		tokenizer.newOptional((read, peek) => {
-			let access = expect(read(), "IDENTIFIER").value;
-			let type = expect(read(), "STRING_LITERAL").value;
-			let url = expect(read(), "STRING_LITERAL").value;
+	try {
+		return tokenizer.newContext((read, peek) => {
+			expect(read(), "<");
+			expect(read(), "!");
+			if (expect(read(), "IDENTIFIER").value !== "DOCTYPE") { throw ``; }
+			let name = expect(read(), "IDENTIFIER").value;
+			tokenizer.newOptional((read, peek) => {
+				let access = expect(read(), "IDENTIFIER").value;
+				let type = expect(read(), "STRING_LITERAL").value;
+				let url = expect(read(), "STRING_LITERAL").value;
+			});
+			expect(read(), ">");
 		});
-		expect(read(), ">");
-	});
+	} catch (error) {}
 }
 
 function parseDocument(tokenizer: Tokenizer): XMLDocument {
