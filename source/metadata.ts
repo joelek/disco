@@ -923,7 +923,7 @@ function request(url: string, cb: Callback<Buffer>) {
 				lib.request(url, {
 					method: "GET",
 					headers:  {
-						"accept-language": "en"
+						"accept-language": "en-US"
 					}
 				}, (response) => {
 					response.setEncoding("binary");
@@ -1079,15 +1079,15 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		let description: string | null = null;
 		let image_url: string | null = null;
 		let element: XMLElementNode | null = null;
-		element = document.querySelector(".np_episode_guide");
+		element = document.querySelector(`[data-testid="hero-subnav-bar-series-episode-guide-link"]`);
 		if (element !== null) {
 			type = "show";
 		}
-		element = document.querySelector("#titleYear a");
+		element = document.querySelector(`[data-testid="hero-title-block__metadata"] a[href]`);
 		if (element !== null) {
 			year = Number.parseInt(element.getTrimmedText());
 		}
-		element = document.querySelector(".poster img[src]");
+		element = document.querySelector(`[data-testid="hero-media__poster"] img[src]`);
 		if (element !== null) {
 			let src = element.getAttribute("src");
 			if (src != null) {
@@ -1095,28 +1095,24 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 			}
 		}
 		description = await getTitleSummary(id) ?? null;
-		element = document.querySelector("#star-rating-widget[data-title]");
+		element = document.querySelector(`[data-testid="hero-title-block__title"]`);
 		if (element !== null) {
-			title = element.getAttribute("data-title");
+			title = element.getTrimmedText().normalize("NFC");
 		}
 		let genres = new Array<string>();
-		let links = document.querySelectorAll(".see-more a[href]");
-		for (let link of links) {
-			let href = link.getAttribute("href");
-			if (href != null && href.indexOf("genre") >= 0) {
-				genres.push(link.getTrimmedText().normalize("NFC"));
-			}
+		let elements = document.querySelectorAll(`[data-testid="genres"] a[href]`);
+		for (let element of elements) {
+			genres.push(element.getTrimmedText().normalize("NFC"));
 		}
 		let stars = new Array<{ id: string, name: string }>();
-		let links2 = document.querySelectorAll(".credit_summary_item a[href]");
-		for (let link of links2) {
-			let href = link.getAttribute("href");
+		elements = document.querySelectorAll(`[data-testid="title-cast-item__actor"][href]`);
+		for (let element of elements) {
+			let href = element.getAttribute("href");
 			if (href != null) {
-				"/name/nm0705356/?ref_=tt_ov_st_sm"
-				let parts = /^[/]name[/](nm[0-9]+)[/][?]ref_[=](.+)$/.exec(href);
-				if (parts != null && parts[2] === "tt_ov_st_sm") {
+				let parts = /^[/]name[/](nm[0-9]+)/.exec(href);
+				if (parts != null) {
 					let id = parts[1];
-					let name = link.getTrimmedText().normalize("NFC");
+					let name = element.getTrimmedText().normalize("NFC");
 					stars.push({
 						id,
 						name
@@ -1124,6 +1120,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				}
 			}
 		}
+		console.log({title, description, image_url});
 		if (title !== null && description !== null && image_url !== null) {
 			title = title.normalize("NFC");
 			description = description.normalize("NFC");
@@ -1135,7 +1132,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				description,
 				image_url,
 				genres,
-				stars
+				stars: stars.slice(0, 3)
 			};
 			ttcache[id] = titleobj;
 			cb(titleobj);
