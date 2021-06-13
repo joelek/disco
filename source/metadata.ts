@@ -346,9 +346,15 @@ function computeUnion<A>(one: Set<A>, two: Iterable<A>): Set<A> {
 	return set;
 }
 
+interface AttributeFilter {
+	mode: "=" | "~=" | "|=" | "^=" | "$=" | "*=";
+	value: string;
+}
+
 interface SimpleSelector {
 	type: "id" | "attribute" | "class" | "tagname",
-	value: string
+	value: string,
+	filter?: AttributeFilter;
 }
 
 function parseSimpleSelector(string: string): Array<SimpleSelector> {
@@ -401,15 +407,58 @@ function parseSimpleSelector(string: string): Array<SimpleSelector> {
 			let value = "";
 			while (true) {
 				let char = reader.peek(1);
-				if (char === "]") {
+				if (["]", "=", "~", "|", "^", "$", "*"].includes(char)) {
 					break;
 				}
 				value += reader.read(1);
 			}
+			let filter: AttributeFilter | undefined;
+			let char = reader.peek(1);
+			if (char !== "]") {
+				let mode: AttributeFilter["mode"] = "=";
+				if (char === "=") {
+					readWord(reader, "=");
+				} else if (char === "~") {
+					readWord(reader, "~=");
+					mode = "~=";
+				} else if (char === "|") {
+					readWord(reader, "|=");
+					mode = "|=";
+				} else if (char === "^") {
+					readWord(reader, "^=");
+					mode = "^=";
+				} else if (char === "$") {
+					readWord(reader, "$=");
+					mode = "$=";
+				} else if (char === "*") {
+					readWord(reader, "*=");
+					mode = "*=";
+				}
+				let value = "";
+				let qmark = "";
+				char = reader.peek(1);
+				if (char === "\"" || char === "'") {
+					qmark = reader.read(1);
+				}
+				while (true) {
+					let char = reader.peek(1);
+					// TODO: Add support for escaped quotation marks.
+					if (char === "]" || char === qmark) {
+						break;
+					}
+					value += reader.read(1);
+				}
+				readWord(reader, qmark);
+				filter = {
+					mode,
+					value
+				};
+			}
 			readWord(reader, "]");
 			selectors.push({
 				type: "attribute",
-				value
+				value,
+				filter
 			});
 			continue;
 		} catch (error) {
@@ -456,6 +505,33 @@ class XMLDocument {
 				newElements = this.getElementsByClassName(selector.value);
 			} else if (selector.type === "attribute") {
 				newElements = this.getElementsByAttribute(selector.value);
+				const filter = selector.filter;
+				if (is.present(filter)) {
+					newElements = Array.from(newElements).filter((element) => {
+						let attribute = element.getAttribute(selector.value);
+						if (is.present(attribute)) {
+							if (filter.mode === "=") {
+								return attribute === filter.value;
+							}
+							if (filter.mode === "~=") {
+								return attribute.split(/\s/).includes(filter.value);
+							}
+							if (filter.mode === "|=") {
+								return attribute === filter.value || attribute.startsWith(filter.value + "-");
+							}
+							if (filter.mode === "^=") {
+								return attribute.startsWith(filter.value);
+							}
+							if (filter.mode === "$=") {
+								return attribute.endsWith(filter.value);
+							}
+							if (filter.mode === "*=") {
+								return attribute.includes(filter.value);
+							}
+						}
+						return false;
+					});
+				}
 			} else if (selector.type === "tagname") {
 				newElements = this.getElementsByTagName(selector.value);
 			}
