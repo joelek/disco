@@ -1077,6 +1077,85 @@ let ttcache: {
 	[key: string]: Title | undefined
 } = {};
 
+export function getTitleLegacy(id: string, cb: Callback<Title | null>): void {
+	let cached = ttcache[id];
+	if (cached) {
+		return cb(cached);
+	}
+	let url = "https://www.imdb.com/title/" + id + "/";
+	getXML(url, async (document) => {
+		let type: TitleType = "movie";
+		let title: string | null = null;
+		let year: number | null = null;
+		let description: string | null = null;
+		let image_url: string | null = null;
+		let element: XMLElementNode | null = null;
+		element = document.querySelector(".np_episode_guide");
+		if (element !== null) {
+			type = "show";
+		}
+		element = document.querySelector("#titleYear a");
+		if (element !== null) {
+			year = Number.parseInt(element.getTrimmedText());
+		}
+		element = document.querySelector(".poster img[src]");
+		if (element !== null) {
+			let src = element.getAttribute("src");
+			if (src != null) {
+				image_url = getImageURL(src);
+			}
+		}
+		description = await getTitleSummary(id) ?? null;
+		element = document.querySelector("#star-rating-widget[data-title]");
+		if (element !== null) {
+			title = element.getAttribute("data-title");
+		}
+		let genres = new Array<string>();
+		let links = document.querySelectorAll(".see-more a[href]");
+		for (let link of links) {
+			let href = link.getAttribute("href");
+			if (href != null && href.indexOf("genre") >= 0) {
+				genres.push(link.getTrimmedText().normalize("NFC"));
+			}
+		}
+		let stars = new Array<{ id: string, name: string }>();
+		let links2 = document.querySelectorAll(".credit_summary_item a[href]");
+		for (let link of links2) {
+			let href = link.getAttribute("href");
+			if (href != null) {
+				"/name/nm0705356/?ref_=tt_ov_st_sm"
+				let parts = /^[/]name[/](nm[0-9]+)[/][?]ref_[=](.+)$/.exec(href);
+				if (parts != null && parts[2] === "tt_ov_st_sm") {
+					let id = parts[1];
+					let name = link.getTrimmedText().normalize("NFC");
+					stars.push({
+						id,
+						name
+					});
+				}
+			}
+		}
+		if (title !== null && description !== null && image_url !== null) {
+			title = title.normalize("NFC");
+			description = description.normalize("NFC");
+			let titleobj: Title = {
+				id,
+				type,
+				title,
+				year,
+				description,
+				image_url,
+				genres,
+				stars
+			};
+			ttcache[id] = titleobj;
+			cb(titleobj);
+		} else {
+			cb(null);
+		}
+	});
+}
+
 export function getTitle(id: string, cb: Callback<Title | null>): void {
 	let cached = ttcache[id];
 	if (cached) {
@@ -1131,7 +1210,6 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				}
 			}
 		}
-		console.log({title, description, image_url});
 		if (title !== null && description !== null && image_url !== null) {
 			title = title.normalize("NFC");
 			description = description.normalize("NFC");
@@ -1148,7 +1226,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 			ttcache[id] = titleobj;
 			cb(titleobj);
 		} else {
-			cb(null);
+			getTitleLegacy(id, cb);
 		}
 	});
 }
