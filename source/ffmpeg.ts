@@ -92,6 +92,23 @@ let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): 
 					color_transfer: stream.color_transfer || null,
 					color_primaries: stream.color_primaries || null
 				};
+				let force_widescreen = false;
+				if (force_widescreen) {
+					let is_dvd_pal = result.dimx === 720 && result.dimy === 576 && result.fpsx === 25 && result.fpsy === 1;
+					if (is_dvd_pal) {
+						result.parx = 64;
+						result.pary = 45;
+						result.darx = 16;
+						result.dary = 9;
+					}
+					let is_dvd_ntsc = result.dimx === 720 && result.dimy === 480 && result.fpsx === 30000 && result.fpsy === 1001;
+					if (is_dvd_ntsc) {
+						result.parx = 32;
+						result.pary = 27;
+						result.darx = 16;
+						result.dary = 9;
+					}
+				}
 				if (result.parx === 186 && result.pary === 157 && result.darx === 279 && result.dary === 157) {
 					result.parx = 32;
 					result.pary = 27;
