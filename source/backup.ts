@@ -293,7 +293,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 						continue;
 					}
 					let episode = episodes.shift() as imdb.db.Episode;
-					let value = media as EpisodeContent;
+					let value = media as EpisodeContent; // unsafe
 					value.type = "episode";
 					value.title = episode.title;
 					value.show = show.title;
@@ -302,6 +302,8 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 					value.imdb = episode.id;
 					value.imdb_show = show.id;
 					value.year = new Date(episode.air_date).getUTCFullYear();
+					value.poster_url_show = show.poster_url;
+					value.summary_show = show.summary;
 					value.summary = episode.summary;
 					value.genres_show = show.genres;
 					value.actors_show = show.actors;
@@ -310,7 +312,7 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 			} else {
 				let movie = await imdb.handler.getMovie(a_imdb);
 				for (let media of content) {
-					let value = media as MovieContent;
+					let value = media as MovieContent; // unsafe
 					value.type = "movie";
 					value.title = movie.title;
 					value.year = movie.year;
