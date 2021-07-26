@@ -398,6 +398,7 @@ let backup_dvd = (hash: string, content: Array<MediaContent>, cb: { (): void }) 
 		jobwd
 	]);
 	handleProgress(cp.stdout, process.stdout);
+	// TODO: Display copy errors.
 	cp.on('close', () => {
 		let subpaths = libfs.readdirSync(jobwd).map((subpath) => {
 			let stat = libfs.statSync(libpath.join(jobwd, subpath));
