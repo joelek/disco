@@ -10,6 +10,7 @@ import { MediaDatabase, MediaContent, MediaType, MovieContent, EpisodeContent } 
 import { Readable, Writable } from 'stream';
 
 const MAKEMKV = "makemkvcon64";
+const DISC = "1";
 
 let a_type: string = 'neither';
 let a_show: string | null = null;
@@ -95,7 +96,7 @@ type MediaMetadata = {
 }
 
 let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>): void }) => {
-	libcp.exec(`${MAKEMKV} info disc:0 --robot --minlength=0`, async (error, stdout, stderr) => {
+	libcp.exec(`${MAKEMKV} info disc:${DISC} --robot --minlength=0`, async (error, stdout, stderr) => {
 		let detected_disc_type = "neither" as "bluray" | "dvd" | "neither";
 		let detected_resolution = "neither" as "720x480" | "720x576" | "neither";
 		let detected_frame_rate = "neither" as "30000/1001" | "25/1" | "neither";
@@ -389,7 +390,7 @@ let backup_dvd = (hash: string, content: Array<MediaContent>, cb: { (): void }) 
 	let selector = content.map(ct => ct.selector).join(' ');
 	let cp = libcp.spawn(MAKEMKV, [
 		'mkv',
-		`disc:0`,
+		`disc:${DISC}`,
 		'all',
 		`--manual=${selector}`,
 		'--minlength=0',
@@ -457,7 +458,7 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 			let ct = content[index++];
 			let cp = libcp.spawn(MAKEMKV, [
 				'mkv',
-				`disc:0`,
+				`disc:${DISC}`,
 				`${ct.selector.split(' ')[0]}`,
 				'--minlength=0',
 				"--robot",
@@ -475,7 +476,7 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 	next();
 };
 
-let dir = "F:\\";
+let dir = "G:\\";
 
 get_content(dir, (hash, type, content) => {
 	let content_to_rip = content;
