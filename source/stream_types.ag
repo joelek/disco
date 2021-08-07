@@ -6,7 +6,7 @@
 		time_base: string,
 		start_pts: number,
 		start_time: string,
-		extradata: string,
+		extradata?: string,
 		tags: ({ string } & {
 			language: string
 		})
@@ -16,8 +16,8 @@
 		width: number,
 		height: number,
 		r_frame_rate: string,
-		sample_aspect_ratio: string,
-		display_aspect_ratio: string,
+		sample_aspect_ratio?: string,
+		display_aspect_ratio?: string,
 		color_range?: string,
 		color_space?: string,
 		color_transfer?: string,
