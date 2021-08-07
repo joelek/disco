@@ -74,15 +74,15 @@ let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): 
 		let json = JSON.parse(stdout);
 		for (let i = 0; json.streams && i < json.streams.length; i++) {
 			let stream = json.streams[i];
-			if (stream.codec_type === 'video') {
+			if (stream_types.VideoStream.is(stream)) {
 				let divisor = gcd(stream.width, stream.height);
 				let result = {
 					dimx: stream.width,
 					dimy: stream.height,
-					parx: parseInt(stream.sample_aspect_ratio.split(':')[0]),
-					pary: parseInt(stream.sample_aspect_ratio.split(':')[1]),
-					darx: parseInt(stream.display_aspect_ratio.split(':')[0]),
-					dary: parseInt(stream.display_aspect_ratio.split(':')[1]),
+					parx: parseInt(stream.sample_aspect_ratio?.split(':')?.[0] ?? "1"),
+					pary: parseInt(stream.sample_aspect_ratio?.split(':')?.[1] ?? "1"),
+					darx: parseInt(stream.display_aspect_ratio?.split(':')?.[0] ?? `${stream.width / divisor}`),
+					dary: parseInt(stream.display_aspect_ratio?.split(':')?.[1] ?? `${stream.height / divisor}`),
 					farx: (stream.width / divisor),
 					fary: (stream.height / divisor),
 					fpsx: parseInt(stream.r_frame_rate.split('/')[0]),
@@ -118,6 +118,8 @@ let format_detect = (path: string, cb: { (result: FormatDetectResult): void }): 
 				console.log(result);
 				cb(result);
 				break;
+			} else {
+				throw `Expected a video stream!`;
 			}
 		}
 	});
