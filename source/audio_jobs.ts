@@ -98,6 +98,7 @@ async function createAudioJob(source_path: string, metadata: Metadata): Promise<
 				"-i", source_path,
 				"-af", `volume=${getVolumeAdjustmentDecibels(metadata.disc.volume)}dB`,
 				"-f", "mp4",
+				"-vn",
 				"-fflags", "+bitexact",
 				"-movflags", "+faststart",
 				"-c:a", "aac",
