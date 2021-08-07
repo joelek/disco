@@ -59,6 +59,9 @@ function getAudioStreamsToKeep(path: string, cb: Callback<Array<stream_types.Aud
 			}).map((items) => {
 				return items[0];
 			});
+		if (streams.length === 0) {
+			return cb(audio_streams.slice(0, 1));
+		}
 		return cb(streams);
 	});
 }
