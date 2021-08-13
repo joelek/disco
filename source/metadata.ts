@@ -959,20 +959,20 @@ function request(url: string, cb: Callback<Buffer>) {
 function translate(node: xml.XMLNode): XMLNode {
 	if (node.isElement()) {
 		let element = node.asElement();
-		let tag = element.tag();
+		let tag = element.tag.name;
 		let attributes = new Array<XMLAttribute>();
-		for (let attribute of element.attributes()) {
-			attributes.push(new XMLAttribute(null, attribute.key(), attribute.value()));
+		for (let attribute of element.attributes) {
+			attributes.push(new XMLAttribute(null, attribute.key.name, attribute.value));
 		}
 		let children = new Array<XMLNode>();
-		for (let child of element.children()) {
+		for (let child of element.children) {
 			children.push(translate(child));
 		}
 		return new XMLElementNode(tag, attributes, children);
 	}
 	if (node.isText()) {
 		let text = node.asText();
-		return new XMLTextNode(text.value());
+		return new XMLTextNode(text.value);
 	}
 	throw ``;
 }
@@ -981,7 +981,7 @@ function getXML(url: string, cb: Callback<XMLDocument>): void {
 	request(url, (buffer) => {
 		let string = buffer.toString("utf8");
 		let doc = xml.parse(string);
-		cb(new XMLDocument([ translate(doc.root) ]));
+		cb(new XMLDocument(doc.nodes.map(translate)));
 	});
 }
 

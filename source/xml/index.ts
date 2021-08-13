@@ -1,150 +1,54 @@
 import * as is from "../is";
+import { expect, Tokenizer } from "./tokenizer";
 
-const DEBUG = false;
+const DEBUG = true;
 
-const MATCHERS = {
-	"WS": /^([\t\r\n ]+)/isu,
-	"<": /^([<])/isu,
-	">": /^([>])/isu,
-	"!": /^([!])/isu,
-	"?": /^([?])/isu,
-	"=": /^([=])/isu,
-	":": /^([:])/isu,
-	"</": /^([<][/])/isu,
-	"/>": /^([/][>])/isu,
-	"TEXT_NODE": /^([^<>]+)[<]/isu,
-	"IDENTIFIER": /^([a-z][a-z0-9_-]*)/isu,
-	"STRING_LITERAL": /^("[^"<]*"|'[^'<]*')/isu,
-	"NUMERIC_LITERAL": /^([0-9]+)/isu,
-	"BOOLEAN_LITERAL": /^(true|false)/isu,
-	"COMMENT": /^([<]\s*[!]\s*[-]\s*[-].*?([-]\s*[-]\s*[>]))/isu,
-	"SCRIPT_NODE": /^([<]script[^>]*[>].*?([<][/]script[>]))/isu,
-	"STYLE_NODE": /^([<]style[^>]*[>].*?([<][/]style[>]))/isu
-};
+export class XMLName {
+	namespace?: string;
+	name: string;
 
-export type Type = keyof typeof MATCHERS;
-
-export type Token = {
-	row: number,
-	col: number,
-	type: Type,
-	value: string
-};
-
-export class Tokenizer {
-	private tokens: Array<Token>;
-	private offset: number;
-
-	private peek(): Token | undefined {
-		return this.tokens[this.offset];
+	constructor(namespace: string | undefined, name: string) {
+		this.namespace = namespace;
+		this.name = name;
 	}
 
-	private read(): Token {
-		if (this.offset >= this.tokens.length) {
-			throw `Unexpectedly reached end of stream!`;
-		}
-		return this.tokens[this.offset++];
+	equals(that: XMLName): boolean {
+		return this.namespace === that.namespace && this.name === that.name;
 	}
 
-	constructor(string: string) {
-		let tokens = new Array<Token>();
-		let row = 1;
-		let col = 1;
-		while (string.length > 0) {
-			let token: [Type, string] | undefined;
-			for (let key in MATCHERS) {
-				let type = key as Type;
-				let exec = MATCHERS[type].exec(string);
-				if (is.absent(exec)) {
-					continue;
-				}
-				if (is.absent(token) || (exec[1].length > token[1].length)) {
-					token = [type, exec[1]];
-				}
-			}
-			if (is.absent(token)) {
-				throw `Unrecognized token at row ${row}, col ${col}!` + string.slice(0, 100);
-			}
-			tokens.push({
-				type: token[0],
-				value: token[1],
-				row: row,
-				col: col
+	static parse(tokenizer: Tokenizer): XMLName {
+		return tokenizer.newContext((read, peek) => {
+			let prefix = expect(read(), "IDENTIFIER").value;
+			let suffix = tokenizer.newOptional((read, peek) => {
+				expect(read(), ":");
+				return expect(read(), "IDENTIFIER").value;
 			});
-			string = string.slice(token[1].length);
-			let lines = token[1].split(/\r?\n/);
-			if (lines.length > 1) {
-				row += lines.length - 1;
-				col = 1;
+			if (is.absent(suffix)) {
+				let namespace = undefined;
+				let name = prefix;
+				return new XMLName(
+					namespace,
+					name
+				);
+			} else {
+				let namespace = prefix;
+				let name = suffix;
+				return new XMLName(
+					namespace,
+					name
+				);
 			}
-			col += lines[lines.length - 1].length;
-		}
-		this.tokens = tokens.filter((token) => {
-			return token.type !== "WS";
 		});
-		this.offset = 0;
-	}
-
-	newOptional<A>(producer: (read: () => Token, peek: () => Token | undefined) => A): A | undefined {
-		let offset = this.offset;
-		try {
-			return producer(() => this.read(), () => this.peek());
-		} catch (error) {
-			this.offset = offset;
-		}
-		return undefined;
-	}
-
-	newContext<A>(producer: (read: () => Token, peek: () => Token | undefined) => A): A {
-		let offset = this.offset;
-		try {
-			return producer(() => this.read(), () => this.peek());
-		} catch (error) {
-			this.offset = offset;
-			throw error;
-		}
 	}
 };
-
-export function expect(token: Token, family: Type | Type[]): Token {
-	let families = Array.isArray(family) ? family : [family];
-	if (!families.includes(token.type)) {
-		throw `Unexpected ${token.type} at row ${token.row}, col ${token.col}!`;
-	}
-	return token;
-};
-
-export type XMLName = {
-	name: string,
-	namespace?: string
-};
-
-function parseName(tokenizer: Tokenizer): XMLName {
-	return tokenizer.newContext((read, peek) => {
-		let prefix = expect(read(), "IDENTIFIER").value;
-		let suffix = tokenizer.newOptional((read, peek) => {
-			expect(read(), ":");
-			return expect(read(), "IDENTIFIER").value;
-		});
-		if (is.absent(suffix)) {
-			let name = prefix;
-			return {
-				name: name
-			};
-		} else {
-			let name = suffix;
-			let namespace = prefix;
-			return {
-				name,
-				namespace
-			};
-		}
-	});
-}
 
 export abstract class XMLNode {
+	constructor() {
+
+	}
+
 	asElement(): XMLElement {
-		throw `Expected node to be an XMLElement!`;
+		throw `Expected an XMLElement!`;
 	}
 
 	isElement(): boolean {
@@ -156,7 +60,7 @@ export abstract class XMLNode {
 	}
 
 	asText(): XMLText {
-		throw `Expected node to be an XMLText!`;
+		throw `Expected an XMLText!`;
 	}
 
 	isText(): boolean {
@@ -166,202 +70,177 @@ export abstract class XMLNode {
 		} catch (error) {}
 		return false;
 	}
+
+	static parse(tokenizer: Tokenizer): XMLNode {
+		try {
+			return XMLElement.parse(tokenizer);
+		} catch (error) {}
+		try {
+			return XMLText.parse(tokenizer);
+		} catch (error) {}
+		throw ``;
+	}
 };
 
-function parseNode(tokenizer: Tokenizer, indent: string = ""): XMLNode {
-	try {
-		return parseElement(tokenizer, indent);
-	} catch (error) {}
-	try {
-		return parseText(tokenizer);
-	} catch (error) {}
-	return tokenizer.newContext((read, peek) => {
-		let token = peek();
-		if (is.present(token)) {
-			throw `Unexpected ${token.type} at ${token.row}, ${token.col}!`;
-		} else {
-			throw `Unexpectedly reached end of stream!`;
-		}
-	});
-}
-
 export class XMLText extends XMLNode {
-	private $value: string;
+	value: string;
 
 	constructor(value: string) {
 		super();
-		this.$value = value;
+		this.value = value;
 	}
 
 	asText(): XMLText {
 		return this;
 	}
 
-	value(): string {
-		return this.$value;
+	static parse(tokenizer: Tokenizer): XMLText {
+		return tokenizer.newContext((read, peek) => {
+			let value = expect(read(), ["TEXT_NODE", "IDENTIFIER"]).value;
+			return new XMLText(value);
+		});
 	}
 };
-
-function parseText(tokenizer: Tokenizer): XMLText {
-	return tokenizer.newContext((read, peek) => {
-		let value = expect(read(), ["TEXT_NODE", "IDENTIFIER"]).value;
-		return new XMLText(value);
-	});
-}
 
 export class XMLAttribute {
-	private $key: string;
-	private $value: string;
+	key: XMLName;
+	value: string;
 
-	constructor(key: string, value: string) {
-		this.$key = key;
-		this.$value = value;
+	constructor(key: XMLName, value: string) {
+		this.key = key;
+		this.value = value;
 	}
 
-	key(): string {
-		return this.$key;
-	}
-
-	value(): string {
-		return this.$value;
-	}
-};
-
-function parseAttribute(tokenizer: Tokenizer): XMLAttribute {
-	return tokenizer.newContext((read, peek) => {
-		let key = parseName(tokenizer);
-		let value = "";
-		if (peek()?.type === "=") {
-			read();
-			let token = read();
-			if (token.type === "STRING_LITERAL") {
-				value = token.value.slice(1, -1);
-			} else if (token.type === "BOOLEAN_LITERAL") {
-				value = token.value;
-			} else if (token.type === "NUMERIC_LITERAL") {
-				value = token.value;
+	static  parse(tokenizer: Tokenizer): XMLAttribute {
+		return tokenizer.newContext((read, peek) => {
+			let key = XMLName.parse(tokenizer);
+			let value = "";
+			if (peek()?.type === "=") {
+				read();
+				let token = read();
+				if (token.type === "STRING_LITERAL") {
+					value = token.value.slice(1, -1);
+				} else if (token.type === "BOOLEAN_LITERAL") {
+					value = token.value;
+				} else if (token.type === "NUMERIC_LITERAL") {
+					value = token.value;
+				}
 			}
-		}
-		return new XMLAttribute(
-			key.name,
-			value
-		);
-	});
-}
-
-class XMLArray<A> {
-	private array: Array<A>;
-
-	constructor(iterable: Iterable<A>) {
-		this.array = Array.from(iterable);
-	}
-
-	get(index: number): A {
-		if (index < 0 || index >= this.array.length) {
-			throw `Expected index ${index} to be between 0 and ${this.array.length}!`;
-		}
-		return this.array[index];
-	}
-
-	length(): number {
-		return this.array.length;
-	}
-
-	[Symbol.iterator](): Iterator<A> {
-		return this.array[Symbol.iterator]();
+			return {
+				key,
+				value
+			};
+		});
 	}
 };
+
 
 export class XMLElement extends XMLNode {
-	private $tag: string;
-	private $attributes: XMLArray<XMLAttribute>;
-	private $children: XMLArray<XMLNode>;
+	tag: XMLName;
+	attributes: Array<XMLAttribute>;
+	children: Array<XMLNode>;
 
-	constructor(tag: string, attributes: Iterable<XMLAttribute>, children: Iterable<XMLNode>) {
+	constructor(tag: XMLName, attributes?: Array<XMLAttribute>, children?: Array<XMLNode>) {
 		super();
-		this.$tag = tag;
-		this.$attributes = new XMLArray(attributes);
-		this.$children = new XMLArray(children);
+		this.tag = tag;
+		this.attributes = attributes ?? [];
+		this.children = children ?? [];
 	}
 
 	asElement() {
 		return this;
 	}
-
-	tag(...expected: Array<string>): string {
-		let tag = this.$tag;
-		if (expected.length > 0 && !expected.includes(tag)) {
-			throw `Expected tag to be one of [${expected.join(", ")}] but was ${tag}!`;
-		}
-		return tag;
-	}
-
-	attributes(): XMLArray<XMLAttribute> {
-		return this.$attributes;
-	}
-
-	children(): XMLArray<XMLNode> {
-		return this.$children;
-	}
 };
 
-const VOID_ELEMENTS = [ "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr" ];
-const OMITTABLE_ELEMENTS = [ "li" ];
+const VOID_ELEMENTS = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
+const RAW_TEXT_ELEMENTS = ["script", "style"];
+const IMPLICIT_SIBLING_ELEMENTS = ["li"];
 
-function parseElement(tokenizer: Tokenizer, indent: string = ""): XMLElement {
+function parseNodes(tokenizer: Tokenizer): Array<XMLNode> {
 	return tokenizer.newContext((read, peek) => {
-		if (peek()?.type === "SCRIPT_NODE") {
-			read();
-			return new XMLElement("script", [], []);
+		let root = new XMLElement(new XMLName(undefined, ""));
+		let open = new Array<XMLElement>();
+		function getParent(): XMLElement {
+			return open[open.length - 1] ?? root;
 		}
-		if (peek()?.type === "STYLE_NODE") {
-			read();
-			return new XMLElement("style", [], []);
+		function openTag(tag: XMLName, attributes: Array<XMLAttribute>): void {
+			let element = new XMLElement(tag, attributes);
+			open.push(element);
 		}
-		expect(read(), "<");
-		let tag = parseName(tokenizer);
-		let attributes = new Array<XMLAttribute>();
-		while (peek()?.type !== ">" && peek()?.type !== "/>") {
-			let attribute = parseAttribute(tokenizer);
-			attributes.push(attribute);
-		}
-		let children = new Array<XMLNode>();
-		let token = expect(read(), [">", "/>"]);
-		if (DEBUG) {
-			console.log(`${indent}<${tag.name}>`);
-		}
-		if (token.type === ">" && !VOID_ELEMENTS.includes(tag.name)) {
-			while (peek()?.type !== "</") {
-				while (peek()?.type === "COMMENT") {
-					read();
-				}
-				let child = parseNode(tokenizer, indent + "\t");
-				children.push(child);
-				while (peek()?.type === "COMMENT") {
-					read();
+		function closeTag(tag: XMLName): void {
+			let index: number | undefined;
+			for (let i = open.length - 1; i >= 0; i--) {
+				if (open[i].tag.equals(tag)) {
+					index = i;
+					break;
 				}
 			}
-			let tag_close = tokenizer.newOptional((read, peek) => {
-				expect(read(), "</");
-				let tag_close = parseName(tokenizer);
-				if (tag_close.name !== tag.name) { throw `` };
-				if (tag_close.namespace !== tag.namespace) { throw `` };
-				expect(read(), ">");
-				return tag_close;
-			});
-			if (is.absent(tag_close) && !OMITTABLE_ELEMENTS.includes(tag.name)) {
-				throw `Expected a closing tag!`;
+			if (is.present(index)) {
+				for (let i = open.length - 1; i >= index; i--) {
+					let child = open.pop() as XMLElement;
+					let parent = getParent();
+					parent.children.push(child);
+				}
+			} else {
+				// TODO: Improve heuristics.
+				let parent = getParent();
+				parent.children.push(new XMLElement(tag));
 			}
 		}
-		if (DEBUG) {
-			console.log(`${indent}</${tag.name}>`);
+		while (is.present(peek())) {
+			let parent = getParent();
+			try {
+				parent.children.push(XMLText.parse(tokenizer));
+			} catch (error) {}
+			let token = read();
+			if (token.type === "SCRIPT_NODE") {
+				let tag = new XMLName(undefined, "script");
+				openTag(tag, []);
+				closeTag(tag);
+				continue;
+			}
+			if (token.type === "STYLE_NODE") {
+				let tag = new XMLName(undefined, "style");
+				openTag(tag, []);
+				closeTag(tag);
+				continue;
+			}
+			expect(token, ["<", "</", "COMMENT"]);
+			if (token.type === "<") {
+				let tag = XMLName.parse(tokenizer);
+				let attributes = new Array<XMLAttribute>();
+				while (peek()?.type !== ">" && peek()?.type !== "/>") {
+					let attribute = XMLAttribute.parse(tokenizer);
+					attributes.push(attribute);
+				}
+				token = expect(read(), [">", "/>"]);
+				if (IMPLICIT_SIBLING_ELEMENTS.includes(tag.name)) {
+					let parent = getParent();
+					if (is.present(parent) && parent.tag.equals(tag)) {
+						closeTag(parent.tag);
+					}
+				}
+				openTag(tag, attributes);
+				if (token.type === "/>" || VOID_ELEMENTS.includes(tag.name)) {
+					closeTag(tag);
+				}
+			} else if (token.type === "</") {
+				let tag = XMLName.parse(tokenizer);
+				token = expect(read(), [">"]);
+				closeTag(tag);
+			}
 		}
-		return new XMLElement(tag.name, attributes, children);
+		for (let i = open.length - 1; i >= 0; i--) {
+			let child = open.pop() as XMLElement;
+			let parent = getParent();
+			parent.children.push(child);
+		}
+		return root.children;
 	});
 }
 
 export type XMLDocument = {
-	root: XMLElement
+	nodes: Array<XMLNode>;
 };
 
 function parseHeader(tokenizer: Tokenizer): void {
@@ -403,14 +282,18 @@ function parseDocument(tokenizer: Tokenizer): XMLDocument {
 	return tokenizer.newContext((read, peek) => {
 		let header = parseHeader(tokenizer);
 		let doctype = parseDoctype(tokenizer);
-		let root = parseElement(tokenizer);
+		let nodes = parseNodes(tokenizer);
 		return {
-			root
+			nodes
 		};
 	});
 }
 
 export function parse(string: string): XMLDocument {
+	let start = Date.now();
 	let tokenizer = new Tokenizer(string.trim());
-	return parseDocument(tokenizer);
+	let document = parseDocument(tokenizer);
+	let duration = Date.now() - start;
+	if (DEBUG) console.log(`XML parsing took ${duration} ms`);
+	return document;
 };
