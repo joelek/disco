@@ -355,7 +355,7 @@ let get_content = (dir: string, cb: { (hash: string, type: MediaType, content: A
 	});
 };
 
-function handleProgress(source: Readable, target: Writable): void {
+function handleProgress(source: Readable, target: Writable, onError: (index: number) => void): void {
 	let rl = librl.createInterface(source);
 	let progress: number | null = null;
 	rl.on("line", (line) => {
@@ -379,6 +379,11 @@ function handleProgress(source: Readable, target: Writable): void {
 				}
 				progress = new_progress;
 			}
+		} else if (command === "MSG") {
+			if (options[0] === 5003) {
+				let index = Number.parseInt(options[5]);
+				onError(index);
+			}
 		}
 	});
 }
@@ -398,8 +403,10 @@ let backup_dvd = (hash: string, content: Array<MediaContent>, cb: { (): void }) 
 		"--progress=-same",
 		jobwd
 	]);
-	handleProgress(cp.stdout, process.stdout);
-	// TODO: Display copy errors.
+	let copyFailedIndices = new Array<number>();
+	handleProgress(cp.stdout, process.stdout, (index) => {
+		copyFailedIndices.push(index);
+	});
 	cp.on('close', () => {
 		let subpaths = libfs.readdirSync(jobwd).map((subpath) => {
 			let stat = libfs.statSync(libpath.join(jobwd, subpath));
@@ -412,12 +419,13 @@ let backup_dvd = (hash: string, content: Array<MediaContent>, cb: { (): void }) 
 		}).map((object) => {
 			return object.subpath;
 		});
-		if (subpaths.length !== content.length) {
-			throw new Error("Wrong number of files encountered!");
-		}
-		for (let i = 0; i < content.length; i++) {
+		for (let i = 0, j = 0; i < content.length; i++) {
 			let target = `./private/archive/${hash}.${('00' + i).slice(-2)}.mkv`;
-			libfs.renameSync(libpath.join(jobwd, subpaths[i]), target);
+			if (copyFailedIndices.includes(i)) {
+				console.log(`Copy failed for "${target}"!`);
+				continue;
+			}
+			libfs.renameSync(libpath.join(jobwd, subpaths[j++]), target);
 		}
 		delete_tree.async(jobwd, () => {
 			cb();
@@ -430,6 +438,7 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 	let jobwd = "./private/jobs/" + jobid + "/";
 	libfs.mkdirSync(jobwd, { recursive: true });
 	let index = 0;
+	let copyFailedIndices = new Array<number>();
 	let done = () => {
 		let subpaths = libfs.readdirSync(jobwd).map((subpath) => {
 			let stat = libfs.statSync(libpath.join(jobwd, subpath));
@@ -442,12 +451,13 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 		}).map((object) => {
 			return object.subpath;
 		});
-		if (subpaths.length !== content.length) {
-			throw new Error("Wrong number of files encountered!");
-		}
-		for (let i = 0; i < content.length; i++) {
+		for (let i = 0, j = 0; i < content.length; i++) {
 			let target = `./private/archive/${hash}.${('00' + i).slice(-2)}.mkv`;
-			libfs.renameSync(libpath.join(jobwd, subpaths[i]), target);
+			if (copyFailedIndices.includes(i)) {
+				console.log(`Copy failed for "${target}"!`);
+				continue;
+			}
+			libfs.renameSync(libpath.join(jobwd, subpaths[j++]), target);
 		}
 		delete_tree.async(jobwd, () => {
 			cb();
@@ -465,7 +475,9 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 				"--progress=-same",
 				jobwd
 			]);
-			handleProgress(cp.stdout, process.stdout);
+			handleProgress(cp.stdout, process.stdout, (index) => {
+				copyFailedIndices.push(index);
+			});
 			cp.on('close', () => {
 				next();
 			});
