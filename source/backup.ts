@@ -10,7 +10,8 @@ import { MediaDatabase, MediaContent, MediaType, MovieContent, EpisodeContent } 
 import { Readable, Writable } from 'stream';
 
 const MAKEMKV = "makemkvcon64";
-const DISC = "1";
+const DISC = "0";
+const DISCID_DIR = "F:\\";
 
 let a_type: string = 'neither';
 let a_show: string | null = null;
@@ -95,7 +96,7 @@ type MediaMetadata = {
 	length: number
 }
 
-let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>): void }) => {
+let analyze = (cb: { (type: MediaType, content: Array<MediaContent>): void }) => {
 	libcp.exec(`${MAKEMKV} info disc:${DISC} --robot --minlength=0`, async (error, stdout, stderr) => {
 		let detected_disc_type = "neither" as "bluray" | "dvd" | "neither";
 		let detected_resolution = "neither" as "720x480" | "720x576" | "neither";
@@ -332,8 +333,8 @@ let analyze = (dir: string, cb: { (type: MediaType, content: Array<MediaContent>
 	});
 };
 
-let get_content = (dir: string, cb: { (hash: string, type: MediaType, content: Array<MediaContent>): void }): void => {
-	compute_digest(dir, (hash) => {
+let get_content = (cb: { (hash: string, type: MediaType, content: Array<MediaContent>): void }): void => {
+	compute_digest(DISCID_DIR, (hash) => {
 		process.stdout.write(`Determined disc id as "${hash}".\n`);
 		let done = (type: MediaType, content: Array<MediaContent>) => {
 			cb(hash, type, content);
@@ -342,7 +343,7 @@ let get_content = (dir: string, cb: { (hash: string, type: MediaType, content: A
 		if (media !== undefined) {
 			done(media.type, media.content);
 		} else {
-			analyze(dir, (type, content) => {
+			analyze((type, content) => {
 				db[hash] = {
 					type,
 					content
@@ -488,9 +489,7 @@ let backup_bluray = (hash: string, content: Array<MediaContent>, cb: { (): void 
 	next();
 };
 
-let dir = "G:\\";
-
-get_content(dir, (hash, type, content) => {
+get_content((hash, type, content) => {
 	let content_to_rip = content;
 	console.log(JSON.stringify(content_to_rip, null, "\t"));
 	let callback = () => {
