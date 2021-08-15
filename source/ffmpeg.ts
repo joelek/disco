@@ -431,6 +431,7 @@ let encode_hardware = (
 };
 
 let compute_compressibility = (filename: string, picture: FormatDetectResult, rect: queue_metadata.CropSettings, imode: queue_metadata.FieldOrder, cb: Callback<number>): void => {
+	console.log(`Detecting compressibility...`);
 	let id1 = libcrypto.randomBytes(16).toString("hex");
 	let id2 = libcrypto.randomBytes(16).toString("hex");
 	let frames = 1;
@@ -446,7 +447,9 @@ let compute_compressibility = (filename: string, picture: FormatDetectResult, re
 					let s2 = libfs.statSync(outfile2).size;
 					let c = 1.0 - (s2 - s1)/(frames * s1);
 					libdt.async(wd, () => {
-						cb(Math.max(0.0, Math.min(c, 1.0)));
+						let compressibility = Math.max(0.0, Math.min(c, 1.0));
+						console.log({ compressibility });
+						cb(compressibility);
 					});
 				}, 250, 1 + frames, [ "-vsync", "0" ], [ "-f", "h264" ], stream);
 			}, 250, 1, [ "-vsync", "0" ], [ "-f", "h264" ], stream);
