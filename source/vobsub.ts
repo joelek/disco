@@ -550,7 +550,7 @@ function extractSingleStream(path: string, stream: stream_types.SubtitleStream, 
 		return;
 	}
 	extract_vobsub(path, stream.index, (jobid) => {
-		convert_to_bmp(jobid, stream.extradata, stream.codec_name, () => {
+		convert_to_bmp(jobid, stream.extradata ?? "", stream.codec_name, () => {
 			ocr(jobid, stream.tags.language, (subtitles) => {
 				let outfile = getArtifactPath(stream, basename);
 				if (subtitles.length > 0) {
