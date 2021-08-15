@@ -85,25 +85,41 @@ async function createJobListRecursively(database: discdb.MediaDatabase, director
 			continue;
 		}
 		if (entry.isFile() && basename.endsWith(".jpg")) {
-			async function perform(): Promise<void> {
-				const metadata = await getMetadata(database, basename);
-				const media = metadata.media;
-				const track = discdb.MovieContent.as(metadata.track);
-				const paths = await getTargetPaths(media, track);
-				const path = paths.join("/") + ".jpg";
-				if (!libfs.existsSync(path)) {
-					console.log(path);
-					const buffer = libfs.readFileSync([
-						...directories,
-						basename
-					].join("/"));
-					libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
-					await writeBufferToDisk(buffer, path);
+			let parts = basename.split(".");
+			if (parts.length !== 2) {
+				continue;
+			}
+			let imdb = parts[0];
+			for (let value of Object.values(database)) {
+				if (value == null) {
+					continue;
+				}
+				let media = value;
+				for (let content of media.content) {
+					if (discdb.MovieContent.is(content)) {
+						let track = content;
+						if (track.imdb !== imdb) {
+							continue;
+						}
+						async function perform(): Promise<void> {
+							const paths = await getTargetPaths(media, track);
+							const path = paths.join("/") + ".jpg";
+							if (!libfs.existsSync(path)) {
+								console.log(path);
+								const buffer = libfs.readFileSync([
+									...directories,
+									basename
+								].join("/"));
+								libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
+								await writeBufferToDisk(buffer, path);
+							}
+						}
+						jobs.push({
+							perform
+						});
+					}
 				}
 			}
-			jobs.push({
-				perform
-			});
 			continue;
 		}
 	}

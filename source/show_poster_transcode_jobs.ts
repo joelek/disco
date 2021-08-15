@@ -70,7 +70,7 @@ async function createJobListRecursively(database: discdb.MediaDatabase, director
 					continue;
 				}
 				let media = value;
-				for (let content of value.content) {
+				for (let content of media.content) {
 					if (discdb.EpisodeContent.is(content)) {
 						let track = content;
 						if (track.imdb_show !== imdb_show) {

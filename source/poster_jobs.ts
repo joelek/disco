@@ -56,7 +56,7 @@ async function createJobListRecursively(database: discdb.MediaDatabase, director
 					"archive",
 					"image",
 					"movies",
-					metadata.id
+					track.imdb
 				];
 				const path = paths.join("/") + ".jpg";
 				if (!libfs.existsSync(path)) {
