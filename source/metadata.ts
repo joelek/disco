@@ -139,11 +139,11 @@ class XMLAttribute {
 }
 
 interface Visitor<A> {
-	(visitable: Visitable<A>): void;
+	(visitable: A): void;
 }
 
 interface Visitable<A> {
-	visit(visitor: Visitor<A>): void
+	visit(visitor: Visitor<A>): void;
 }
 
 class XMLNode implements Visitable<XMLNode> {
