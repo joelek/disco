@@ -16,5 +16,5 @@
 		"clean": "rm -rf ./build/ ./node_modules/",
 		"codegen": "npx autoguard"
 	},
-	"version": "1.0.0"
+	"version": "0.0.0"
 }
