@@ -151,6 +151,7 @@ class XMLNode implements Visitable<XMLNode> {
 	private parent: XMLElementNode | null;
 
 	constructor() {
+		this.document = null;
 		this.parent = null;
 	}
 
