@@ -1,14 +1,16 @@
 {
 	"compilerOptions": {
-		"composite": true,
-		"module": "none",
-		"moduleResolution": "node",
-		"noImplicitAny": true,
-		"noImplicitReturns": true,
-		"noImplicitThis": true,
+		"declaration": false,
+		"lib": [
+			"esnext"
+		],
+		"module": "commonjs",
 		"outDir": "./build/",
-		"rootDir": "./",
-		"strictNullChecks": true,
-		"target": "es6"
-	}
+		"rootDir": "./source/",
+		"strict": true,
+		"target": "esnext"
+	},
+	"include": [
+		"./source/"
+	]
 }
