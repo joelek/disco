@@ -1,6 +1,6 @@
 {
 	"bin": {},
-	"dependencies": {
+	"devDependencies": {
 		"@joelek/ts-autoguard": "github:joelek/ts-autoguard#semver:^5.8",
 		"@types/node": "^16.7",
 		"typescript": "^4.4"
