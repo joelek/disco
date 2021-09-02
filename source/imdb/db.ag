@@ -1,33 +1,34 @@
-{
-	Movie: {
-		id: string,
-		title: string,
-		year: number,
-		summary: string,
-		poster_url: string,
-		genres: string[],
-		actors: string[]
-	},
-	Show: {
-		id: string,
-		title: string,
-		summary: string,
-		poster_url: string,
-		genres: string[],
-		actors: string[]
-	},
-	Episode: {
-		id: string,
-		title: string,
-		air_date: number,
-		summary: string,
-		show_id: string,
-		season: number,
-		episode: number
-	},
-	Database: {
-		movies: Movie[],
-		shows: Show[],
-		episodes: Episode[]
-	}
-}
+guard Movie: {
+	"id": string,
+	"title": string,
+	"year": number,
+	"summary": string,
+	"poster_url": string,
+	"genres": string[],
+	"actors": string[]
+};
+
+guard Show: {
+	"id": string,
+	"title": string,
+	"summary": string,
+	"poster_url": string,
+	"genres": string[],
+	"actors": string[]
+};
+
+guard Episode: {
+	"id": string,
+	"title": string,
+	"air_date": number,
+	"summary": string,
+	"show_id": string,
+	"season": number,
+	"episode": number
+};
+
+guard Database: {
+	"movies": Movie[],
+	"shows": Show[],
+	"episodes": Episode[]
+};

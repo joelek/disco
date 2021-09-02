@@ -1,15 +1,16 @@
-{
-	FieldOrder: ("bff" | "tff" | "progressive"),
-	CropSettings: {
-		w: number,
-		h: number,
-		x: number,
-		y: number
-	},
-	Setting: {
-		field_order: FieldOrder,
-		crop: CropSettings,
-		compressibility: number
-	},
-	Database: { Setting }
-}
+guard FieldOrder: ("bff" | "tff" | "progressive");
+
+guard CropSettings: {
+	"w": number,
+	"h": number,
+	"x": number,
+	"y": number
+};
+
+guard Setting: {
+	"field_order": FieldOrder,
+	"crop": CropSettings,
+	"compressibility": number
+};
+
+guard Database: { Setting };

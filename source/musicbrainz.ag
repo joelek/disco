@@ -1,30 +1,33 @@
-{
-	ArtistCredit: {
-		name: string
-	},
-	Track: {
-		title: string,
-		"artist-credit": ArtistCredit[]
-	},
-	Disc: {
-		sectors: number,
-		"offset-count": number,
-		id: string,
-		offsets: number[]
-	},
-	Media: {
-		position: number,
-		discs: Disc[],
-		tracks: Track[]
-	},
-	Release: {
-		id: string,
-		date: string,
-		title: string,
-		"artist-credit": ArtistCredit[],
-		media: Media[]
-	},
-	DiscIdLookupResponse: {
-		releases: Release[]
-	}
-}
+guard ArtistCredit: {
+	"name": string
+};
+
+guard Track: {
+	"title": string,
+	"artist-credit": ArtistCredit[]
+};
+
+guard Disc: {
+	"sectors": number,
+	"offset-count": number,
+	"id": string,
+	"offsets": number[]
+};
+
+guard Media: {
+	"position": number,
+	"discs": Disc[],
+	"tracks": Track[]
+};
+
+guard Release: {
+	"id": string,
+	"date": string,
+	"title": string,
+	"artist-credit": ArtistCredit[],
+	"media": Media[]
+};
+
+guard DiscIdLookupResponse: {
+	"releases": Release[]
+};

@@ -1,24 +1,25 @@
-{
-	Volume: {
-		replaygain_gain: number,
-		replaygain_peak: number,
-		mean_volume: number,
-		peak_volume: number
-	},
-	Track: {
-		number: number,
-		artists: string[],
-		title: string
-	},
-	Disc: {
-		number: number,
-		artists: string[],
-		title: string,
-		year: number,
-		musicbrainz?: string,
-		volume?: Volume,
-		cover_art_url?: string,
-		tracks: Track[]
-	},
-	Database: { Disc }
-}
+guard Volume: {
+	"replaygain_gain": number,
+	"replaygain_peak": number,
+	"mean_volume": number,
+	"peak_volume": number
+};
+
+guard Track: {
+	"number": number,
+	"artists": string[],
+	"title": string
+};
+
+guard Disc: {
+	"number": number,
+	"artists": string[],
+	"title": string,
+	"year": number,
+	"musicbrainz"?: string,
+	"volume"?: Volume,
+	"cover_art_url"?: string,
+	"tracks": Track[]
+};
+
+guard Database: { Disc };

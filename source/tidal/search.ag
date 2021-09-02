@@ -1,218 +1,199 @@
-{
-	ArtistType: (
-		"ARTIST" |
-		"CONTRIBUTOR" |
-		string
-	),
-	SearchResponseArtist: {
-		"id": number,
-		"name": string,
-		"artistTypes": ArtistType[],
-		"url": string,
-		"picture": string,
-		"popularity": number
+guard ArtistType: ("ARTIST" | "CONTRIBUTOR" | string);
+
+guard SearchResponseArtist: {
+	"id": number,
+	"name": string,
+	"artistTypes": ArtistType[],
+	"url": string,
+	"picture": string,
+	"popularity": number
+};
+
+guard AlbumType: ("ALBUM" | string);
+
+guard AudioQualityType: ("LOSSLESS" | "HI_RES" | string);
+
+guard AudioModeType: ("STEREO" | string);
+
+guard ArtistRelationType: ("MAIN" | "FEATURED" | string);
+
+guard SearchResponseArtistRelation: {
+	"id": number,
+	"name": string,
+	"type": ArtistRelationType
+};
+
+guard AlbumRelation: {
+	"id": number,
+	"title": string,
+	"cover": string,
+	"videoCover": (null | any),
+	"releaseDate": string
+};
+
+guard SearchResponseAlbum: {
+	"id": number,
+	"title": string,
+	"duration": number,
+	"streamReady": boolean,
+	"streamStartDate": string,
+	"allowStreaming": boolean,
+	"premiumStreamingOnly": boolean,
+	"numberOfTracks": number,
+	"numberOfVideos": number,
+	"numberOfVolumes": number,
+	"releaseDate": string,
+	"copyright": string,
+	"type": AlbumType,
+	"version": (any | null),
+	"url": string,
+	"cover": string,
+	"videoCover": (any | null),
+	"explicit": boolean,
+	"upc": string,
+	"popularity": number,
+	"audioQuality": AudioQualityType,
+	"audioModes": AudioModeType[],
+	"artists": SearchResponseArtistRelation[]
+};
+
+guard PlaylistType: ("ARTIST" | "EDITORIAL" | string);
+
+guard PlaylistCreator: {
+	"id": number,
+	"name": string,
+	"artistTypes": (null | any),
+	"url": (null | any),
+	"picture": (null | any),
+	"popularity": number
+};
+
+guard SearchResponsePlaylist: {
+	"uuid": string,
+	"title": string,
+	"numberOfTracks": number,
+	"numberOfVideos": number,
+	"creator": ({} | PlaylistCreator),
+	"description": string,
+	"duration": number,
+	"lastUpdated": string,
+	"created": string,
+	"type": PlaylistType,
+	"publicPlaylist": boolean,
+	"url": string,
+	"image": string,
+	"popularity": number,
+	"squareImage": string,
+	"promotedArtists": SearchResponseArtistRelation[],
+	"lastItemAddedAt": (null | any)
+};
+
+guard SearchResponseTrack: {
+	"id": number,
+	"title": string,
+	"duration": number,
+	"replayGain": number,
+	"peak": number,
+	"allowStreaming": boolean,
+	"streamReady": boolean,
+	"streamStartDate": string,
+	"premiumStreamingOnly": boolean,
+	"trackNumber": number,
+	"volumeNumber": number,
+	"version": (null | any),
+	"popularity": number,
+	"copyright": string,
+	"url": string,
+	"isrc": string,
+	"editable": boolean,
+	"explicit": boolean,
+	"audioQuality": AudioQualityType,
+	"audioModes": AudioModeType[],
+	"artists": SearchResponseArtistRelation[],
+	"album": AlbumRelation
+};
+
+guard SearchResponseVideoQualityType: ("MP4_1080P" | string);
+
+guard SearchResponseVideo: {
+	"id": number,
+	"title": string,
+	"volumeNumber": number,
+	"trackNumber": number,
+	"releaseDate": string,
+	"imagePath": (null | any),
+	"imageId": string,
+	"duration": number,
+	"quality": SearchResponseVideoQualityType,
+	"streamReady": boolean,
+	"streamStartDate": string,
+	"allowStreaming": boolean,
+	"explicit": boolean,
+	"popularity": number,
+	"type": string,
+	"adsUrl": (null | any),
+	"adsPrePaywallOnly": boolean,
+	"artists": SearchResponseArtistRelation[],
+	"album": (null | any)
+};
+
+guard EntityType: ("ARTISTS" | "ALBUMS" | "PLAYLISTS" | "TRACKS" | "VIDEOS");
+
+guard SearchResponseTopHitArtist: {
+	"value": SearchResponseArtist,
+	"type": "ARTISTS"
+};
+
+guard SearchResponseTopHitAlbum: {
+	"value": SearchResponseAlbum,
+	"type": "ALBUMS"
+};
+
+guard SearchResponseTopHitPlaylist: {
+	"value": SearchResponsePlaylist,
+	"type": "PLAYLISTS"
+};
+
+guard SearchResponseTopHitTrack: {
+	"value": SearchResponseTrack,
+	"type": "TRACKS"
+};
+
+guard SearchResponseTopHitVideo: {
+	"value": SearchResponseVideo,
+	"type": "VIDEOS"
+};
+
+guard SearchResponse: {
+	"artists": {
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseArtist[]
 	},
-	AlbumType: (
-		"ALBUM" |
-		string
-	),
-	AudioQualityType: (
-		"LOSSLESS" |
-		"HI_RES" |
-		string
-	),
-	AudioModeType: (
-		"STEREO" |
-		string
-	),
-	ArtistRelationType: (
-		"MAIN" |
-		"FEATURED" |
-		string
-	),
-	SearchResponseArtistRelation: {
-		"id": number,
-		"name": string,
-		"type": ArtistRelationType
+	"albums": {
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseAlbum[]
 	},
-	AlbumRelation: {
-		"id": number,
-		"title": string,
-		"cover": string,
-		"videoCover": (null | any),
-		"releaseDate": string
+	"playlists": {
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponsePlaylist[]
 	},
-	SearchResponseAlbum: {
-		"id": number,
-		"title": string,
-		"duration": number,
-		"streamReady": boolean,
-		"streamStartDate": string,
-		"allowStreaming": boolean,
-		"premiumStreamingOnly": boolean,
-		"numberOfTracks": number,
-		"numberOfVideos": number,
-		"numberOfVolumes": number,
-		"releaseDate": string,
-		"copyright": string,
-		"type": AlbumType,
-		"version": (any | null),
-		"url": string,
-		"cover": string,
-		"videoCover": (any | null),
-		"explicit": boolean,
-		"upc": string,
-		"popularity": number,
-		"audioQuality": AudioQualityType,
-		"audioModes": AudioModeType[],
-		"artists": SearchResponseArtistRelation[]
+	"tracks": {
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseTrack[]
 	},
-	PlaylistType: (
-		"ARTIST" |
-		"EDITORIAL" |
-		string
-	),
-	PlaylistCreator: {
-		"id": number,
-		"name": string,
-		"artistTypes": (null | any),
-		"url": (null | any),
-		"picture": (null | any),
-		"popularity": number
+	"videos": {
+		"limit": number,
+		"offset": number,
+		"totalNumberOfItems": number,
+		"items": SearchResponseVideo[]
 	},
-	SearchResponsePlaylist: {
-		"uuid": string,
-		"title": string,
-		"numberOfTracks": number,
-		"numberOfVideos": number,
-		"creator": ({} | PlaylistCreator),
-		"description": string,
-		"duration": number,
-		"lastUpdated": string,
-		"created": string,
-		"type": PlaylistType,
-		"publicPlaylist": boolean,
-		"url": string,
-		"image": string,
-		"popularity": number,
-		"squareImage": string,
-		"promotedArtists": SearchResponseArtistRelation[],
-		"lastItemAddedAt": (null | any)
-	},
-	SearchResponseTrack: {
-		"id": number,
-		"title": string,
-		"duration": number,
-		"replayGain": number,
-		"peak": number,
-		"allowStreaming": boolean,
-		"streamReady": boolean,
-		"streamStartDate": string,
-		"premiumStreamingOnly": boolean,
-		"trackNumber": number,
-		"volumeNumber": number,
-		"version": (null | any),
-		"popularity": number,
-		"copyright": string,
-		"url": string,
-		"isrc": string,
-		"editable": boolean,
-		"explicit": boolean,
-		"audioQuality": AudioQualityType,
-		"audioModes": AudioModeType[],
-		"artists": SearchResponseArtistRelation[],
-		"album": AlbumRelation
-	},
-	SearchResponseVideoQualityType: (
-		"MP4_1080P" |
-		string
-	),
-	SearchResponseVideo: {
-		"id": number,
-		"title": string,
-		"volumeNumber": number,
-		"trackNumber": number,
-		"releaseDate": string,
-		"imagePath": (null | any),
-		"imageId": string,
-		"duration": number,
-		"quality": SearchResponseVideoQualityType,
-		"streamReady": boolean,
-		"streamStartDate": string,
-		"allowStreaming": boolean,
-		"explicit": boolean,
-		"popularity": number,
-		"type": string,
-		"adsUrl": (null | any),
-		"adsPrePaywallOnly": boolean,
-		"artists": SearchResponseArtistRelation[],
-		"album": (null | any)
-	},
-	EntityType: (
-		"ARTISTS" |
-		"ALBUMS" |
-		"PLAYLISTS" |
-		"TRACKS" |
-		"VIDEOS"
-	),
-	SearchResponseTopHitArtist: {
-		"value": SearchResponseArtist,
-		"type": "ARTISTS"
-	},
-	SearchResponseTopHitAlbum: {
-		"value": SearchResponseAlbum,
-		"type": "ALBUMS"
-	},
-	SearchResponseTopHitPlaylist: {
-		"value": SearchResponsePlaylist,
-		"type": "PLAYLISTS"
-	},
-	SearchResponseTopHitTrack: {
-		"value": SearchResponseTrack,
-		"type": "TRACKS"
-	},
-	SearchResponseTopHitVideo: {
-		"value": SearchResponseVideo,
-		"type": "VIDEOS"
-	},
-	SearchResponse: {
-		"artists": {
-			"limit": number,
-			"offset": number,
-			"totalNumberOfItems": number,
-			"items": SearchResponseArtist[]
-		},
-		"albums": {
-			"limit": number,
-			"offset": number,
-			"totalNumberOfItems": number,
-			"items": SearchResponseAlbum[]
-		},
-		"playlists": {
-			"limit": number,
-			"offset": number,
-			"totalNumberOfItems": number,
-			"items": SearchResponsePlaylist[]
-		},
-		"tracks": {
-			"limit": number,
-			"offset": number,
-			"totalNumberOfItems": number,
-			"items": SearchResponseTrack[]
-		},
-		"videos": {
-			"limit": number,
-			"offset": number,
-			"totalNumberOfItems": number,
-			"items": SearchResponseVideo[]
-		},
-		"topHit": (
-			SearchResponseTopHitArtist |
-			SearchResponseTopHitAlbum |
-			SearchResponseTopHitPlaylist |
-			SearchResponseTopHitTrack |
-			SearchResponseTopHitVideo |
-			null
-		)
-	}
-}
+	"topHit": (SearchResponseTopHitArtist | SearchResponseTopHitAlbum | SearchResponseTopHitPlaylist | SearchResponseTopHitTrack | SearchResponseTopHitVideo | null)
+};

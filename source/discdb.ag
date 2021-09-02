@@ -1,42 +1,47 @@
-{
-	Content: {
-		type: string,
-		selector: string
-	},
-	MovieContent: (Content & {
-		type: "movie",
-		title: string,
-		year: number,
-		part: number,
-		imdb: string,
-		poster_url: string,
-		summary: string,
-		genres: string[],
-		actors: string[]
-	}),
-	EpisodeContent: (Content & {
-		type: "episode",
-		title: string,
-		show: string,
-		season: number,
-		episode: number,
-		imdb: string,
-		imdb_show: string,
-		year: number,
-		poster_url_show?: string,
-		summary_show: string,
-		summary: string,
-		genres_show: string[],
-		actors_show: string[]
-	}),
-	UnknownContent: (Content & {
-		type: "unknown"
-	}),
-	MediaContent: (UnknownContent | MovieContent | EpisodeContent),
-	MediaType: ("paldvd" | "ntscdvd" | "bluray"),
-	Media: {
-		type: MediaType,
-		content: MediaContent[]
-	},
-	MediaDatabase: { Media }
-}
+guard Content: {
+	"type": string,
+	"selector": string
+};
+
+guard MovieContent: (Content & {
+	"type": "movie",
+	"title": string,
+	"year": number,
+	"part": number,
+	"imdb": string,
+	"poster_url": string,
+	"summary": string,
+	"genres": string[],
+	"actors": string[]
+});
+
+guard EpisodeContent: (Content & {
+	"type": "episode",
+	"title": string,
+	"show": string,
+	"season": number,
+	"episode": number,
+	"imdb": string,
+	"imdb_show": string,
+	"year": number,
+	"poster_url_show"?: string,
+	"summary_show": string,
+	"summary": string,
+	"genres_show": string[],
+	"actors_show": string[]
+});
+
+guard UnknownContent: (Content & {
+	"type": "unknown"
+});
+
+guard MediaContent: (UnknownContent | MovieContent | EpisodeContent);
+
+guard MediaType: ("paldvd" | "ntscdvd" | "bluray");
+
+guard Media: {
+	"type": MediaType,
+	"content": MediaContent[]
+};
+
+guard MediaDatabase: { Media };

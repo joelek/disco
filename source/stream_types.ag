@@ -1,38 +1,41 @@
-{
-	Stream: {
-		index: number,
-		codec_type: string,
-		codec_name: string,
-		time_base: string,
-		start_pts: number,
-		start_time: string,
-		extradata?: string,
-		tags: ({ string } & {
-			language: string
-		})
-	},
-	VideoStream: (Stream & {
-		codec_type: "video",
-		width: number,
-		height: number,
-		r_frame_rate: string,
-		sample_aspect_ratio?: string,
-		display_aspect_ratio?: string,
-		color_range?: string,
-		color_space?: string,
-		color_transfer?: string,
-		color_primaries?: string
-	}),
-	AudioStream: (Stream & {
-		codec_type: "audio",
-		sample_rate: string,
-		channels: number
-	}),
-	SubtitleStream: (Stream & {
-		codec_type: "subtitle"
-	}),
-	StreamType: (VideoStream | AudioStream | SubtitleStream),
-	FFProbe: {
-		streams: StreamType[]
-	}
-}
+guard Stream: {
+	"index": number,
+	"codec_type": string,
+	"codec_name": string,
+	"time_base": string,
+	"start_pts": number,
+	"start_time": string,
+	"extradata"?: string,
+	"tags": ({ string } & {
+		"language": string
+	})
+};
+
+guard VideoStream: (Stream & {
+	"codec_type": "video",
+	"width": number,
+	"height": number,
+	"r_frame_rate": string,
+	"sample_aspect_ratio"?: string,
+	"display_aspect_ratio"?: string,
+	"color_range"?: string,
+	"color_space"?: string,
+	"color_transfer"?: string,
+	"color_primaries"?: string
+});
+
+guard AudioStream: (Stream & {
+	"codec_type": "audio",
+	"sample_rate": string,
+	"channels": number
+});
+
+guard SubtitleStream: (Stream & {
+	"codec_type": "subtitle"
+});
+
+guard StreamType: (VideoStream | AudioStream | SubtitleStream);
+
+guard FFProbe: {
+	"streams": StreamType[]
+};
