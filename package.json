@@ -14,7 +14,9 @@
 	"scripts": {
 		"build": "rm -rf ./build/ && npm run codegen && npx tsc --build",
 		"clean": "rm -rf ./build/ ./node_modules/",
-		"codegen": "npx autoguard"
+		"codegen": "npx autoguard",
+		"preversion": "npm run build && git add ./",
+		"postversion": "git push && git push --tags"
 	},
 	"version": "0.0.0"
 }
