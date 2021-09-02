@@ -16,9 +16,9 @@
 		title: string,
 		year: number,
 		musicbrainz?: string,
-		volume?: @Volume,
+		volume?: Volume,
 		cover_art_url?: string,
-		tracks: @Track[]
+		tracks: Track[]
 	},
-	Database: { @Disc }
+	Database: { Disc }
 }

@@ -7,9 +7,9 @@
 		y: number
 	},
 	Setting: {
-		field_order: @FieldOrder,
-		crop: @CropSettings,
+		field_order: FieldOrder,
+		crop: CropSettings,
 		compressibility: number
 	},
-	Database: { @Setting }
+	Database: { Setting }
 }

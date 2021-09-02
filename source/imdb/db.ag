@@ -26,8 +26,8 @@
 		episode: number
 	},
 	Database: {
-		movies: @Movie[],
-		shows: @Show[],
-		episodes: @Episode[]
+		movies: Movie[],
+		shows: Show[],
+		episodes: Episode[]
 	}
 }

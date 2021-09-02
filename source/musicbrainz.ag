@@ -4,7 +4,7 @@
 	},
 	Track: {
 		title: string,
-		"artist-credit": @ArtistCredit[]
+		"artist-credit": ArtistCredit[]
 	},
 	Disc: {
 		sectors: number,
@@ -14,17 +14,17 @@
 	},
 	Media: {
 		position: number,
-		discs: @Disc[],
-		tracks: @Track[]
+		discs: Disc[],
+		tracks: Track[]
 	},
 	Release: {
 		id: string,
 		date: string,
 		title: string,
-		"artist-credit": @ArtistCredit[],
-		media: @Media[]
+		"artist-credit": ArtistCredit[],
+		media: Media[]
 	},
 	DiscIdLookupResponse: {
-		releases: @Release[]
+		releases: Release[]
 	}
 }

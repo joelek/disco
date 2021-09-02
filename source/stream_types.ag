@@ -11,7 +11,7 @@
 			language: string
 		})
 	},
-	VideoStream: (@Stream & {
+	VideoStream: (Stream & {
 		codec_type: "video",
 		width: number,
 		height: number,
@@ -23,16 +23,16 @@
 		color_transfer?: string,
 		color_primaries?: string
 	}),
-	AudioStream: (@Stream & {
+	AudioStream: (Stream & {
 		codec_type: "audio",
 		sample_rate: string,
 		channels: number
 	}),
-	SubtitleStream: (@Stream & {
+	SubtitleStream: (Stream & {
 		codec_type: "subtitle"
 	}),
-	StreamType: (@VideoStream | @AudioStream | @SubtitleStream),
+	StreamType: (VideoStream | AudioStream | SubtitleStream),
 	FFProbe: {
-		streams: @StreamType[]
+		streams: StreamType[]
 	}
 }

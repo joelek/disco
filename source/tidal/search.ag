@@ -7,7 +7,7 @@
 	SearchResponseArtist: {
 		"id": number,
 		"name": string,
-		"artistTypes": @ArtistType[],
+		"artistTypes": ArtistType[],
 		"url": string,
 		"picture": string,
 		"popularity": number
@@ -33,7 +33,7 @@
 	SearchResponseArtistRelation: {
 		"id": number,
 		"name": string,
-		"type": @ArtistRelationType
+		"type": ArtistRelationType
 	},
 	AlbumRelation: {
 		"id": number,
@@ -55,7 +55,7 @@
 		"numberOfVolumes": number,
 		"releaseDate": string,
 		"copyright": string,
-		"type": @AlbumType,
+		"type": AlbumType,
 		"version": (any | null),
 		"url": string,
 		"cover": string,
@@ -63,9 +63,9 @@
 		"explicit": boolean,
 		"upc": string,
 		"popularity": number,
-		"audioQuality": @AudioQualityType,
-		"audioModes": @AudioModeType[],
-		"artists": @SearchResponseArtistRelation[]
+		"audioQuality": AudioQualityType,
+		"audioModes": AudioModeType[],
+		"artists": SearchResponseArtistRelation[]
 	},
 	PlaylistType: (
 		"ARTIST" |
@@ -85,18 +85,18 @@
 		"title": string,
 		"numberOfTracks": number,
 		"numberOfVideos": number,
-		"creator": ({} | @PlaylistCreator),
+		"creator": ({} | PlaylistCreator),
 		"description": string,
 		"duration": number,
 		"lastUpdated": string,
 		"created": string,
-		"type": @PlaylistType,
+		"type": PlaylistType,
 		"publicPlaylist": boolean,
 		"url": string,
 		"image": string,
 		"popularity": number,
 		"squareImage": string,
-		"promotedArtists": @SearchResponseArtistRelation[],
+		"promotedArtists": SearchResponseArtistRelation[],
 		"lastItemAddedAt": (null | any)
 	},
 	SearchResponseTrack: {
@@ -118,10 +118,10 @@
 		"isrc": string,
 		"editable": boolean,
 		"explicit": boolean,
-		"audioQuality": @AudioQualityType,
-		"audioModes": @AudioModeType[],
-		"artists": @SearchResponseArtistRelation[],
-		"album": @AlbumRelation
+		"audioQuality": AudioQualityType,
+		"audioModes": AudioModeType[],
+		"artists": SearchResponseArtistRelation[],
+		"album": AlbumRelation
 	},
 	SearchResponseVideoQualityType: (
 		"MP4_1080P" |
@@ -136,7 +136,7 @@
 		"imagePath": (null | any),
 		"imageId": string,
 		"duration": number,
-		"quality": @SearchResponseVideoQualityType,
+		"quality": SearchResponseVideoQualityType,
 		"streamReady": boolean,
 		"streamStartDate": string,
 		"allowStreaming": boolean,
@@ -145,7 +145,7 @@
 		"type": string,
 		"adsUrl": (null | any),
 		"adsPrePaywallOnly": boolean,
-		"artists": @SearchResponseArtistRelation[],
+		"artists": SearchResponseArtistRelation[],
 		"album": (null | any)
 	},
 	EntityType: (
@@ -156,23 +156,23 @@
 		"VIDEOS"
 	),
 	SearchResponseTopHitArtist: {
-		"value": @SearchResponseArtist,
+		"value": SearchResponseArtist,
 		"type": "ARTISTS"
 	},
 	SearchResponseTopHitAlbum: {
-		"value": @SearchResponseAlbum,
+		"value": SearchResponseAlbum,
 		"type": "ALBUMS"
 	},
 	SearchResponseTopHitPlaylist: {
-		"value": @SearchResponsePlaylist,
+		"value": SearchResponsePlaylist,
 		"type": "PLAYLISTS"
 	},
 	SearchResponseTopHitTrack: {
-		"value": @SearchResponseTrack,
+		"value": SearchResponseTrack,
 		"type": "TRACKS"
 	},
 	SearchResponseTopHitVideo: {
-		"value": @SearchResponseVideo,
+		"value": SearchResponseVideo,
 		"type": "VIDEOS"
 	},
 	SearchResponse: {
@@ -180,38 +180,38 @@
 			"limit": number,
 			"offset": number,
 			"totalNumberOfItems": number,
-			"items": @SearchResponseArtist[]
+			"items": SearchResponseArtist[]
 		},
 		"albums": {
 			"limit": number,
 			"offset": number,
 			"totalNumberOfItems": number,
-			"items": @SearchResponseAlbum[]
+			"items": SearchResponseAlbum[]
 		},
 		"playlists": {
 			"limit": number,
 			"offset": number,
 			"totalNumberOfItems": number,
-			"items": @SearchResponsePlaylist[]
+			"items": SearchResponsePlaylist[]
 		},
 		"tracks": {
 			"limit": number,
 			"offset": number,
 			"totalNumberOfItems": number,
-			"items": @SearchResponseTrack[]
+			"items": SearchResponseTrack[]
 		},
 		"videos": {
 			"limit": number,
 			"offset": number,
 			"totalNumberOfItems": number,
-			"items": @SearchResponseVideo[]
+			"items": SearchResponseVideo[]
 		},
 		"topHit": (
-			@SearchResponseTopHitArtist |
-			@SearchResponseTopHitAlbum |
-			@SearchResponseTopHitPlaylist |
-			@SearchResponseTopHitTrack |
-			@SearchResponseTopHitVideo |
+			SearchResponseTopHitArtist |
+			SearchResponseTopHitAlbum |
+			SearchResponseTopHitPlaylist |
+			SearchResponseTopHitTrack |
+			SearchResponseTopHitVideo |
 			null
 		)
 	}
