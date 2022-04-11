@@ -1,82 +1,192 @@
-import * as search from "./search";
-import * as libhttp from "http";
-import * as libhttps from "https";
+import * as tidalapi from "./search";
 import * as rate_limiter from "../rate_limiter";
+import * as libdb from "./db";
+import * as libfs from "fs";
+import * as api from "./search/client";
+import * as autoguard from "@joelek/ts-autoguard/dist/lib-server";
 
-interface Request<A> {
-	body?: A,
-	headers?: libhttp.OutgoingHttpHeaders,
-	method?: string,
-	url: string
+function getImageURL(id: string, width: number, height: number): string {
+	return "https://resources.tidal.com/images/" + id.split("-").join("/") + `/${width}x${height}.jpg`;
 }
 
-interface Response<A> {
-	body: A,
-	headers: libhttp.IncomingHttpHeaders
+function getAlbumArtURL(id: string): string {
+	return getImageURL(id, 1280, 1280);
 }
 
-async function request(request: Request<Buffer>): Promise<Response<Buffer>> {
-	return new Promise((resolve, reject) => {
-		const client_request = libhttps.request(request.url, {
-			headers: request.headers,
-			method: request.method
-		});
-		client_request.on("response", (incoming_message) => {
-			incoming_message.setEncoding("binary");
-			const buffers = new Array<Buffer>();
-			incoming_message.on("data", (chunk) => {
-				const buffer = Buffer.from(chunk, "binary");
-				buffers.push(buffer);
-			});
-			incoming_message.on("end", () => {
-				const headers = incoming_message.headers;
-				const body = Buffer.concat(buffers);
-				const response = {
-					headers,
-					body
-				};
-				return resolve(response);
-			});
-		});
-		client_request.on("error", (error) => {
-			return reject(error);
-		});
-		if (request.body != null) {
-			client_request.end(request.body);
-		} else {
-			client_request.end();
+function getArtistArtURL(id: string): string {
+	return getImageURL(id, 750, 750);
+}
+
+function parseDate(string: string): number {
+	return Date.parse(string + "Z");
+}
+
+type Artist = libdb.Artist & {
+
+};
+
+type Album = libdb.Album & {
+	artists: Artist[];
+};
+
+type SearchResponse = {
+	albums: Album[];
+	artists: Artist[];
+};
+
+const path = [".", "private", "db", "tidal.json"];
+const token = "gsFXkJqGrUNoYMQPZe4k3WKwijnrp8iGSwn3bApe";
+const db = libdb.Database.as(JSON.parse(libfs.readFileSync(path.join("/"), "utf8")));
+const rl = new rate_limiter.RateLimiter(10000);
+const apiclient = api.makeClient({
+	urlPrefix: "https://api.tidal.com/v1",
+	requestHandler: autoguard.api.makeNodeRequestHandler()
+});
+
+export async function search(query: string, types: Array<tidalapi.EntityType>): Promise<SearchResponse> {
+	await rl.rateLimit();
+	let response = await apiclient.search({
+		headers: {
+			"x-tidal-token": token
+		},
+		options: {
+			query,
+			countryCode: "SE",
+			offset: 0,
+			limit: 1,
+			types,
+			includeContributors: true
 		}
 	});
-}
-
-const rl = new rate_limiter.RateLimiter(10000);
-const cache: { [key: string]: undefined | Buffer } = {};
-
-async function getSearchResults(query: string, types: Array<search.EntityType>, token?: string): Promise<search.SearchResponse> {
-	let url = "https://api.tidal.com/v1/search?query=" + encodeURIComponent(query) + "&limit=3&offset=0&types=" + types.join(",") + "&includeContributors=true&countryCode=SE";
-	let buffer = cache[url];
-	if (buffer == null) {
-		await rl.rateLimit();
-		console.log(url);
-		let response = await request({
-			url: url,
-			headers: {
-				"x-tidal-token": token || "gsFXkJqGrUNoYMQPZe4k3WKwijnrp8iGSwn3bApe"
+	let payload = await response.payload();
+	for (let album of payload.albums.items) {
+		try {
+			await getAlbumFromDatabase(album.id);
+		} catch (error) {
+			for (let artist of album.artists) {
+				try {
+					await getArtistFromDatabase(artist.id);
+				} catch (error) {
+					db.artists.push({
+						id: artist.id,
+						name: artist.name,
+						picture: artist.picture ?? undefined
+					});
+				}
 			}
-		});
-		buffer = response.body;
-		cache[url] = buffer;
+			db.albums.push({
+				id: album.id,
+				title: album.title,
+				cover: album.cover,
+				release_date: parseDate(album.releaseDate),
+				artists: album.artists.map((artist) => ({
+					id: artist.id
+				}))
+			});
+		}
 	}
-	let string = (buffer as Buffer).toString();
-	let json = JSON.parse(string);
-	return search.SearchResponse.as(json);
+	for (let artist of payload.artists.items) {
+		try {
+			await getArtistFromDatabase(artist.id);
+		} catch (error) {
+			db.artists.push({
+				id: artist.id,
+				name: artist.name,
+				picture: artist.picture ?? undefined
+			});
+		}
+	}
+	libfs.writeFileSync(path.join("/"), JSON.stringify(db, null, "\t"));
+	return {
+		albums: await Promise.all(payload.albums.items.map((album) => getAlbumFromDatabase(album.id))),
+		artists: await Promise.all(payload.artists.items.map((album) => getArtistFromDatabase(album.id)))
+	};
 }
 
-async function getCoverArtURL(id: string): Promise<string> {
-	return "https://resources.tidal.com/images/" + id.split("-").join("/") + "/1280x1280.jpg";
-}
+export async function getArtistFromDatabase(id: number): Promise<Artist> {
+	let artists = db.artists.filter((artist) => artist.id === id);
+	let artist = artists.shift();
+	if (artist == null) {
+		throw `Expected an artist!`;
+	}
+	return {
+		...artist,
+		picture: artist.picture != null ? getArtistArtURL(artist.picture) : undefined
+	};
+};
 
-export {
-	getSearchResults,
-	getCoverArtURL
+export async function getArtist(id: number): Promise<Artist> {
+	try {
+		return await getArtistFromDatabase(id);
+	} catch (error) {}
+	await rl.rateLimit();
+	let response = await apiclient.getArtist({
+		headers: {
+			"x-tidal-token": token
+		},
+		options: {
+			id,
+			countryCode: "SE"
+		}
+	});
+	let payload = await response.payload();
+	db.artists.push({
+		id: payload.id,
+		name: payload.name,
+		picture: payload.picture ?? undefined
+	});
+	libfs.writeFileSync(path.join("/"), JSON.stringify(db, null, "\t"));
+	return getArtistFromDatabase(id);
+};
+
+export async function getAlbumFromDatabase(id: number): Promise<Album> {
+	let albums = db.albums.filter((album) => album.id === id);
+	let album = albums.shift();
+	if (album == null) {
+		throw `Expected an album!`;
+	}
+	return {
+		...album,
+		cover: getAlbumArtURL(album.cover),
+		artists: await Promise.all(album.artists.map((artist) => getArtistFromDatabase(artist.id)))
+	};
+};
+
+export async function getAlbum(id: number): Promise<Album> {
+	try {
+		return await getAlbumFromDatabase(id);
+	} catch (error) {}
+	await rl.rateLimit();
+	let response = await apiclient.getAlbum({
+		headers: {
+			"x-tidal-token": token
+		},
+		options: {
+			id,
+			countryCode: "SE"
+		}
+	});
+	let payload = await response.payload();
+	for (let artist of payload.artists) {
+		try {
+			await getArtistFromDatabase(artist.id);
+		} catch (error) {
+			db.artists.push({
+				id: artist.id,
+				name: artist.name,
+				picture: artist.picture ?? undefined
+			});
+		}
+	}
+	db.albums.push({
+		id: payload.id,
+		title: payload.title,
+		cover: payload.cover,
+		release_date: parseDate(payload.releaseDate),
+		artists: payload.artists.map((artist) => ({
+			id: artist.id
+		}))
+	});
+	libfs.writeFileSync(path.join("/"), JSON.stringify(db, null, "\t"));
+	return getAlbumFromDatabase(id);
 };

@@ -2,25 +2,40 @@
 
 import * as autoguard from "@joelek/ts-autoguard/dist/lib-shared";
 
-export const ArtistType: autoguard.serialization.MessageGuard<ArtistType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const ArtistType: autoguard.serialization.MessageGuard<ArtistType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("ARTIST"),
 	autoguard.guards.StringLiteral.of("CONTRIBUTOR"),
 	autoguard.guards.String
-));
+);
 
-export type ArtistType = autoguard.guards.Group<autoguard.guards.Union<[
+export type ArtistType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"ARTIST">,
 	autoguard.guards.StringLiteral<"CONTRIBUTOR">,
 	autoguard.guards.String
-]>>;
+]>;
+
+export const ArtistRole: autoguard.serialization.MessageGuard<ArtistRole> = autoguard.guards.Object.of({
+	"categoryId": autoguard.guards.Number,
+	"category": autoguard.guards.String
+}, {});
+
+export type ArtistRole = autoguard.guards.Object<{
+	"categoryId": autoguard.guards.Number,
+	"category": autoguard.guards.String
+}, {}>;
 
 export const SearchResponseArtist: autoguard.serialization.MessageGuard<SearchResponseArtist> = autoguard.guards.Object.of({
 	"id": autoguard.guards.Number,
 	"name": autoguard.guards.String,
 	"artistTypes": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => ArtistType)),
 	"url": autoguard.guards.String,
-	"picture": autoguard.guards.String,
-	"popularity": autoguard.guards.Number
+	"picture": autoguard.guards.Union.of(
+		autoguard.guards.String,
+		autoguard.guards.Null
+	),
+	"popularity": autoguard.guards.Number,
+	"artistRoles": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => ArtistRole)),
+	"mixes": autoguard.guards.Record.of(autoguard.guards.String)
 }, {});
 
 export type SearchResponseArtist = autoguard.guards.Object<{
@@ -28,74 +43,87 @@ export type SearchResponseArtist = autoguard.guards.Object<{
 	"name": autoguard.guards.String,
 	"artistTypes": autoguard.guards.Array<autoguard.guards.Reference<ArtistType>>,
 	"url": autoguard.guards.String,
-	"picture": autoguard.guards.String,
-	"popularity": autoguard.guards.Number
+	"picture": autoguard.guards.Union<[
+		autoguard.guards.String,
+		autoguard.guards.Null
+	]>,
+	"popularity": autoguard.guards.Number,
+	"artistRoles": autoguard.guards.Array<autoguard.guards.Reference<ArtistRole>>,
+	"mixes": autoguard.guards.Record<autoguard.guards.String>
 }, {}>;
 
-export const AlbumType: autoguard.serialization.MessageGuard<AlbumType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const AlbumType: autoguard.serialization.MessageGuard<AlbumType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("ALBUM"),
 	autoguard.guards.String
-));
+);
 
-export type AlbumType = autoguard.guards.Group<autoguard.guards.Union<[
+export type AlbumType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"ALBUM">,
 	autoguard.guards.String
-]>>;
+]>;
 
-export const AudioQualityType: autoguard.serialization.MessageGuard<AudioQualityType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const AudioQualityType: autoguard.serialization.MessageGuard<AudioQualityType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("LOSSLESS"),
 	autoguard.guards.StringLiteral.of("HI_RES"),
 	autoguard.guards.String
-));
+);
 
-export type AudioQualityType = autoguard.guards.Group<autoguard.guards.Union<[
+export type AudioQualityType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"LOSSLESS">,
 	autoguard.guards.StringLiteral<"HI_RES">,
 	autoguard.guards.String
-]>>;
+]>;
 
-export const AudioModeType: autoguard.serialization.MessageGuard<AudioModeType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const AudioModeType: autoguard.serialization.MessageGuard<AudioModeType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("STEREO"),
 	autoguard.guards.String
-));
+);
 
-export type AudioModeType = autoguard.guards.Group<autoguard.guards.Union<[
+export type AudioModeType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"STEREO">,
 	autoguard.guards.String
-]>>;
+]>;
 
-export const ArtistRelationType: autoguard.serialization.MessageGuard<ArtistRelationType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const ArtistRelationType: autoguard.serialization.MessageGuard<ArtistRelationType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("MAIN"),
 	autoguard.guards.StringLiteral.of("FEATURED"),
 	autoguard.guards.String
-));
+);
 
-export type ArtistRelationType = autoguard.guards.Group<autoguard.guards.Union<[
+export type ArtistRelationType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"MAIN">,
 	autoguard.guards.StringLiteral<"FEATURED">,
 	autoguard.guards.String
-]>>;
+]>;
 
 export const SearchResponseArtistRelation: autoguard.serialization.MessageGuard<SearchResponseArtistRelation> = autoguard.guards.Object.of({
 	"id": autoguard.guards.Number,
 	"name": autoguard.guards.String,
-	"type": autoguard.guards.Reference.of(() => ArtistRelationType)
+	"type": autoguard.guards.Reference.of(() => ArtistRelationType),
+	"picture": autoguard.guards.Union.of(
+		autoguard.guards.String,
+		autoguard.guards.Null
+	)
 }, {});
 
 export type SearchResponseArtistRelation = autoguard.guards.Object<{
 	"id": autoguard.guards.Number,
 	"name": autoguard.guards.String,
-	"type": autoguard.guards.Reference<ArtistRelationType>
+	"type": autoguard.guards.Reference<ArtistRelationType>,
+	"picture": autoguard.guards.Union<[
+		autoguard.guards.String,
+		autoguard.guards.Null
+	]>
 }, {}>;
 
 export const AlbumRelation: autoguard.serialization.MessageGuard<AlbumRelation> = autoguard.guards.Object.of({
 	"id": autoguard.guards.Number,
 	"title": autoguard.guards.String,
 	"cover": autoguard.guards.String,
-	"videoCover": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"videoCover": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	)),
+	),
 	"releaseDate": autoguard.guards.String
 }, {});
 
@@ -103,10 +131,10 @@ export type AlbumRelation = autoguard.guards.Object<{
 	"id": autoguard.guards.Number,
 	"title": autoguard.guards.String,
 	"cover": autoguard.guards.String,
-	"videoCover": autoguard.guards.Group<autoguard.guards.Union<[
+	"videoCover": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>,
+	]>,
 	"releaseDate": autoguard.guards.String
 }, {}>;
 
@@ -124,23 +152,26 @@ export const SearchResponseAlbum: autoguard.serialization.MessageGuard<SearchRes
 	"releaseDate": autoguard.guards.String,
 	"copyright": autoguard.guards.String,
 	"type": autoguard.guards.Reference.of(() => AlbumType),
-	"version": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"version": autoguard.guards.Union.of(
 		autoguard.guards.Any,
 		autoguard.guards.Null
-	)),
+	),
 	"url": autoguard.guards.String,
 	"cover": autoguard.guards.String,
-	"videoCover": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"vibrantColor": autoguard.guards.String,
+	"videoCover": autoguard.guards.Union.of(
 		autoguard.guards.Any,
 		autoguard.guards.Null
-	)),
+	),
 	"explicit": autoguard.guards.Boolean,
 	"upc": autoguard.guards.String,
 	"popularity": autoguard.guards.Number,
 	"audioQuality": autoguard.guards.Reference.of(() => AudioQualityType),
 	"audioModes": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => AudioModeType)),
 	"artists": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => SearchResponseArtistRelation))
-}, {});
+}, {
+	"artist": autoguard.guards.Reference.of(() => SearchResponseArtistRelation)
+});
 
 export type SearchResponseAlbum = autoguard.guards.Object<{
 	"id": autoguard.guards.Number,
@@ -156,69 +187,72 @@ export type SearchResponseAlbum = autoguard.guards.Object<{
 	"releaseDate": autoguard.guards.String,
 	"copyright": autoguard.guards.String,
 	"type": autoguard.guards.Reference<AlbumType>,
-	"version": autoguard.guards.Group<autoguard.guards.Union<[
+	"version": autoguard.guards.Union<[
 		autoguard.guards.Any,
 		autoguard.guards.Null
-	]>>,
+	]>,
 	"url": autoguard.guards.String,
 	"cover": autoguard.guards.String,
-	"videoCover": autoguard.guards.Group<autoguard.guards.Union<[
+	"vibrantColor": autoguard.guards.String,
+	"videoCover": autoguard.guards.Union<[
 		autoguard.guards.Any,
 		autoguard.guards.Null
-	]>>,
+	]>,
 	"explicit": autoguard.guards.Boolean,
 	"upc": autoguard.guards.String,
 	"popularity": autoguard.guards.Number,
 	"audioQuality": autoguard.guards.Reference<AudioQualityType>,
 	"audioModes": autoguard.guards.Array<autoguard.guards.Reference<AudioModeType>>,
 	"artists": autoguard.guards.Array<autoguard.guards.Reference<SearchResponseArtistRelation>>
-}, {}>;
+}, {
+	"artist": autoguard.guards.Reference<SearchResponseArtistRelation>
+}>;
 
-export const PlaylistType: autoguard.serialization.MessageGuard<PlaylistType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const PlaylistType: autoguard.serialization.MessageGuard<PlaylistType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("ARTIST"),
 	autoguard.guards.StringLiteral.of("EDITORIAL"),
 	autoguard.guards.String
-));
+);
 
-export type PlaylistType = autoguard.guards.Group<autoguard.guards.Union<[
+export type PlaylistType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"ARTIST">,
 	autoguard.guards.StringLiteral<"EDITORIAL">,
 	autoguard.guards.String
-]>>;
+]>;
 
 export const PlaylistCreator: autoguard.serialization.MessageGuard<PlaylistCreator> = autoguard.guards.Object.of({
 	"id": autoguard.guards.Number,
 	"name": autoguard.guards.String,
-	"artistTypes": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"artistTypes": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	)),
-	"url": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	),
+	"url": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	)),
-	"picture": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	),
+	"picture": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	)),
+	),
 	"popularity": autoguard.guards.Number
 }, {});
 
 export type PlaylistCreator = autoguard.guards.Object<{
 	"id": autoguard.guards.Number,
 	"name": autoguard.guards.String,
-	"artistTypes": autoguard.guards.Group<autoguard.guards.Union<[
+	"artistTypes": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>,
-	"url": autoguard.guards.Group<autoguard.guards.Union<[
+	]>,
+	"url": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>,
-	"picture": autoguard.guards.Group<autoguard.guards.Union<[
+	]>,
+	"picture": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>,
+	]>,
 	"popularity": autoguard.guards.Number
 }, {}>;
 
@@ -242,10 +276,10 @@ export const SearchResponsePlaylist: autoguard.serialization.MessageGuard<Search
 	"popularity": autoguard.guards.Number,
 	"squareImage": autoguard.guards.String,
 	"promotedArtists": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => SearchResponseArtistRelation)),
-	"lastItemAddedAt": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"lastItemAddedAt": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	))
+	)
 }, {});
 
 export type SearchResponsePlaylist = autoguard.guards.Object<{
@@ -268,10 +302,10 @@ export type SearchResponsePlaylist = autoguard.guards.Object<{
 	"popularity": autoguard.guards.Number,
 	"squareImage": autoguard.guards.String,
 	"promotedArtists": autoguard.guards.Array<autoguard.guards.Reference<SearchResponseArtistRelation>>,
-	"lastItemAddedAt": autoguard.guards.Group<autoguard.guards.Union<[
+	"lastItemAddedAt": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>
+	]>
 }, {}>;
 
 export const SearchResponseTrack: autoguard.serialization.MessageGuard<SearchResponseTrack> = autoguard.guards.Object.of({
@@ -286,10 +320,10 @@ export const SearchResponseTrack: autoguard.serialization.MessageGuard<SearchRes
 	"premiumStreamingOnly": autoguard.guards.Boolean,
 	"trackNumber": autoguard.guards.Number,
 	"volumeNumber": autoguard.guards.Number,
-	"version": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"version": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	)),
+	),
 	"popularity": autoguard.guards.Number,
 	"copyright": autoguard.guards.String,
 	"url": autoguard.guards.String,
@@ -314,10 +348,10 @@ export type SearchResponseTrack = autoguard.guards.Object<{
 	"premiumStreamingOnly": autoguard.guards.Boolean,
 	"trackNumber": autoguard.guards.Number,
 	"volumeNumber": autoguard.guards.Number,
-	"version": autoguard.guards.Group<autoguard.guards.Union<[
+	"version": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>,
+	]>,
 	"popularity": autoguard.guards.Number,
 	"copyright": autoguard.guards.String,
 	"url": autoguard.guards.String,
@@ -330,15 +364,15 @@ export type SearchResponseTrack = autoguard.guards.Object<{
 	"album": autoguard.guards.Reference<AlbumRelation>
 }, {}>;
 
-export const SearchResponseVideoQualityType: autoguard.serialization.MessageGuard<SearchResponseVideoQualityType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const SearchResponseVideoQualityType: autoguard.serialization.MessageGuard<SearchResponseVideoQualityType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("MP4_1080P"),
 	autoguard.guards.String
-));
+);
 
-export type SearchResponseVideoQualityType = autoguard.guards.Group<autoguard.guards.Union<[
+export type SearchResponseVideoQualityType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"MP4_1080P">,
 	autoguard.guards.String
-]>>;
+]>;
 
 export const SearchResponseVideo: autoguard.serialization.MessageGuard<SearchResponseVideo> = autoguard.guards.Object.of({
 	"id": autoguard.guards.Number,
@@ -346,10 +380,10 @@ export const SearchResponseVideo: autoguard.serialization.MessageGuard<SearchRes
 	"volumeNumber": autoguard.guards.Number,
 	"trackNumber": autoguard.guards.Number,
 	"releaseDate": autoguard.guards.String,
-	"imagePath": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"imagePath": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	)),
+	),
 	"imageId": autoguard.guards.String,
 	"duration": autoguard.guards.Number,
 	"quality": autoguard.guards.Reference.of(() => SearchResponseVideoQualityType),
@@ -359,16 +393,16 @@ export const SearchResponseVideo: autoguard.serialization.MessageGuard<SearchRes
 	"explicit": autoguard.guards.Boolean,
 	"popularity": autoguard.guards.Number,
 	"type": autoguard.guards.String,
-	"adsUrl": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"adsUrl": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	)),
+	),
 	"adsPrePaywallOnly": autoguard.guards.Boolean,
 	"artists": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => SearchResponseArtistRelation)),
-	"album": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"album": autoguard.guards.Union.of(
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	))
+	)
 }, {});
 
 export type SearchResponseVideo = autoguard.guards.Object<{
@@ -377,10 +411,10 @@ export type SearchResponseVideo = autoguard.guards.Object<{
 	"volumeNumber": autoguard.guards.Number,
 	"trackNumber": autoguard.guards.Number,
 	"releaseDate": autoguard.guards.String,
-	"imagePath": autoguard.guards.Group<autoguard.guards.Union<[
+	"imagePath": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>,
+	]>,
 	"imageId": autoguard.guards.String,
 	"duration": autoguard.guards.Number,
 	"quality": autoguard.guards.Reference<SearchResponseVideoQualityType>,
@@ -390,33 +424,33 @@ export type SearchResponseVideo = autoguard.guards.Object<{
 	"explicit": autoguard.guards.Boolean,
 	"popularity": autoguard.guards.Number,
 	"type": autoguard.guards.String,
-	"adsUrl": autoguard.guards.Group<autoguard.guards.Union<[
+	"adsUrl": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>,
+	]>,
 	"adsPrePaywallOnly": autoguard.guards.Boolean,
 	"artists": autoguard.guards.Array<autoguard.guards.Reference<SearchResponseArtistRelation>>,
-	"album": autoguard.guards.Group<autoguard.guards.Union<[
+	"album": autoguard.guards.Union<[
 		autoguard.guards.Null,
 		autoguard.guards.Any
-	]>>
+	]>
 }, {}>;
 
-export const EntityType: autoguard.serialization.MessageGuard<EntityType> = autoguard.guards.Group.of(autoguard.guards.Union.of(
+export const EntityType: autoguard.serialization.MessageGuard<EntityType> = autoguard.guards.Union.of(
 	autoguard.guards.StringLiteral.of("ARTISTS"),
 	autoguard.guards.StringLiteral.of("ALBUMS"),
 	autoguard.guards.StringLiteral.of("PLAYLISTS"),
 	autoguard.guards.StringLiteral.of("TRACKS"),
 	autoguard.guards.StringLiteral.of("VIDEOS")
-));
+);
 
-export type EntityType = autoguard.guards.Group<autoguard.guards.Union<[
+export type EntityType = autoguard.guards.Union<[
 	autoguard.guards.StringLiteral<"ARTISTS">,
 	autoguard.guards.StringLiteral<"ALBUMS">,
 	autoguard.guards.StringLiteral<"PLAYLISTS">,
 	autoguard.guards.StringLiteral<"TRACKS">,
 	autoguard.guards.StringLiteral<"VIDEOS">
-]>>;
+]>;
 
 export const SearchResponseTopHitArtist: autoguard.serialization.MessageGuard<SearchResponseTopHitArtist> = autoguard.guards.Object.of({
 	"value": autoguard.guards.Reference.of(() => SearchResponseArtist),
@@ -499,14 +533,14 @@ export const SearchResponse: autoguard.serialization.MessageGuard<SearchResponse
 		"totalNumberOfItems": autoguard.guards.Number,
 		"items": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => SearchResponseVideo))
 	}, {}),
-	"topHit": autoguard.guards.Group.of(autoguard.guards.Union.of(
+	"topHit": autoguard.guards.Union.of(
 		autoguard.guards.Reference.of(() => SearchResponseTopHitArtist),
 		autoguard.guards.Reference.of(() => SearchResponseTopHitAlbum),
 		autoguard.guards.Reference.of(() => SearchResponseTopHitPlaylist),
 		autoguard.guards.Reference.of(() => SearchResponseTopHitTrack),
 		autoguard.guards.Reference.of(() => SearchResponseTopHitVideo),
 		autoguard.guards.Null
-	))
+	)
 }, {});
 
 export type SearchResponse = autoguard.guards.Object<{
@@ -540,19 +574,20 @@ export type SearchResponse = autoguard.guards.Object<{
 		"totalNumberOfItems": autoguard.guards.Number,
 		"items": autoguard.guards.Array<autoguard.guards.Reference<SearchResponseVideo>>
 	}, {}>,
-	"topHit": autoguard.guards.Group<autoguard.guards.Union<[
+	"topHit": autoguard.guards.Union<[
 		autoguard.guards.Reference<SearchResponseTopHitArtist>,
 		autoguard.guards.Reference<SearchResponseTopHitAlbum>,
 		autoguard.guards.Reference<SearchResponseTopHitPlaylist>,
 		autoguard.guards.Reference<SearchResponseTopHitTrack>,
 		autoguard.guards.Reference<SearchResponseTopHitVideo>,
 		autoguard.guards.Null
-	]>>
+	]>
 }, {}>;
 
 export namespace Autoguard {
 	export const Guards = {
 		"ArtistType": autoguard.guards.Reference.of(() => ArtistType),
+		"ArtistRole": autoguard.guards.Reference.of(() => ArtistRole),
 		"SearchResponseArtist": autoguard.guards.Reference.of(() => SearchResponseArtist),
 		"AlbumType": autoguard.guards.Reference.of(() => AlbumType),
 		"AudioQualityType": autoguard.guards.Reference.of(() => AudioQualityType),
@@ -578,11 +613,96 @@ export namespace Autoguard {
 
 	export type Guards = { [A in keyof typeof Guards]: ReturnType<typeof Guards[A]["as"]>; };
 
-	export const Requests = {};
+	export const Requests = {
+		"search": autoguard.guards.Object.of({
+			"options": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({
+					"countryCode": autoguard.guards.String,
+					"query": autoguard.guards.String
+				}, {
+					"offset": autoguard.guards.Number,
+					"limit": autoguard.guards.Number,
+					"types": autoguard.guards.Array.of(autoguard.guards.String),
+					"includeContributors": autoguard.guards.Boolean
+				}),
+				autoguard.api.Options
+			),
+			"headers": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({
+					"x-tidal-token": autoguard.guards.String
+				}, {}),
+				autoguard.api.Headers
+			)
+		}, {
+			"payload": autoguard.api.Binary
+		}),
+		"getArtist": autoguard.guards.Object.of({
+			"options": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({
+					"id": autoguard.guards.Number,
+					"countryCode": autoguard.guards.String
+				}, {}),
+				autoguard.api.Options
+			),
+			"headers": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({
+					"x-tidal-token": autoguard.guards.String
+				}, {}),
+				autoguard.api.Headers
+			)
+		}, {
+			"payload": autoguard.api.Binary
+		}),
+		"getAlbum": autoguard.guards.Object.of({
+			"options": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({
+					"id": autoguard.guards.Number,
+					"countryCode": autoguard.guards.String
+				}, {}),
+				autoguard.api.Options
+			),
+			"headers": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({
+					"x-tidal-token": autoguard.guards.String
+				}, {}),
+				autoguard.api.Headers
+			)
+		}, {
+			"payload": autoguard.api.Binary
+		})
+	};
 
 	export type Requests = { [A in keyof typeof Requests]: ReturnType<typeof Requests[A]["as"]>; };
 
-	export const Responses = {};
+	export const Responses = {
+		"search": autoguard.guards.Object.of({
+			"payload": autoguard.guards.Reference.of(() => SearchResponse)
+		}, {
+			"status": autoguard.guards.Number,
+			"headers": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({}, {}),
+				autoguard.api.Headers
+			)
+		}),
+		"getArtist": autoguard.guards.Object.of({
+			"payload": autoguard.guards.Reference.of(() => SearchResponseArtist)
+		}, {
+			"status": autoguard.guards.Number,
+			"headers": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({}, {}),
+				autoguard.api.Headers
+			)
+		}),
+		"getAlbum": autoguard.guards.Object.of({
+			"payload": autoguard.guards.Reference.of(() => SearchResponseAlbum)
+		}, {
+			"status": autoguard.guards.Number,
+			"headers": autoguard.guards.Intersection.of(
+				autoguard.guards.Object.of({}, {}),
+				autoguard.api.Headers
+			)
+		})
+	};
 
 	export type Responses = { [A in keyof typeof Responses]: ReturnType<typeof Responses[A]["as"]>; };
 };

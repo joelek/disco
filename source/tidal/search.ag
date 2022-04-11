@@ -1,33 +1,41 @@
-guard ArtistType: ("ARTIST" | "CONTRIBUTOR" | string);
+guard ArtistType: "ARTIST" | "CONTRIBUTOR" | string;
+
+guard ArtistRole: {
+	"categoryId": number,
+	"category": string
+};
 
 guard SearchResponseArtist: {
 	"id": number,
 	"name": string,
 	"artistTypes": ArtistType[],
 	"url": string,
-	"picture": string,
-	"popularity": number
+	"picture": string | null,
+	"popularity": number,
+	"artistRoles": ArtistRole[],
+	"mixes": { string }
 };
 
-guard AlbumType: ("ALBUM" | string);
+guard AlbumType: "ALBUM" | string;
 
-guard AudioQualityType: ("LOSSLESS" | "HI_RES" | string);
+guard AudioQualityType: "LOSSLESS" | "HI_RES" | string;
 
-guard AudioModeType: ("STEREO" | string);
+guard AudioModeType: "STEREO" | string;
 
-guard ArtistRelationType: ("MAIN" | "FEATURED" | string);
+guard ArtistRelationType: "MAIN" | "FEATURED" | string;
 
 guard SearchResponseArtistRelation: {
 	"id": number,
 	"name": string,
-	"type": ArtistRelationType
+	"type": ArtistRelationType,
+	"picture": string | null
 };
 
 guard AlbumRelation: {
 	"id": number,
 	"title": string,
 	"cover": string,
-	"videoCover": (null | any),
+	"videoCover": null | any,
 	"releaseDate": string
 };
 
@@ -45,26 +53,28 @@ guard SearchResponseAlbum: {
 	"releaseDate": string,
 	"copyright": string,
 	"type": AlbumType,
-	"version": (any | null),
+	"version": any | null,
 	"url": string,
 	"cover": string,
-	"videoCover": (any | null),
+	"vibrantColor": string,
+	"videoCover": any | null,
 	"explicit": boolean,
 	"upc": string,
 	"popularity": number,
 	"audioQuality": AudioQualityType,
 	"audioModes": AudioModeType[],
+	"artist"?: SearchResponseArtistRelation,
 	"artists": SearchResponseArtistRelation[]
 };
 
-guard PlaylistType: ("ARTIST" | "EDITORIAL" | string);
+guard PlaylistType: "ARTIST" | "EDITORIAL" | string;
 
 guard PlaylistCreator: {
 	"id": number,
 	"name": string,
-	"artistTypes": (null | any),
-	"url": (null | any),
-	"picture": (null | any),
+	"artistTypes": null | any,
+	"url": null | any,
+	"picture": null | any,
 	"popularity": number
 };
 
@@ -85,7 +95,7 @@ guard SearchResponsePlaylist: {
 	"popularity": number,
 	"squareImage": string,
 	"promotedArtists": SearchResponseArtistRelation[],
-	"lastItemAddedAt": (null | any)
+	"lastItemAddedAt": null | any
 };
 
 guard SearchResponseTrack: {
@@ -100,7 +110,7 @@ guard SearchResponseTrack: {
 	"premiumStreamingOnly": boolean,
 	"trackNumber": number,
 	"volumeNumber": number,
-	"version": (null | any),
+	"version": null | any,
 	"popularity": number,
 	"copyright": string,
 	"url": string,
@@ -113,7 +123,7 @@ guard SearchResponseTrack: {
 	"album": AlbumRelation
 };
 
-guard SearchResponseVideoQualityType: ("MP4_1080P" | string);
+guard SearchResponseVideoQualityType: "MP4_1080P" | string;
 
 guard SearchResponseVideo: {
 	"id": number,
@@ -121,7 +131,7 @@ guard SearchResponseVideo: {
 	"volumeNumber": number,
 	"trackNumber": number,
 	"releaseDate": string,
-	"imagePath": (null | any),
+	"imagePath": null | any,
 	"imageId": string,
 	"duration": number,
 	"quality": SearchResponseVideoQualityType,
@@ -131,13 +141,13 @@ guard SearchResponseVideo: {
 	"explicit": boolean,
 	"popularity": number,
 	"type": string,
-	"adsUrl": (null | any),
+	"adsUrl": null | any,
 	"adsPrePaywallOnly": boolean,
 	"artists": SearchResponseArtistRelation[],
-	"album": (null | any)
+	"album": null | any
 };
 
-guard EntityType: ("ARTISTS" | "ALBUMS" | "PLAYLISTS" | "TRACKS" | "VIDEOS");
+guard EntityType: "ARTISTS" | "ALBUMS" | "PLAYLISTS" | "TRACKS" | "VIDEOS";
 
 guard SearchResponseTopHitArtist: {
 	"value": SearchResponseArtist,
@@ -195,5 +205,17 @@ guard SearchResponse: {
 		"totalNumberOfItems": number,
 		"items": SearchResponseVideo[]
 	},
-	"topHit": (SearchResponseTopHitArtist | SearchResponseTopHitAlbum | SearchResponseTopHitPlaylist | SearchResponseTopHitTrack | SearchResponseTopHitVideo | null)
+	"topHit": SearchResponseTopHitArtist | SearchResponseTopHitAlbum | SearchResponseTopHitPlaylist | SearchResponseTopHitTrack | SearchResponseTopHitVideo | null
 };
+
+route search(): GET:/search ? <{ countryCode: plain, query: plain, offset?: number, limit?: number, types*: plain, includeContributors?: boolean }>
+	<= <{ "x-tidal-token": plain }>
+	=> SearchResponse;
+
+route getArtist(): GET:/artists/<id:number> ? <{ countryCode: plain }>
+	<= <{ "x-tidal-token": plain }>
+	=> SearchResponseArtist;
+
+route getAlbum(): GET:/albums/<id:number> ? <{ countryCode: plain }>
+	<= <{ "x-tidal-token": plain }>
+	=> SearchResponseAlbum;

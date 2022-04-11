@@ -160,11 +160,10 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 							...disc.artists,
 						].join(" ");
 						try {
-							const results = await tidal.getSearchResults(query, ["ALBUMS"]);
-							const album = results.albums.items[0];
+							const results = await tidal.search(query, ["ALBUMS"]);
+							const album = results.albums[0];
 							if (album != null) {
-								const url = await tidal.getCoverArtURL(album.cover);
-								disc.cover_art_url = url;
+								disc.cover_art_url = album.cover;
 							}
 						} catch (error) {}
 						return save_disc_to_db(id, disc, () => {
