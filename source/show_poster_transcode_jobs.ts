@@ -4,7 +4,7 @@ import * as discdb from "./discdb";
 import * as job from "./job";
 import * as utils from "./utils";
 
-async function getTargetPaths(media: discdb.Media, track: discdb.EpisodeContent): Promise<Array<string>> {
+function getShowTargetPath(media: discdb.Media, track: discdb.EpisodeContent): Array<string> {
 	const show = utils.pathify(track.show);
 	return [
 		".",
@@ -13,6 +13,25 @@ async function getTargetPaths(media: discdb.Media, track: discdb.EpisodeContent)
 		"video",
 		"shows",
 		`${show}`,
+		"00-artwork",
+	];
+}
+
+function getEpisodeTargetPath(media: discdb.Media, track: discdb.EpisodeContent): Array<string> {
+	const show = utils.pathify(track.show);
+	const title = utils.pathify(track.title);
+	const season = ("00" + track.season).slice(-2);
+	const episode = ("00" + track.episode).slice(-2);
+	const suffix = utils.pathify(media.type);
+	return [
+		".",
+		"private",
+		"media",
+		"video",
+		"shows",
+		`${show}`,
+		`s${season}`,
+		`${show}-s${season}e${episode}-${title}-${suffix}`,
 		"00-artwork",
 	];
 }
@@ -70,21 +89,35 @@ async function createJobListRecursively(database: discdb.MediaDatabase, director
 						if (track.imdb_show !== imdb_show) {
 							continue;
 						}
-						async function perform(): Promise<void> {
-							const paths = await getTargetPaths(media, track);
-							const path = paths.join("/") + ".jpg";
-							if (!libfs.existsSync(path)) {
-								console.log(path);
-								const buffer = libfs.readFileSync([
-									...directories,
-									basename
-								].join("/"));
-								libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
-								await writeBufferToDisk(buffer, path);
-							}
-						}
 						jobs.push({
-							perform
+							perform: async () => {
+								const paths = getShowTargetPath(media, track);
+								const path = paths.join("/") + ".jpg";
+								if (!libfs.existsSync(path)) {
+									console.log(path);
+									const buffer = libfs.readFileSync([
+										...directories,
+										basename
+									].join("/"));
+									libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
+									await writeBufferToDisk(buffer, path);
+								}
+							}
+						});
+						jobs.push({
+							perform: async () => {
+								const paths = getEpisodeTargetPath(media, track);
+								const path = paths.join("/") + ".jpg";
+								if (!libfs.existsSync(path)) {
+									console.log(path);
+									const buffer = libfs.readFileSync([
+										...directories,
+										basename
+									].join("/"));
+									libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
+									await writeBufferToDisk(buffer, path);
+								}
+							}
 						});
 					}
 				}
