@@ -164,6 +164,7 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 							const album = results.albums[0];
 							if (album != null) {
 								disc.cover_art_url = album.cover;
+								disc.tidal = album.id;
 							}
 						} catch (error) {}
 						return save_disc_to_db(id, disc, () => {

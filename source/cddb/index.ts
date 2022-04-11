@@ -37,7 +37,8 @@ export const Disc: autoguard.serialization.MessageGuard<Disc> = autoguard.guards
 }, {
 	"musicbrainz": autoguard.guards.String,
 	"volume": autoguard.guards.Reference.of(() => Volume),
-	"cover_art_url": autoguard.guards.String
+	"cover_art_url": autoguard.guards.String,
+	"tidal": autoguard.guards.Number
 });
 
 export type Disc = autoguard.guards.Object<{
@@ -49,7 +50,8 @@ export type Disc = autoguard.guards.Object<{
 }, {
 	"musicbrainz": autoguard.guards.String,
 	"volume": autoguard.guards.Reference<Volume>,
-	"cover_art_url": autoguard.guards.String
+	"cover_art_url": autoguard.guards.String,
+	"tidal": autoguard.guards.Number
 }>;
 
 export const Database: autoguard.serialization.MessageGuard<Database> = autoguard.guards.Record.of(autoguard.guards.Reference.of(() => Disc));

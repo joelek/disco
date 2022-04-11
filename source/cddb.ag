@@ -19,7 +19,8 @@ guard Disc: {
 	"musicbrainz"?: string,
 	"volume"?: Volume,
 	"cover_art_url"?: string,
-	"tracks": Track[]
+	"tracks": Track[],
+	"tidal"?: number
 };
 
 guard Database: { Disc };
