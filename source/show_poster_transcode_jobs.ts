@@ -6,10 +6,6 @@ import * as utils from "./utils";
 
 async function getTargetPaths(media: discdb.Media, track: discdb.EpisodeContent): Promise<Array<string>> {
 	const show = utils.pathify(track.show);
-	const title = utils.pathify(track.title);
-	const season = ("00" + track.season).slice(-2);
-	const episode = ("00" + track.episode).slice(-2);
-	const suffix = utils.pathify(media.type);
 	return [
 		".",
 		"private",
@@ -17,8 +13,6 @@ async function getTargetPaths(media: discdb.Media, track: discdb.EpisodeContent)
 		"video",
 		"shows",
 		`${show}`,
-		`s${season}`,
-		`${show}-s${season}e${episode}-${title}-${suffix}`,
 		"00-artwork",
 	];
 }
