@@ -46,6 +46,10 @@ function loadDatabase<A>(path: string, guard: { (subject: any): A }): A {
 	return guard(JSON.parse(libfs.readFileSync(path, "utf8")));
 }
 
+function saveDatabase<A>(path: string, guard: { (subject: any): A }, db: A): void {
+	return libfs.writeFileSync(path, JSON.stringify(guard(db), null, "\t"));
+}
+
 async function request(url: string): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
 		const client_request = libhttps.request(url);
@@ -73,5 +77,6 @@ export {
 	foreach,
 	getBasename,
 	loadDatabase,
+	saveDatabase,
 	request
 };
