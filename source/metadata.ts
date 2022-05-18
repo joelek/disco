@@ -1055,7 +1055,8 @@ export type Title = {
 	genres: string[],
 	stars: {
 		id: string,
-		name: string
+		name: string,
+		image_url?: string
 	}[]
 };
 
@@ -1195,18 +1196,26 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		for (let element of elements) {
 			genres.push(element.getTrimmedText().normalize("NFC"));
 		}
-		let stars = new Array<{ id: string, name: string }>();
-		elements = document.querySelectorAll(`[data-testid="title-cast-item__actor"][href]`);
+		let stars = new Array<{ id: string, name: string, image_url?: string }>();
+		elements = document.querySelectorAll(`[data-testid="title-cast-item"]`);
 		for (let element of elements) {
-			let href = element.getAttribute("href");
-			if (href != null) {
+			let img = element.querySelector(`[data-testid="title-cast-item__avatar"] img[src]`);
+			let link = element.querySelector(`[data-testid="title-cast-item__actor"][href]`);
+			if (link != null) {
+				let href = link.getAttribute("href") as string;
 				let parts = /^[/]name[/](nm[0-9]+)/.exec(href);
 				if (parts != null) {
 					let id = parts[1];
-					let name = element.getTrimmedText().normalize("NFC");
+					let name = link.getTrimmedText().normalize("NFC");
+					let image_url: string | undefined;
+					if (img != null) {
+						let src = img.getAttribute("src") as string;
+						image_url = getImageURL(src);
+					}
 					stars.push({
 						id,
-						name
+						name,
+						image_url
 					});
 				}
 			}
@@ -1222,7 +1231,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				description,
 				image_url,
 				genres,
-				stars: stars.slice(0, 3)
+				stars
 			};
 			ttcache[id] = titleobj;
 			cb(titleobj);
