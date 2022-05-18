@@ -189,9 +189,6 @@ function parseNodes(tokenizer: Tokenizer): Array<XMLNode> {
 		}
 		while (is.present(peek())) {
 			let parent = getParent();
-			try {
-				parent.children.push(XMLText.parse(tokenizer));
-			} catch (error) {}
 			let token = read();
 			if (token.type === "SCRIPT_NODE") {
 				let tag = new XMLName(undefined, "script");
@@ -205,7 +202,6 @@ function parseNodes(tokenizer: Tokenizer): Array<XMLNode> {
 				closeTag(tag);
 				continue;
 			}
-			expect(token, ["<", "</", "COMMENT"]);
 			if (token.type === "<") {
 				let tag = XMLName.parse(tokenizer);
 				let attributes = new Array<XMLAttribute>();
@@ -228,6 +224,8 @@ function parseNodes(tokenizer: Tokenizer): Array<XMLNode> {
 				let tag = XMLName.parse(tokenizer);
 				token = expect(read(), [">"]);
 				closeTag(tag);
+			} else {
+				parent.children.push(new XMLText(token.value));
 			}
 		}
 		for (let i = open.length - 1; i >= 0; i--) {
