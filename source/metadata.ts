@@ -1120,20 +1120,30 @@ export function getTitleLegacy(id: string, cb: Callback<Title | null>): void {
 				genres.push(link.getTrimmedText().normalize("NFC"));
 			}
 		}
-		let stars = new Array<{ id: string, name: string }>();
-		let links2 = document.querySelectorAll(".credit_summary_item a[href]");
-		for (let link of links2) {
-			let href = link.getAttribute("href");
-			if (href != null) {
-				"/name/nm0705356/?ref_=tt_ov_st_sm"
-				let parts = /^[/]name[/](nm[0-9]+)[/][?]ref_[=](.+)$/.exec(href);
-				if (parts != null && parts[2] === "tt_ov_st_sm") {
+		let stars = new Array<{ id: string, name: string, image_url?: string }>();
+		let cast_list = document.querySelector(".cast_list");
+		if (cast_list != null) {
+			let elements = cast_list.querySelectorAll(".primary_photo a[href]");
+			for (let element of elements) {
+				let href = element.getAttribute("href") as string;
+				let parts = /^[/]name[/](nm[0-9]+)/.exec(href);
+				if (parts != null) {
 					let id = parts[1];
-					let name = link.getTrimmedText().normalize("NFC");
-					stars.push({
-						id,
-						name
-					});
+					let img = element.querySelector("img[alt]");
+					if (img != null) {
+						let alt = img.getAttribute("alt") as string;
+						let name = alt.normalize("NFC");
+						let image_url: string | undefined;
+						let loadlate = img.getAttribute("loadlate");
+						if (loadlate != null) {
+							image_url = getImageURL(loadlate);
+						}
+						stars.push({
+							id,
+							name,
+							image_url
+						});
+					}
 				}
 			}
 		}
