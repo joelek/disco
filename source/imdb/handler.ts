@@ -45,6 +45,14 @@ export async function getMovie(id: string): Promise<Movie> {
 	if (title.type !== "movie") {
 		throw "Expected a movie!";
 	}
+	for (let star of title.stars) {
+		let actor = db.actors.find((actor) => actor.id === star.id);
+		if (actor == null) {
+			db.actors.push({
+				...star
+			});
+		}
+	}
 	db.movies.push({
 		id: title.id,
 		title: title.title,
@@ -52,7 +60,8 @@ export async function getMovie(id: string): Promise<Movie> {
 		summary: title.description,
 		poster_url: title.image_url,
 		genres: title.genres,
-		actors: title.stars.map((star) => star.name)
+		actors: title.stars.map((star) => star.name),
+		actor_ids: title.stars.map((star) => star.id)
 	});
 	$fs.writeFileSync(path.join("/"), JSON.stringify(db, null, "\t"));
 	return getMovieFromDatabase(id);
@@ -88,13 +97,22 @@ export async function getShow(id: string): Promise<Show> {
 	if (title.type !== "show") {
 		throw "Expected a show!";
 	}
+	for (let star of title.stars) {
+		let actor = db.actors.find((actor) => actor.id === star.id);
+		if (actor == null) {
+			db.actors.push({
+				...star
+			});
+		}
+	}
 	db.shows.push({
 		id: title.id,
 		title: title.title,
 		summary: title.description,
 		poster_url: title.image_url,
 		genres: title.genres,
-		actors: title.stars.map((star) => star.name)
+		actors: title.stars.map((star) => star.name),
+		actor_ids: title.stars.map((star) => star.id)
 	});
 	for (let i = 1; true; i++) {
 		try {
