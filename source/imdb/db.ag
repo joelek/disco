@@ -5,7 +5,8 @@ guard Movie: {
 	"summary": string,
 	"poster_url": string,
 	"genres": string[],
-	"actors": string[]
+	"actors": string[],
+	"actor_ids"?: string[]
 };
 
 guard Show: {
@@ -14,7 +15,8 @@ guard Show: {
 	"summary": string,
 	"poster_url": string,
 	"genres": string[],
-	"actors": string[]
+	"actors": string[],
+	"actor_ids"?: string[]
 };
 
 guard Episode: {
@@ -27,8 +29,15 @@ guard Episode: {
 	"episode": number
 };
 
+guard Actor: {
+	"id": string,
+	"name": string,
+	"image_url"?: string
+};
+
 guard Database: {
 	"movies": Movie[],
 	"shows": Show[],
-	"episodes": Episode[]
+	"episodes": Episode[],
+	"actors": Actor[]
 };
