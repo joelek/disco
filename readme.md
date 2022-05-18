@@ -5,4 +5,3 @@
 * Improve xml parser to handle `<p><a></a>?</p>`.
 * Improve xml parser to handle `<some'thing>`.
 * Improve xml parser to handle `alt="""`.
-* Improve xml parser to handle entity encodings (join all adjacent xmltext nodes).
