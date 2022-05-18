@@ -43,12 +43,17 @@ export async function getMovieFromSource(id: string): Promise<Movie> {
 		throw "Expected a movie!";
 	}
 	for (let star of title.stars) {
-		let actor = db.actors.find((actor) => actor.id === star.id);
-		if (actor == null) {
-			db.actors.push({
-				...star
-			});
+		let index = db.actors.findIndex((actor) => actor.id === star.id);
+		if (index >= 0) {
+			db.actors.splice(index, 1);
 		}
+		db.actors.push({
+			...star
+		});
+	}
+	let index = db.movies.findIndex((movie) => movie.id === id);
+	if (index >= 0) {
+		db.movies.splice(index, 1);
 	}
 	db.movies.push({
 		id: title.id,
@@ -99,12 +104,17 @@ export async function getShowFromSource(id: string): Promise<Show> {
 		throw "Expected a show!";
 	}
 	for (let star of title.stars) {
-		let actor = db.actors.find((actor) => actor.id === star.id);
-		if (actor == null) {
-			db.actors.push({
-				...star
-			});
+		let index = db.actors.findIndex((actor) => actor.id === star.id);
+		if (index >= 0) {
+			db.actors.splice(index, 1);
 		}
+		db.actors.push({
+			...star
+		});
+	}
+	let index = db.shows.findIndex((show) => show.id === id);
+	if (index >= 0) {
+		db.shows.splice(index, 1);
 	}
 	db.shows.push({
 		id: title.id,
@@ -127,6 +137,10 @@ export async function getShowFromSource(id: string): Promise<Show> {
 			});
 			for (let episode of season.episodes) {
 				if (episode.air_date_timestamp < Date.now()) {
+					let index = db.episodes.findIndex((dbepisode) => dbepisode.id === episode.id);
+					if (index >= 0) {
+						db.episodes.splice(index, 1);
+					}
 					db.episodes.push({
 						id: episode.id,
 						title: episode.title,
