@@ -30,10 +30,7 @@ export async function getMovieFromDatabase(id: string): Promise<Movie> {
 	};
 };
 
-export async function getMovie(id: string): Promise<Movie> {
-	try {
-		return await getMovieFromDatabase(id);
-	} catch (error) {}
+export async function getMovieFromSource(id: string): Promise<Movie> {
 	let title = await new Promise<$metadata.Title>((resolve, reject) => {
 		$metadata.getTitle(id, async (title) => {
 			if (title == null) {
@@ -67,6 +64,13 @@ export async function getMovie(id: string): Promise<Movie> {
 	return getMovieFromDatabase(id);
 };
 
+export async function getMovie(id: string): Promise<Movie> {
+	try {
+		return await getMovieFromDatabase(id);
+	} catch (error) {}
+	return getMovieFromSource(id);
+};
+
 /* getMovie("tt0201265").then(console.log); */
 
 export async function getShowFromDatabase(id: string): Promise<Show> {
@@ -82,10 +86,7 @@ export async function getShowFromDatabase(id: string): Promise<Show> {
 	};
 };
 
-export async function getShow(id: string): Promise<Show> {
-	try {
-		return await getShowFromDatabase(id);
-	} catch (error) {}
+export async function getShowFromSource(id: string): Promise<Show> {
 	let title = await new Promise<$metadata.Title>((resolve, reject) => {
 		$metadata.getTitle(id, async (title) => {
 			if (title == null) {
@@ -143,4 +144,11 @@ export async function getShow(id: string): Promise<Show> {
 	}
 	$fs.writeFileSync(path.join("/"), JSON.stringify(db, null, "\t"));
 	return getShowFromDatabase(id);
+};
+
+export async function getShow(id: string): Promise<Show> {
+	try {
+		return await getShowFromDatabase(id);
+	} catch (error) {}
+	return getShowFromSource(id);
 };
