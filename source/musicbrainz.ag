@@ -22,7 +22,7 @@ guard Media: {
 
 guard Release: {
 	"id": string,
-	"date": string,
+	"date"?: string,
 	"title": string,
 	"artist-credit": ArtistCredit[],
 	"media": Media[]

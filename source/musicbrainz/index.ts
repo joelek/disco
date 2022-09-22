@@ -48,19 +48,21 @@ export type Media = autoguard.guards.Object<{
 
 export const Release: autoguard.serialization.MessageGuard<Release> = autoguard.guards.Object.of({
 	"id": autoguard.guards.String,
-	"date": autoguard.guards.String,
 	"title": autoguard.guards.String,
 	"artist-credit": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => ArtistCredit)),
 	"media": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => Media))
-}, {});
+}, {
+	"date": autoguard.guards.String
+});
 
 export type Release = autoguard.guards.Object<{
 	"id": autoguard.guards.String,
-	"date": autoguard.guards.String,
 	"title": autoguard.guards.String,
 	"artist-credit": autoguard.guards.Array<autoguard.guards.Reference<ArtistCredit>>,
 	"media": autoguard.guards.Array<autoguard.guards.Reference<Media>>
-}, {}>;
+}, {
+	"date": autoguard.guards.String
+}>;
 
 export const DiscIdLookupResponse: autoguard.serialization.MessageGuard<DiscIdLookupResponse> = autoguard.guards.Object.of({
 	"releases": autoguard.guards.Array.of(autoguard.guards.Reference.of(() => Release))

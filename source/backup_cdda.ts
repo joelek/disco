@@ -519,7 +519,7 @@ function get_disc_metadata_from_mb(options: Arguments, mb_disc_id: string, mb: m
 	let title = release.title.normalize("NFC");
 	let number = media.position;
 	let year = 0;
-	if ((parts = /^([0-9]{4})/.exec(release.date)) !== null) {
+	if ((parts = /^([0-9]{4})/.exec(release.date ?? "")) !== null) {
 		year = Number.parseInt(parts[1]);
 	}
 	let tracks = media.tracks.map((track, index) => {
