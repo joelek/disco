@@ -7,7 +7,7 @@ function extractData(xml: xml.XMLElement): Data {
 	let tag = xml.tag.name;
 	let attributes = xml.attributes
 		.filter((attribute) => !["id", "class", "style"].includes(attribute.key.name))
-		.map((attribute) => [attribute.key.name, attribute.value.replaceAll(/\r\n\t/g, "")] as [string, string]);
+		.map((attribute) => [attribute.key.name, attribute.value.replace(/[\r\n\t]+/g, "")] as [string, string]);
 	let children = xml.children
 		.filter((child): child is xml.XMLElement => child.isElement())
 		.map((element) => extractData(element));
@@ -47,4 +47,6 @@ if (root != null) {
 		factory[key] = extractData(node);
 	}
 }
-console.log(JSON.stringify(factory))
+for (let key of Object.keys(factory).sort()) {
+	console.log(`\t["${key}"]: ${JSON.stringify(factory[key])},`);
+}
