@@ -51,7 +51,7 @@ export abstract class XMLNode {
 		throw `Expected an XMLElement!`;
 	}
 
-	isElement(): boolean {
+	isElement(): this is XMLElement {
 		try {
 			this.asElement();
 			return true;
@@ -63,7 +63,7 @@ export abstract class XMLNode {
 		throw `Expected an XMLText!`;
 	}
 
-	isText(): boolean {
+	isText(): this is XMLText {
 		try {
 			this.asText();
 			return true;
