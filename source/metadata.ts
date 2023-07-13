@@ -928,6 +928,7 @@ function request(url: string, cb: Callback<Buffer>) {
 		if (error) {
 			let delay = last_request_ms + Math.round(rate_limit_avg_ms * (0.5 + Math.random())) - Date.now();
 			delay = delay > 0 ? delay : 0;
+			console.log(`Waiting ${delay} ms...`);
 			setTimeout(() => {
 				last_request_ms = Date.now();
 				console.log("Requesting: " + url);
