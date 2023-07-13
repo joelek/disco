@@ -1093,7 +1093,8 @@ let ttcache: {
 	[key: string]: Title | undefined
 } = {};
 
-export function getTitleLegacy(id: string, cb: Callback<Title | null>): void {
+export function getTitleLegacy2(id: string, cb: Callback<Title | null>): void {
+	console.log(`Getting title with ${id}... (legacy 2)`);
 	let cached = ttcache[id];
 	if (cached) {
 		return cb(cached);
@@ -1183,6 +1184,91 @@ export function getTitleLegacy(id: string, cb: Callback<Title | null>): void {
 }
 
 export function getTitle(id: string, cb: Callback<Title | null>): void {
+	console.log(`Getting title with ${id}...`);
+	let cached = ttcache[id];
+	if (cached) {
+		return cb(cached);
+	}
+	let url = "https://www.imdb.com/title/" + id + "/";
+	getXML(url, async (document) => {
+		let type: TitleType = "movie";
+		let title: string | null = null;
+		let year: number | null = null;
+		let description: string | null = null;
+		let image_url: string | null = null;
+		let element: XMLElementNode | null = null;
+		element = document.querySelector(`[data-testid="hero-subnav-bar-series-episode-guide-link"]`);
+		if (element !== null) {
+			type = "show";
+		}
+		element = document.querySelector(`a[href^="/title/${id}/releaseinfo"]`); // TODO: Improve selector.
+		if (element !== null) {
+			year = Number.parseInt(element.getTrimmedText());
+		}
+		element = document.querySelector(`[data-testid="hero-media__poster"] img[src]`);
+		if (element !== null) {
+			let src = element.getAttribute("src");
+			if (src != null) {
+				image_url = getImageURL(src);
+			}
+		}
+		description = await getTitleSummary(id) ?? null;
+		element = document.querySelector(`[data-testid="hero__pageTitle"]`);
+		if (element !== null) {
+			title = element.getTrimmedText().normalize("NFC");
+		}
+		let genres = new Array<string>();
+		let elements = document.querySelectorAll(`[data-testid="genres"] a[href]`);
+		for (let element of elements) {
+			genres.push(element.getTrimmedText().normalize("NFC"));
+		}
+		let stars = new Array<{ id: string, name: string, image_url?: string }>();
+		elements = document.querySelectorAll(`[data-testid="title-cast-item"]`);
+		for (let element of elements) {
+			let img = element.querySelector(`[data-testid="title-cast-item__avatar"] img[src]`);
+			let link = element.querySelector(`[data-testid="title-cast-item__actor"][href]`);
+			if (link != null) {
+				let href = link.getAttribute("href") as string;
+				let parts = /^[/]name[/](nm[0-9]+)/.exec(href);
+				if (parts != null) {
+					let id = parts[1];
+					let name = link.getTrimmedText().normalize("NFC");
+					let image_url: string | undefined;
+					if (img != null) {
+						let src = img.getAttribute("src") as string;
+						image_url = getImageURL(src);
+					}
+					stars.push({
+						id,
+						name,
+						image_url
+					});
+				}
+			}
+		}
+		if (title !== null && description !== null && image_url !== null) {
+			title = title.normalize("NFC");
+			description = description.normalize("NFC");
+			let titleobj: Title = {
+				id,
+				type,
+				title,
+				year,
+				description,
+				image_url,
+				genres,
+				stars
+			};
+			ttcache[id] = titleobj;
+			cb(titleobj);
+		} else {
+			getTitleLegacy1(id, cb);
+		}
+	});
+}
+
+export function getTitleLegacy1(id: string, cb: Callback<Title | null>): void {
+	console.log(`Getting title with ${id}... (legacy 1)`);
 	let cached = ttcache[id];
 	if (cached) {
 		return cb(cached);
@@ -1260,7 +1346,7 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 			ttcache[id] = titleobj;
 			cb(titleobj);
 		} else {
-			getTitleLegacy(id, cb);
+			getTitleLegacy2(id, cb);
 		}
 	});
 }
