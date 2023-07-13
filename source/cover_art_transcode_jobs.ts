@@ -111,7 +111,7 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 				async perform() {
 					const metadata = await getMetadata(database, basename);
 					const paths = await getPaths(metadata.media);
-					const path = paths.join("/") + "00-artwork.jpg";
+					const path = [...paths, "00-artwork.jpg"].join("/");
 					if (!libfs.existsSync(path)) {
 						console.log(path);
 						const buffer = libfs.readFileSync([
@@ -127,7 +127,7 @@ async function createJobListRecursively(database: cddb.Database, directories: Ar
 				async perform() {
 					const metadata = await getMetadata(database, basename);
 					const paths = await getPaths(metadata.media);
-					const path = paths.join("/") + "00-metadata.json";
+					const path = [...paths, "00-metadata.json"].join("/");
 					if (!libfs.existsSync(path)) {
 						console.log(path);
 						libfs.mkdirSync(paths.slice(0, -1).join("/"), { recursive: true });
