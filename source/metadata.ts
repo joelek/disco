@@ -1063,6 +1063,19 @@ export type Title = {
 
 export function getTitleSummary(id: string): Promise<string | undefined> {
 	return new Promise((resolve, reject) => {
+		let url = `https://www.imdb.com/title/${id}/plotsummary/`;
+		getXML(url, (document) => {
+			let element = document.querySelector("[data-testid=sub-section-summaries] [data-testid=list-item]");
+			if (is.absent(element)) {
+				return reject();
+			}
+			resolve(element.getTrimmedText());
+		});
+	});
+};
+
+export function getTitleSummaryLegacy(id: string): Promise<string | undefined> {
+	return new Promise((resolve, reject) => {
 		let url = `https://www.imdb.com/title/${id}/plotsummary`;
 		getXML(url, (document) => {
 			let element = document.querySelector("#plot-summaries-content p");
