@@ -172,7 +172,7 @@ let crop_detect = (path: string, picture: FormatDetectResult, cb: { (crop: queue
 	console.log(`Detecting crop settings...`);
 	libcp.execFile('ffmpeg', [
 		'-i', `${path}`,
-		'-vf', 'framestep=250,crop=iw-4:ih-4,bbox=24',
+		'-vf', 'framestep=250,crop=iw-4:ih-4,bbox=32',
 		'-an',
 		'-f', 'null',
 		'-'
