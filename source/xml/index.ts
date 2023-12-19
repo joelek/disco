@@ -192,7 +192,10 @@ function parseNodes(tokenizer: Tokenizer): Array<XMLNode> {
 			let token = read();
 			if (token.type === "SCRIPT_NODE") {
 				let tag = new XMLName(undefined, "script");
-				openTag(tag, []);
+				openTag(tag, []);/*
+				let start = token.value.indexOf(">") + 1;
+				let end = token.value.lastIndexOf("</");
+				getParent().children.push(new XMLText(token.value.slice(start, end))); */
 				closeTag(tag);
 				continue;
 			}
