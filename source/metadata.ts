@@ -1421,7 +1421,7 @@ let sscache: {
 	[key: string]: Season | undefined
 } = {};
 
-export function getSeason(id: string, season: number, cb: Callback<Season | null>): void {
+export function getSeasonLegacy(id: string, season: number, cb: Callback<Season | null>): void {
 	let cached = sscache[id + ":" + season];
 	if (cached) {
 		return cb(cached);
@@ -1504,3 +1504,68 @@ export function getSeason(id: string, season: number, cb: Callback<Season | null
 }
 
 //getSeason("tt0121955", 1, (results) => { console.log(results); });
+
+export function getSeason(id: string, season: number, cb: Callback<Season | null>): void {
+	let cached = sscache[id + ":" + season];
+	if (cached) {
+		return cb(cached);
+	}
+	let url = "https://www.imdb.com/title/" + id + "/episodes/?season=" + season;
+	getXML(url, (document) => {
+		let image_url: string | undefined = undefined;
+		let containers = document.querySelectorAll(".episode-item-wrapper");
+		let episodes = new Array<Episode>();
+		for (let container of containers) {
+			let element: XMLElementNode | null = null;
+			let id: string | null = null;
+			let title: string | null = null;
+			let episode_number: number | null = null;
+			let description: string | null = null;
+			let air_date_timestamp: number | null = null;
+			element = container.querySelector("a.ipc-title-link-wrapper[href]");
+			if (element !== null) {
+				let href = element.getAttribute("href") as string;
+				let parts = /^[/]title[/](tt[0-9]+)[/]/.exec(href);
+				if (parts != null) {
+					id = parts[1];
+				}
+				let content = element.getTrimmedText();
+				let parts2 = /^S([0-9]+)[.]E([0-9]+)\s+∙\s(.+)$/.exec(content);
+				if (parts2 != null) {
+					episode_number = Number.parseInt(parts2[2]);
+					title = parts2[3];
+				}
+			}
+			element = container.querySelector(".ipc-html-content-inner-div");
+			if (element !== null) {
+				description = element.getTrimmedText();
+			}
+			element = container.querySelector("span");
+			if (element !== null) {
+				air_date_timestamp = Date.parse(element.getTrimmedText() + "Z");
+			}
+			console.log({id, title, episode_number, description, air_date_timestamp })
+			if (id != null && title != null && description != null && episode_number != null && air_date_timestamp != null) {
+				title = title.normalize("NFC");
+				description = description.normalize("NFC");
+				episodes.push({
+					id,
+					title,
+					description,
+					episode_number,
+					air_date_timestamp
+				});
+			}
+		}
+		if (episodes.length === 0) {
+			return cb(null);
+		}
+		let obj = {
+			image_url,
+			season_number: season,
+			episodes
+		};
+		sscache[id + ":" + season] = obj;
+		cb(obj);
+	});
+}
