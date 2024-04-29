@@ -28,7 +28,11 @@ type CDDA_TRACK = {
 };
 
 type CDDA_TOC = {
+	buffer: Buffer;
 	disc_id: string;
+	length: number;
+	first_track: number;
+	last_track: number;
 	tracks: Array<CDDA_TRACK>;
 };
 
@@ -116,7 +120,11 @@ function parse_toc(buffer: Buffer): CDDA_TOC {
 		});
 	}
 	return {
+		buffer,
 		disc_id,
+		length,
+		first_track,
+		last_track,
 		tracks
 	};
 }
@@ -265,6 +273,7 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 		val.id
 	];
 	libfs.mkdirSync(folders.join("/"), { recursive: true });
+	libfs.writeFileSync(folders.join("/") + `/toc.bin`, val.toc.buffer);
 	let sectorcache = new Array<Array<{
 		sector: Buffer,
 		hash: string,
@@ -363,7 +372,7 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 					count: number
 				}>());
 			};
-			let counts = new Array(max_reads).fill(0);
+			let counts = new Array<number>(max_reads).fill(0);
 			for (let i = 0; i < sectors; i++) {
 				let sector = data.slice((i + 0) * 2352, (i + 1) * 2352);
 				let hash = libcrypto.createHash("sha256").update(sector).digest("hex");
