@@ -12,6 +12,8 @@ import * as tidal from "./tidal";
 
 let db = utils.loadDatabase("./private/db/cddb.json", cddb.Database.as);
 
+const SEARCH_TIDAL = false;
+
 interface Callback<T> {
 	(value: T): void;
 }
@@ -22,6 +24,7 @@ type CDDA_TRACK = {
 	offset: number;
 	length: number;
 	duration_ms: number;
+	is_audio: boolean;
 };
 
 type CDDA_TOC = {
@@ -75,33 +78,42 @@ function parse_toc(buffer: Buffer): CDDA_TOC {
 	let first_track = buffer.readUInt8(offset); offset += 1;
 	let last_track = buffer.readUInt8(offset); offset += 1;
 	let tracks = new Array<CDDA_TRACK>();
+	let found_audio = false;
 	for (let track_number = first_track; track_number <= last_track; track_number++) {
-		let track_index = track_number - first_track;
-		let c1 = buffer.readUInt8(offset + ((track_number - 1) * 8) + 1);
-		let c2 = buffer.readUInt8(offset + ((track_number) * 8) + 1);
-		if ((c1 & 0x04) === 0x00) {
-			let m1 = buffer.readUInt8(offset + ((track_number - 1) * 8) + 5);
-			let s1 = buffer.readUInt8(offset + ((track_number - 1) * 8) + 6);
-			let f1 = buffer.readUInt8(offset + ((track_number - 1) * 8) + 7);
-			let m2 = buffer.readUInt8(offset + ((track_number) * 8) + 5);
-			let s2 = buffer.readUInt8(offset + ((track_number) * 8) + 6);
-			let f2 = buffer.readUInt8(offset + ((track_number) * 8) + 7);
-			if ((c2 & 0x04) === 0x04) {
-				m2 -= 2;
-				s2 -= 30;
-				s2 -= 2;
-			}
-			let sectors1 = sector_from_msf(m1, s1, f1);
-			let sectors2 = sector_from_msf(m2, s2, f2);
-			let duration_ms = Math.floor((sectors2 - sectors1) * (1000 / 75));
-			tracks.push({
-				track_number,
-				track_index,
-				offset: sectors1,
-				length: sectors2 - sectors1,
-				duration_ms
-			});
+		let track_index = track_number - 1;
+		let adr_control_current_track = buffer.readUInt8(offset + (track_index * 8) + 1);
+		let adr_current_track = (adr_control_current_track >> 4) & 0x0F;
+		let control_current_track = (adr_control_current_track >> 0) & 0x0F;
+		let current_track_is_data = (control_current_track & 0b0100) !== 0;
+		let adr_control_next_track = buffer.readUInt8(offset + ((track_index + 1) * 8) + 1);
+		let adr_next_track = (adr_control_next_track >> 4) & 0x0F;
+		let control_next_track = (adr_control_next_track >> 0) & 0x0F;
+		let next_track_is_data = (control_next_track & 0b0100) !== 0;
+		if (found_audio && current_track_is_data) {
+			break;
 		}
+		found_audio = found_audio || !current_track_is_data;
+		let m1 = buffer.readUInt8(offset + (track_index * 8) + 5);
+		let s1 = buffer.readUInt8(offset + (track_index * 8) + 6);
+		let f1 = buffer.readUInt8(offset + (track_index * 8) + 7);
+		let m2 = buffer.readUInt8(offset + ((track_index + 1) * 8) + 5);
+		let s2 = buffer.readUInt8(offset + ((track_index + 1) * 8) + 6);
+		let f2 = buffer.readUInt8(offset + ((track_index + 1) * 8) + 7);
+		let sectors1 = sector_from_msf(m1, s1, f1);
+		let sectors2 = sector_from_msf(m2, s2, f2);
+		// Subtract 152 seconds (11400 frames) from next track MSF to compute correct track length in sectors for mixed mode cds.
+		if (found_audio && next_track_is_data) {
+			sectors2 -= 11400;
+		}
+		let duration_ms = Math.floor((sectors2 - sectors1) * (1000 / 75));
+		tracks.push({
+			track_number,
+			track_index,
+			offset: sectors1,
+			length: sectors2 - sectors1,
+			duration_ms,
+			is_audio: !current_track_is_data
+		});
 	}
 	return {
 		disc_id,
@@ -159,14 +171,17 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 							disc.title,
 							...disc.artists,
 						].join(" ");
-						try {
-							const results = await tidal.search(query, ["ALBUMS"]);
-							const album = results.albums[0];
-							if (album != null) {
-								disc.cover_art_url = album.cover;
-								disc.tidal = album.id;
-							}
-						} catch (error) {}
+						if (SEARCH_TIDAL) {
+							console.log("Searching tidal...");
+							try {
+								const results = await tidal.search(query, ["ALBUMS"]);
+								const album = results.albums[0];
+								if (album != null) {
+									disc.cover_art_url = album.cover;
+									disc.tidal = album.id;
+								}
+							} catch (error) {}
+						}
 						return save_disc_to_db(id, disc, () => {
 							return cb({id, toc, disc});
 						});
@@ -179,7 +194,7 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 	});
 }
 
-function backup_track(read_offset: number, cb: Callback<Buffer>): void {
+function backup_all_audio_tracks(read_offset: number, cb: Callback<Buffer>): void {
 	console.log({read_offset});
 	let chunks = new Array<Buffer>();
 	let cp = libcp.spawn(`main`, [ `ext`, `all` ], { cwd: "../disc_reader/build/targets/" });
@@ -306,7 +321,13 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 		if (val.toc.tracks.length > 0) {
 			start_offset = val.toc.tracks[0].offset;
 		}
+		let skipped_data_sectors_count = 0;
 		utils.foreach(val.toc.tracks, (track, next_track) => {
+			if (!track.is_audio) {
+				skipped_data_sectors_count += track.length;
+				next_track();
+				return;
+			}
 			let target_path = folders.join("/") + `/${val.id}.${('00' + track.track_index).slice(-2)}.wav`;
 			let ffmpeg = libcp.spawn("ffmpeg", [
 				"-f", "s16le",
@@ -318,7 +339,7 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 			ffmpeg.on("exit", () => {
 				next_track();
 			});
-			let offset = track.offset - start_offset;
+			let offset = track.offset - start_offset - skipped_data_sectors_count;
 			utils.foreach(sectorcache.slice(offset, offset + track.length), (sector, next) => {
 				ffmpeg.stdin.write(sector[0].sector, next);
 			}, () => {
@@ -331,10 +352,10 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 	let reads = 0;
 	let max_reads = 8;
 	function getData(read_offset: number): void {
-		backup_track(read_offset, (data) => {
+		backup_all_audio_tracks(read_offset, (data) => {
 			reads += 1;
-			console.log(`Reads: ${reads}/${max_reads}`);
 			let sectors = Math.floor(data.length / 2352);
+			console.log(`Reads: ${reads}/${max_reads}, Got Sectors: ${sectors}`);
 			for (let i = sectorcache.length; i < sectors; i++) {
 				sectorcache.push(new Array<{
 					sector: Buffer,
@@ -548,6 +569,7 @@ parseCommandLine().then((options) => {
 	get_disc(options, (val) => {
 		if (val != null) {
 			console.log(JSON.stringify(val.disc, null, "\t"));
+			console.log(val.toc)
 			backup_disc(options, val, () => {
 				process.exit(0);
 			});
