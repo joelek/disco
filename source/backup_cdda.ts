@@ -145,6 +145,7 @@ function get_disc_id(toc: Buffer): string {
 
 function get_disc_from_ws(options: Arguments, toc: CDDA_TOC, cb: Callback<cddb.Disc | null>): void {
 	let mb_disc_id = get_mb_disc_id(toc);
+	console.log(toc);
 	log(`Disc id (Musicbrainz): ${mb_disc_id}`);
 	get_mb_data(options, mb_disc_id, (data) => {
 		if (data == null) {
@@ -161,6 +162,20 @@ function get_disc_from_ws(options: Arguments, toc: CDDA_TOC, cb: Callback<cddb.D
 		cb(disc);
 	});
 }
+
+function generateEmptyMetaData(toc: CDDA_TOC): cddb.Disc {
+	return {
+		artists: [],
+		title: "",
+		number: 1,
+		year: 0,
+		tracks: toc.tracks.map((track) => ({
+			number: track.track_number,
+			title: "",
+			artists: []
+		}))
+	};
+};
 
 function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, disc: cddb.Disc } | null>): void {
 	return get_toc((toc) => {
@@ -195,7 +210,12 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 						});
 					})();
 				} else {
-					return cb(null);
+					if (options.placeholder) {
+						let disc = generateEmptyMetaData(toc);
+						return cb({ id, toc, disc });
+					} else {
+						return cb(null);
+					}
 				}
 			});
 		}
@@ -455,7 +475,8 @@ type RequriedArguments = {
 type OptionalArguments = {
 	release_id: string,
 	disc_number: number,
-	read_offset: number
+	read_offset: number,
+	placeholder: boolean
 };
 
 type Arguments = Partial<OptionalArguments> & RequriedArguments;
@@ -464,6 +485,7 @@ async function parseCommandLine(): Promise<Arguments> {
 	let disc_number: number | undefined;
 	let release_id: string | undefined;
 	let read_offset: number | undefined;
+	let placeholder: boolean | undefined;
 	let found_unrecognized_argument = false;
 	for (let arg of process.argv.slice(2)) {
 		let parts;
@@ -474,7 +496,9 @@ async function parseCommandLine(): Promise<Arguments> {
 			release_id = parts[1];
 		} else if ((parts = /^--read-offset=([+-]?[0-9]+)$/.exec(arg)) != null) {
 			read_offset = Number.parseInt(parts[1]);
-		} else {
+		}else if ((parts = /^--placeholder=(true|false)$/.exec(arg)) != null) {
+			placeholder = parts[1] === "true";
+		}  else {
 			found_unrecognized_argument = true;
 			process.stderr.write("Unrecognized argument \"" + arg + "\"!\n");
 		}
@@ -484,12 +508,14 @@ async function parseCommandLine(): Promise<Arguments> {
 		process.stderr.write("	--disc=number\n");
 		process.stderr.write("	--release=string\n");
 		process.stderr.write("	--read-offset=number\n");
+		process.stderr.write("	--placeholder=boolean\n");
 		process.exit(0);
 	}
 	return {
 		release_id,
 		disc_number,
-		read_offset
+		read_offset,
+		placeholder
 	};
 }
 
