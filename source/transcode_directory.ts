@@ -2,6 +2,26 @@ import * as libcp from "child_process";
 import * as libfs from "fs";
 import * as libpath from "path";
 
+async function getAudioMetadata(input: string): Promise<{
+	album?: string;
+	artist?: string;
+	title?: string;
+	genre?: string;
+	track: string;
+	date?: string;
+}> {
+	return new Promise((resolve, reject) => {
+		let options = [
+			"-i", input,
+			"-of", "json",
+			"-show_entries", "format_tags"
+		];
+		let stdout = libcp.execFileSync("ffprobe", options, { encoding: "utf-8" });
+		let json = JSON.parse(stdout);
+		resolve(json?.format?.tags ?? {});
+	});
+};
+
 async function transcodeAudio(input: string, output: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		let options = [
@@ -47,13 +67,19 @@ async function run(): Promise<void> {
 	let files = libfs.readdirSync("./", { withFileTypes: true })
 		.filter((entry) => entry.isFile())
 		.sort((one, two) => one.name.toLowerCase().localeCompare(two.name));
-	let metadata = {
+	let album = {
 		"type": "album",
 		"title": "Album Title",
-		"disc": 0,
+		"disc": {
+			"number": 1,
+			"title": "Disc Title"
+		},
 		"year": 0,
 		"artists": [
 			"Album Artist"
+		],
+		"genres": [
+			"Genre"
 		],
 		"tracks": <Array<{ title: string; artists: Array<string>; }>> []
 	};
@@ -62,13 +88,18 @@ async function run(): Promise<void> {
 		let extension = libpath.extname(filename);
 		let basename = filename.slice(0, filename.length - extension.length);
 		if ([".wav", ".ogg", ".flac", ".mp3", ".mp4"].includes(extension)) {
-			metadata.tracks.push({
-				title: basename,
+			let metadata = await getAudioMetadata(filename);
+			album.title = metadata.album != null ? metadata.album.trim() : album.title;
+			album.artists = metadata.artist != null ? metadata.artist.split(";").map((artist) => artist.trim()) : album.artists;
+			album.genres = metadata.genre != null ? metadata.genre.split(";").map((genre) => genre.trim()) : album.genres;
+			album.year = metadata.date != null ? new Date(metadata.date).getFullYear() : album.year;
+			album.tracks.push({
+				title: metadata.title != null ? metadata.title.trim() : basename.replaceAll("_", " ").replaceAll(".", " "),
 				artists: [
-					"Track Artist"
+					metadata.artist ?? "Track Artist"
 				]
 			});
-			await transcodeAudio(filename, `./output/${metadata.tracks.length.toString().padStart(2, "0")}-${basename.replaceAll(" ", "_")}.mp3`);
+			await transcodeAudio(filename, `./output/${album.tracks.length.toString().padStart(2, "0")}-${basename.replaceAll(" ", "_")}.mp3`);
 			continue;
 		}
 		if ([".jpg", ".jpeg", ".png", ".bmp"].includes(extension)) {
@@ -76,7 +107,7 @@ async function run(): Promise<void> {
 			continue;
 		}
 	}
-	libfs.writeFileSync("./output/00-metadata.json", JSON.stringify(metadata, null, "\t"));
+	libfs.writeFileSync("./output/00-metadata.json", JSON.stringify(album, null, "\t"));
 };
 
 run();
