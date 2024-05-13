@@ -87,6 +87,9 @@ async function run(): Promise<void> {
 		let filename = file.name.toLowerCase();
 		let extension = libpath.extname(filename);
 		let basename = filename.slice(0, filename.length - extension.length);
+		if (/^[0-9]{2}[-]/.test(basename)) {
+			basename = basename.slice(3);
+		}
 		if ([".wav", ".ogg", ".flac", ".mp3", ".mp4"].includes(extension)) {
 			let metadata = await getAudioMetadata(filename);
 			album.title = metadata.album != null ? metadata.album.trim() : album.title;
