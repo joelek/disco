@@ -90,7 +90,10 @@ async function run(): Promise<void> {
 		if (/^[0-9]{2}[-]/.test(basename)) {
 			basename = basename.slice(3);
 		}
-		if ([".wav", ".ogg", ".flac", ".mp3", ".mp4"].includes(extension)) {
+		if (/^[0-9a-fA-F]{64}[.][0-9]{2}/.test(basename)) {
+			basename = `track${basename.slice(64 + 1)}`;
+		}
+		if ([".wav", ".ogg", ".flac", ".mp3", ".mp4", ".aud"].includes(extension)) {
 			let metadata = await getAudioMetadata(filename);
 			album.title = metadata.album != null ? metadata.album.trim() : album.title;
 			album.artists = metadata.artist != null ? metadata.artist.split(";").map((artist) => artist.trim()) : album.artists;
