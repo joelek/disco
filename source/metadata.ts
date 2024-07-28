@@ -935,8 +935,9 @@ function request(url: string, cb: Callback<Buffer>) {
 				let lib = url.startsWith("http://") ? libhttp : libhttps;
 				lib.request(url, {
 					method: "GET",
-					headers:  {
-						"accept-language": "en-US"
+					headers: {
+						"Accept-Language": "en;q=0.7",
+						"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
 					}
 				}, (response) => {
 					response.setEncoding("binary");
