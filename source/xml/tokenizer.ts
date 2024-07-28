@@ -11,7 +11,7 @@ const MATCHERS = {
 	"</": /^([<][/])/isu,
 	"/>": /^([/][>])/isu,
 	"TEXT_NODE": /^([^<>]+)[<]/isu,
-	"IDENTIFIER": /^([a-z][a-z0-9_-]*)/isu,
+	"IDENTIFIER": /^([a-z_][a-z0-9_-]*)/isu,
 	"STRING_LITERAL": /^("[^"<]*"|'[^'<]*')/isu,
 	"NUMERIC_LITERAL": /^([0-9]+)/isu,
 	"BOOLEAN_LITERAL": /^(true|false)/isu,
