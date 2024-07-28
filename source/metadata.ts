@@ -1223,6 +1223,12 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 		for (let element of elements) {
 			genres.push(element.getTrimmedText().normalize("NFC"));
 		}
+		if (genres.length === 0) {
+			let elements = document.querySelectorAll(`[data-testid="interests"] a[href]`);
+			for (let element of elements) {
+				genres.push(element.getTrimmedText().normalize("NFC"));
+			}
+		}
 		let stars = new Array<{ id: string, name: string, image_url?: string }>();
 		elements = document.querySelectorAll(`[data-testid="title-cast-item"]`);
 		for (let element of elements) {
