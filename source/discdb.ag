@@ -21,6 +21,7 @@ guard EpisodeContent: (Content & {
 	"show": string,
 	"season": number,
 	"episode": number,
+	"part"?: number,
 	"imdb": string,
 	"imdb_show": string,
 	"year": number,

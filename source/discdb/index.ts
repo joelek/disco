@@ -58,6 +58,7 @@ export const EpisodeContent: autoguard.serialization.MessageGuard<EpisodeContent
 		"genres_show": autoguard.guards.Array.of(autoguard.guards.String),
 		"actors_show": autoguard.guards.Array.of(autoguard.guards.String)
 	}, {
+		"part": autoguard.guards.Number,
 		"poster_url_show": autoguard.guards.String
 	})
 ));
@@ -78,6 +79,7 @@ export type EpisodeContent = autoguard.guards.Group<autoguard.guards.Intersectio
 		"genres_show": autoguard.guards.Array<autoguard.guards.String>,
 		"actors_show": autoguard.guards.Array<autoguard.guards.String>
 	}, {
+		"part": autoguard.guards.Number,
 		"poster_url_show": autoguard.guards.String
 	}>
 ]>>;
