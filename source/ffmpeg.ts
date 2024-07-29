@@ -349,6 +349,9 @@ let encode_hardware = (
 				'-metadata', `episode_id=${opt_content.title}`,
 				"-metadata", `comment=${opt_content.summary}`
 			];
+			if (opt_content.part != null) {
+				md.push("-metadata", `track=${opt_content.part}`);
+			}
 		} else if (MovieContent.is(opt_content)) {
 			md = [
 				'-metadata', `title=${opt_content.title}`,

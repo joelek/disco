@@ -31,7 +31,13 @@ function foreach<A>(array: Array<A>, next: { (value: A, cb: { (): void }): void 
 function getBasename(type: discdb.MediaType, content: discdb.MediaContent): string {
 	if (discdb.EpisodeContent.is(content)) {
 		let rn = `${pathify(content.show)}-s${("00" + content.season).slice(-2)}e${("00" + content.episode).slice(-2)}-${pathify(content.title)}-${pathify(type)}`;
-		return `./private/media/video/shows/${pathify(content.show)}/s${('00' + content.season).slice(-2)}/${rn}/${rn}`;
+		if (content.part != null) {
+			let fn = `${("00" + content.part).slice(-2)}-s${("00" + content.season).slice(-2)}e${("00" + content.episode).slice(-2)}-${pathify(content.title)}-${pathify(type)}`;
+			return `./private/media/video/shows/${pathify(content.show)}/s${('00' + content.season).slice(-2)}/${rn}/${fn}`;
+		} else {
+			let fn = rn;
+			return `./private/media/video/shows/${pathify(content.show)}/s${('00' + content.season).slice(-2)}/${rn}/${fn}`;
+		}
 	}
 	if (discdb.MovieContent.is(content)) {
 		let title = pathify(content.title);
