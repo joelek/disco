@@ -31,7 +31,7 @@ function getAudioStreams(path: string, cb: Callback<Array<stream_types.AudioStre
 }
 
 function getAudioStreamsToKeep(path: string, cb: Callback<Array<stream_types.AudioStream>>): void {
-	let target_languages = ["eng", "swe", "jpn"];
+	let target_languages = ["swe", "eng", "jpn"];
 	getAudioStreams(path, (audio_streams) => {
 		let streams = target_languages.map((target_language) => {
 				return audio_streams.filter((stream) => {
@@ -74,7 +74,7 @@ function getSubtitleStreams(path: string, cb: Callback<Array<stream_types.Subtit
 }
 
 function getSubtitleStreamsToKeep(path: string, cb: Callback<Array<stream_types.SubtitleStream>>): void {
-	let target_languages = ["eng", "swe", "jpn"];
+	let target_languages = ["swe", "eng", "jpn"];
 	tesseract.getSupportedLanguages((supported_languages) => {
 		getSubtitleStreams(path, (subtitle_streams) => {
 			let streams = target_languages.map((target_language) => {
