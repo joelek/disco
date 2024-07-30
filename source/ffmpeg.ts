@@ -365,6 +365,10 @@ let encode_hardware = (
 	audio_streams.forEach((audio_stream, index) => {
 		md.push("-metadata:s:a:" + index, "language=" + audio_stream.tags.language);
 	});
+	let disposition = new Array<string>();
+	audio_streams.forEach((audio_stream, index) => {
+		disposition.push("-disposition:a:" + index, index === 0 ? "default" : "0");
+	});
 	let interlace = '';
 	if (imode === 'tff') {
 		interlace = 'yadif=0:0:0,';
@@ -420,6 +424,7 @@ let encode_hardware = (
 		'-c:a', 'aac',
 		'-q:a', '2',
 		...md,
+		...disposition,
 		...overrides,
 		outfile,
 		'-y'
