@@ -30,9 +30,9 @@ function getAudioStreams(path: string, cb: Callback<Array<stream_types.AudioStre
 	});
 }
 
-function getAudioStreamsToKeep(path: string, cb: Callback<Array<stream_types.AudioStream>>): void {
-	let target_languages = ["swe", "eng", "jpn"];
+function getAudioStreamsToKeep(path: string, target_languages: undefined | Array<string>, cb: Callback<Array<stream_types.AudioStream>>): void {
 	getAudioStreams(path, (audio_streams) => {
+		target_languages = target_languages ?? ["swe", "eng", "jpn"];
 		let streams = target_languages.map((target_language) => {
 				return audio_streams.filter((stream) => {
 					if (stream.tags.language !== target_language) {
@@ -73,10 +73,10 @@ function getSubtitleStreams(path: string, cb: Callback<Array<stream_types.Subtit
 	});
 }
 
-function getSubtitleStreamsToKeep(path: string, cb: Callback<Array<stream_types.SubtitleStream>>): void {
-	let target_languages = ["swe", "eng", "jpn"];
+function getSubtitleStreamsToKeep(path: string, target_languages: undefined | Array<string>, cb: Callback<Array<stream_types.SubtitleStream>>): void {
 	tesseract.getSupportedLanguages((supported_languages) => {
 		getSubtitleStreams(path, (subtitle_streams) => {
+			target_languages = target_languages ?? ["swe", "eng", "jpn"];
 			let streams = target_languages.map((target_language) => {
 					return subtitle_streams.filter((stream) => {
 						if (stream.tags.language !== target_language) {

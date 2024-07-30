@@ -10,7 +10,8 @@ guard CropSettings: {
 guard Setting: {
 	"field_order": FieldOrder,
 	"crop": CropSettings,
-	"compressibility": number
+	"compressibility": number,
+	"audio_languages"?: string[]
 };
 
 guard Database: { Setting };

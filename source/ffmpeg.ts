@@ -526,7 +526,7 @@ function transcodeSingleStream(path: string, stream: stream_types.VideoStream, b
 	get_metadata(path, (md) => {
 		let extraopts = new Array<string>();
 		// extraopts = ['-ss', '0:15:00', '-t', '60'];
-		ffprobe.getAudioStreamsToKeep(path, (audio_streams) => {
+		ffprobe.getAudioStreamsToKeep(path, md.settings.audio_languages, (audio_streams) => {
 			create_temp_dir((wd, id) => {
 				let temp_path = libpath.join(wd, "video.mp4");
 				encode_hardware(path, temp_path, md.picture, md.settings.crop, md.settings.field_order, md.settings.compressibility, audio_streams, () => {

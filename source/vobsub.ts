@@ -585,7 +585,7 @@ function extractSingleStream(path: string, stream: stream_types.SubtitleStream, 
 
 function generateJobs(path: string, type: MediaType, content: MediaContent, cb: Callback<Array<job.Job>>) {
 	let basename = utils.getBasename(type, content);
-	ffprobe.getSubtitleStreamsToKeep(path, (streams) => {
+	ffprobe.getSubtitleStreamsToKeep(path, undefined, (streams) => {
 		let jobs = new Array<job.Job>();
 		for (let stream of streams) {
 			jobs.push({

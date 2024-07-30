@@ -32,13 +32,17 @@ export const Setting: autoguard.serialization.MessageGuard<Setting> = autoguard.
 	"field_order": autoguard.guards.Reference.of(() => FieldOrder),
 	"crop": autoguard.guards.Reference.of(() => CropSettings),
 	"compressibility": autoguard.guards.Number
-}, {});
+}, {
+	"audio_languages": autoguard.guards.Array.of(autoguard.guards.String)
+});
 
 export type Setting = autoguard.guards.Object<{
 	"field_order": autoguard.guards.Reference<FieldOrder>,
 	"crop": autoguard.guards.Reference<CropSettings>,
 	"compressibility": autoguard.guards.Number
-}, {}>;
+}, {
+	"audio_languages": autoguard.guards.Array<autoguard.guards.String>
+}>;
 
 export const Database: autoguard.serialization.MessageGuard<Database> = autoguard.guards.Record.of(autoguard.guards.Reference.of(() => Setting));
 

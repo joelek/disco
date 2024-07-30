@@ -367,7 +367,7 @@ let get_metadata = (filename: string, cb: Callback<{ picture: FormatDetectResult
 function transcodeSingleStream(input: string, output: string, stream: stream_types.VideoStream): Promise<void> {
 	return new Promise((resolve, reject) => {
 		get_metadata(input, (md) => {
-			ffprobe.getAudioStreamsToKeep(input, (audio_streams) => {
+			ffprobe.getAudioStreamsToKeep(input, md.settings.audio_languages, (audio_streams) => {
 				create_temp_dir((wd, id) => {
 					let temp_path = libpath.join(wd, "video.mp4");
 					encode_hardware(input, temp_path, md.picture, md.settings.crop, md.settings.field_order, md.settings.compressibility, audio_streams, () => {
