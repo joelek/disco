@@ -12,6 +12,7 @@ import * as utils from "./utils";
 import * as tesseract from "./tesseract";
 import * as vtt from "./vtt";
 import { MediaType, MediaContent } from './discdb';
+import { get_metadata } from './ffmpeg';
 
 interface Callback<A> {
 	(value: A): void
@@ -383,11 +384,12 @@ let write_file = (image: Image, directory: string, ed: string): void => {
 	libfs.closeSync(fd);
 };
 
-let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): void }): void => {
+let extract_vobsub = (filename: string, subn: number, extraopts: Array<string>, cb: { (jobid: string): void }): void => {
 	let jobid = libcrypto.randomBytes(16).toString('hex');
 	libfs.mkdirSync(libpath.join('./private/temp/', jobid, 'raw'), { recursive: true });
 	libfs.mkdirSync(libpath.join('./private/temp/', jobid, 'bmp'), { recursive: true });
 	let cp = libcp.spawn('ffmpeg', [
+		...extraopts,
 		'-i', filename,
 		'-map', `0:${subn}`,
 		'-vn',
@@ -405,9 +407,10 @@ let extract_vobsub = (filename: string, subn: number, cb: { (jobid: string): voi
 	});
 };
 
-function extractSubrip(filename: string, subn: number, cb: Callback<string>): void {
+function extractSubrip(filename: string, subn: number, extraopts: Array<string>, cb: Callback<string>): void {
 	libcp.exec([
 		'ffmpeg',
+		...extraopts,
 		'-i', filename,
 		'-vn',
 		'-an',
@@ -534,53 +537,64 @@ function getArtifactPath(stream: stream_types.SubtitleStream, basename: string):
 }
 
 function extractSingleStream(path: string, stream: stream_types.SubtitleStream, basename: string, cb: Callback<string>): void {
-	if (stream.codec_name === "subrip") {
-		extractSubrip(path, stream.index, (webvtt) => {
-			let track = vtt.decode(webvtt);
-			track.head.metadata = JSON.stringify({
-				language: stream.tags.language
-			});
-			webvtt = vtt.encode(track);
-			let outfile = getArtifactPath(stream, basename);
-			let fd = libfs.openSync(outfile, 'w');
-			libfs.writeSync(fd, webvtt);
-			libfs.closeSync(fd);
-			cb(outfile);
-		});
-		return;
-	}
-	extract_vobsub(path, stream.index, (jobid) => {
-		convert_to_bmp(jobid, stream.extradata ?? "", stream.codec_name, () => {
-			ocr(jobid, stream.tags.language, (subtitles) => {
+	get_metadata(path, (md) => {
+		let extraopts = new Array<string>();
+		if (md.settings.segment != null) {
+			if (md.settings.segment.start != null) {
+				extraopts.push("-ss", "" + md.settings.segment.start);
+			}
+			if (md.settings.segment.stop != null) {
+				extraopts.push("-to", "" + md.settings.segment.stop);
+			}
+		}
+		if (stream.codec_name === "subrip") {
+			extractSubrip(path, stream.index, extraopts, (webvtt) => {
+				let track = vtt.decode(webvtt);
+				track.head.metadata = JSON.stringify({
+					language: stream.tags.language
+				});
+				webvtt = vtt.encode(track);
 				let outfile = getArtifactPath(stream, basename);
-				if (subtitles.length > 0) {
-					let track = {
-						head: {
-							metadata: JSON.stringify({
-								language: stream.tags.language
-							})
-						},
-						body: {
-							cues: subtitles.map((subtitle) => {
-								return {
-									start_ms: subtitle.pts_start,
-									duration_ms: Math.max(0, subtitle.pts_end - subtitle.pts_start),
-									lines: subtitle.lines
-								};
-							})
-						}
-					};
-					let webvtt = vtt.encode(track);
-					let fd = libfs.openSync(outfile, 'w');
-					libfs.writeSync(fd, webvtt);
-					libfs.closeSync(fd);
-				}
-				delete_tree.async(libpath.join('./private/temp/', jobid), () => {
-					cb(outfile);
+				let fd = libfs.openSync(outfile, 'w');
+				libfs.writeSync(fd, webvtt);
+				libfs.closeSync(fd);
+				cb(outfile);
+			});
+			return;
+		}
+		extract_vobsub(path, stream.index, extraopts, (jobid) => {
+			convert_to_bmp(jobid, stream.extradata ?? "", stream.codec_name, () => {
+				ocr(jobid, stream.tags.language, (subtitles) => {
+					let outfile = getArtifactPath(stream, basename);
+					if (subtitles.length > 0) {
+						let track = {
+							head: {
+								metadata: JSON.stringify({
+									language: stream.tags.language
+								})
+							},
+							body: {
+								cues: subtitles.map((subtitle) => {
+									return {
+										start_ms: subtitle.pts_start,
+										duration_ms: Math.max(0, subtitle.pts_end - subtitle.pts_start),
+										lines: subtitle.lines
+									};
+								})
+							}
+						};
+						let webvtt = vtt.encode(track);
+						let fd = libfs.openSync(outfile, 'w');
+						libfs.writeSync(fd, webvtt);
+						libfs.closeSync(fd);
+					}
+					delete_tree.async(libpath.join('./private/temp/', jobid), () => {
+						cb(outfile);
+					});
 				});
 			});
 		});
-	});
+	}, "basename");
 }
 
 function generateJobs(path: string, type: MediaType, content: MediaContent, cb: Callback<Array<job.Job>>) {

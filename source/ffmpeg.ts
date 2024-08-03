@@ -525,7 +525,14 @@ function getArtifactPath(stream: stream_types.VideoStream, basename: string): st
 function transcodeSingleStream(path: string, stream: stream_types.VideoStream, basename: string, content: MediaContent, cb: Callback<string>): void {
 	get_metadata(path, (md) => {
 		let extraopts = new Array<string>();
-		// extraopts = ['-ss', '0:15:00', '-t', '60'];
+		if (md.settings.segment != null) {
+			if (md.settings.segment.start != null) {
+				extraopts.push("-ss", "" + md.settings.segment.start);
+			}
+			if (md.settings.segment.stop != null) {
+				extraopts.push("-to", "" + md.settings.segment.stop);
+			}
+		}
 		ffprobe.getAudioStreamsToKeep(path, md.settings.audio_languages, (audio_streams) => {
 			create_temp_dir((wd, id) => {
 				let temp_path = libpath.join(wd, "video.mp4");
@@ -560,5 +567,6 @@ function generateJobs(path: string, type: MediaType, content: MediaContent, cb: 
 }
 
 export {
+	get_metadata,
 	generateJobs
 };

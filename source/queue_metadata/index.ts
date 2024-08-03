@@ -28,12 +28,23 @@ export type CropSettings = autoguard.guards.Object<{
 	"y": autoguard.guards.Number
 }, {}>;
 
+export const Segment: autoguard.serialization.MessageGuard<Segment> = autoguard.guards.Object.of({}, {
+	"start": autoguard.guards.Number,
+	"stop": autoguard.guards.Number
+});
+
+export type Segment = autoguard.guards.Object<{}, {
+	"start": autoguard.guards.Number,
+	"stop": autoguard.guards.Number
+}>;
+
 export const Setting: autoguard.serialization.MessageGuard<Setting> = autoguard.guards.Object.of({
 	"field_order": autoguard.guards.Reference.of(() => FieldOrder),
 	"crop": autoguard.guards.Reference.of(() => CropSettings),
 	"compressibility": autoguard.guards.Number
 }, {
-	"audio_languages": autoguard.guards.Array.of(autoguard.guards.String)
+	"audio_languages": autoguard.guards.Array.of(autoguard.guards.String),
+	"segment": autoguard.guards.Reference.of(() => Segment)
 });
 
 export type Setting = autoguard.guards.Object<{
@@ -41,7 +52,8 @@ export type Setting = autoguard.guards.Object<{
 	"crop": autoguard.guards.Reference<CropSettings>,
 	"compressibility": autoguard.guards.Number
 }, {
-	"audio_languages": autoguard.guards.Array<autoguard.guards.String>
+	"audio_languages": autoguard.guards.Array<autoguard.guards.String>,
+	"segment": autoguard.guards.Reference<Segment>
 }>;
 
 export const Database: autoguard.serialization.MessageGuard<Database> = autoguard.guards.Record.of(autoguard.guards.Reference.of(() => Setting));
@@ -52,6 +64,7 @@ export namespace Autoguard {
 	export const Guards = {
 		"FieldOrder": autoguard.guards.Reference.of(() => FieldOrder),
 		"CropSettings": autoguard.guards.Reference.of(() => CropSettings),
+		"Segment": autoguard.guards.Reference.of(() => Segment),
 		"Setting": autoguard.guards.Reference.of(() => Setting),
 		"Database": autoguard.guards.Reference.of(() => Database)
 	};

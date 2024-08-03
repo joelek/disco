@@ -7,11 +7,17 @@ guard CropSettings: {
 	"y": number
 };
 
+guard Segment: {
+	start?: number,
+	stop?: number
+};
+
 guard Setting: {
 	"field_order": FieldOrder,
 	"crop": CropSettings,
 	"compressibility": number,
-	"audio_languages"?: string[]
+	"audio_languages"?: string[],
+	"segment"?: Segment
 };
 
 guard Database: { Setting };
