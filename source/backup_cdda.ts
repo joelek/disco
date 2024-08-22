@@ -235,6 +235,7 @@ function backup_all_audio_tracks(read_offset: number, cb: Callback<Buffer>): voi
 		let data = Buffer.concat(chunks);
 		let byte_offset = read_offset * 4;
 		let padding = Buffer.alloc(Math.abs(byte_offset));
+		// This is wrong. It should be adjusted the other way around.
 		if (byte_offset > 0) {
 			data = Buffer.concat([data.slice(byte_offset), padding]);
 		} else if (byte_offset < 0) {
