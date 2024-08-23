@@ -222,8 +222,8 @@ function get_disc(options: Arguments, cb: Callback<{ id: string, toc: CDDA_TOC, 
 	});
 }
 
-function backup_all_audio_tracks(read_offset: number, cb: Callback<Buffer>): void {
-	console.log({read_offset});
+function backup_all_audio_tracks(read_offset_correction: number, cb: Callback<Buffer>): void {
+	console.log({read_offset_correction: read_offset_correction});
 	let chunks = new Array<Buffer>();
 	let cp = libcp.spawn(`main`, [ `ext`, `all` ], { cwd: "../disc_reader/build/targets/" });
 	cp.stderr.pipe(process.stderr);
@@ -233,9 +233,8 @@ function backup_all_audio_tracks(read_offset: number, cb: Callback<Buffer>): voi
 	});
 	cp.on(`close`, (code) => {
 		let data = Buffer.concat(chunks);
-		let byte_offset = read_offset * 4;
+		let byte_offset = read_offset_correction * 4;
 		let padding = Buffer.alloc(Math.abs(byte_offset));
-		// This is wrong. It should be adjusted the other way around.
 		if (byte_offset > 0) {
 			data = Buffer.concat([data.slice(byte_offset), padding]);
 		} else if (byte_offset < 0) {
@@ -262,7 +261,7 @@ async function getDeviceDetails(): Promise<disc_reader.DeviceDetails> {
 	});
 }
 
-async function getDriveReadOffset(): Promise<number> {
+async function getDriveReadOffsetCorrection(): Promise<number> {
 	let device_details = await getDeviceDetails();
 	console.log(device_details);
 	let xml = await metadata.promiseXML("http://www.accuraterip.com/driveoffsets.htm");
@@ -275,8 +274,8 @@ async function getDriveReadOffset(): Promise<number> {
 			if (font.getText() === key) {
 				let font = children[1].querySelector("font");
 				if (font != null) {
-					let read_offset = Number.parseInt(font.getText());
-					return read_offset;
+					let read_offset_correction = Number.parseInt(font.getText());
+					return read_offset_correction;
 				}
 				break;
 			}
@@ -381,8 +380,8 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 	}
 	let reads = 0;
 	let max_reads = 8;
-	function getData(read_offset: number): void {
-		backup_all_audio_tracks(read_offset, (data) => {
+	function getData(read_offset_correction: number): void {
+		backup_all_audio_tracks(read_offset_correction, (data) => {
 			reads += 1;
 			let sectors = Math.floor(data.length / 2352);
 			console.log(`Reads: ${reads}/${max_reads}, Got Sectors: ${sectors}`);
@@ -434,17 +433,17 @@ function backup_disc(options: Arguments, val: { id: string, toc: CDDA_TOC, disc:
 				computeStats();
 			} else if ((accepted < total_sectors) && (reads < max_reads)) {
 				console.log(`Accepted: ${accepted}/${total_sectors}`);
-				getData(read_offset);
+				getData(read_offset_correction);
 			} else {
 				computeStats();
 			}
 		});
 	}
-	if (options.read_offset != null) {
-		getData(options.read_offset);
+	if (options.read_offset_correction != null) {
+		getData(options.read_offset_correction);
 	} else {
-		getDriveReadOffset().then((read_offset) => {
-			getData(read_offset);
+		getDriveReadOffsetCorrection().then((read_offset_correction) => {
+			getData(read_offset_correction);
 		});
 	}
 }
@@ -476,7 +475,7 @@ type RequriedArguments = {
 type OptionalArguments = {
 	release_id: string,
 	disc_number: number,
-	read_offset: number,
+	read_offset_correction: number,
 	placeholder: boolean
 };
 
@@ -485,7 +484,7 @@ type Arguments = Partial<OptionalArguments> & RequriedArguments;
 async function parseCommandLine(): Promise<Arguments> {
 	let disc_number: number | undefined;
 	let release_id: string | undefined;
-	let read_offset: number | undefined;
+	let read_offset_correction: number | undefined;
 	let placeholder: boolean | undefined;
 	let found_unrecognized_argument = false;
 	for (let arg of process.argv.slice(2)) {
@@ -495,8 +494,8 @@ async function parseCommandLine(): Promise<Arguments> {
 			disc_number = Number.parseInt(parts[1]);
 		} else if ((parts = /^--release=(.+)$/.exec(arg)) != null) {
 			release_id = parts[1];
-		} else if ((parts = /^--read-offset=([+-]?[0-9]+)$/.exec(arg)) != null) {
-			read_offset = Number.parseInt(parts[1]);
+		} else if ((parts = /^--read-offset-correction=([+-]?[0-9]+)$/.exec(arg)) != null) {
+			read_offset_correction = Number.parseInt(parts[1]);
 		}else if ((parts = /^--placeholder=(true|false)$/.exec(arg)) != null) {
 			placeholder = parts[1] === "true";
 		}  else {
@@ -508,14 +507,14 @@ async function parseCommandLine(): Promise<Arguments> {
 		process.stderr.write("Arguments:\n");
 		process.stderr.write("	--disc=number\n");
 		process.stderr.write("	--release=string\n");
-		process.stderr.write("	--read-offset=number\n");
+		process.stderr.write("	--read-offset-correction=number\n");
 		process.stderr.write("	--placeholder=boolean\n");
 		process.exit(0);
 	}
 	return {
 		release_id,
 		disc_number,
-		read_offset,
+		read_offset_correction,
 		placeholder
 	};
 }
