@@ -33,5 +33,5 @@ async function getReadOffsetCorrectionEntries(): Promise<Array<Entry>> {
 };
 
 getReadOffsetCorrectionEntries().then((entries) => {
-	console.log(entries.map(({ vendor, product, roc }) => `\t{ "${vendor} - ${product}", ${roc} }`).join(",\r\n"));
+	console.log(entries.map(({ vendor, product, roc }) => `\"${vendor},${product},${roc}\\n\"`).join("\r\n"));
 });
