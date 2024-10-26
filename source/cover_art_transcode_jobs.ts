@@ -63,7 +63,10 @@ async function writeBufferToDisk(buffer: Buffer, path: string): Promise<void> {
 type AlbumMetadata = {
 	type: "album";
 	title: string;
-	disc: number;
+	disc: number | {
+		number: number;
+		title?: string;
+	};
 	year?: number;
 	artists: string[];
 	tracks: {
@@ -73,6 +76,7 @@ type AlbumMetadata = {
 	}[];
 	copyright?: string;
 	tidal?: number;
+	genres?: string[]
 };
 
 function getAlbumMetadata(disc: cddb.Disc): AlbumMetadata {

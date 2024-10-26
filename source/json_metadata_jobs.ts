@@ -80,7 +80,7 @@ function getMovieTargetPath(media: discdb.Media, track: discdb.MovieContent): Ar
 
 type ShowMetadata = {
 	type: "show",
-	imdb: string,
+	imdb?: string,
 	title: string,
 	summary?: string,
 	genres: string[],
@@ -89,29 +89,34 @@ type ShowMetadata = {
 
 type EpisodeMetadata = {
 	type: "episode",
-	imdb: string,
+	imdb?: string,
 	title: string,
-	year: number,
+	year?: number,
 	summary?: string,
 	show: {
-		imdb: string,
+		imdb?: string,
 		title: string,
 		summary?: string,
 		genres: string[],
 		actors: string[]
 	},
-	season: number,
-	episode: number
+	season: number | {
+		number: number,
+		title?: string
+	},
+	episode: number,
+	copyright?: string
 };
 
 type MovieMetadata = {
 	type: "movie",
-	imdb: string,
+	imdb?: string,
 	title: string,
-	year: number,
+	year?: number,
 	summary?: string,
 	genres: string[],
-	actors: string[]
+	actors: string[],
+	copyright?: string
 };
 
 function getShowJson(media: discdb.Media, track: discdb.EpisodeContent): ShowMetadata {
