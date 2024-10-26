@@ -280,7 +280,7 @@ let analyze = (cb: { (type: MediaType, content: Array<MediaContent>): void }) =>
 					return "paldvd";
 				}
 			}
-			throw "";
+			throw "Unknown media type!";
 		})();
 		if (detected_disc_type === 'bluray') {
 			metadata.forEach((ct, index) => ct.content.selector = '' + index + ' ' + ct.content.selector);
