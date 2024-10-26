@@ -10,7 +10,7 @@ guard MovieContent: (Content & {
 	"part": number,
 	"imdb": string,
 	"poster_url": string,
-	"summary": string,
+	"summary"?: string,
 	"genres": string[],
 	"actors": string[]
 });
@@ -26,8 +26,8 @@ guard EpisodeContent: (Content & {
 	"imdb_show": string,
 	"year": number,
 	"poster_url_show"?: string,
-	"summary_show": string,
-	"summary": string,
+	"summary_show"?: string,
+	"summary"?: string,
 	"genres_show": string[],
 	"actors_show": string[]
 });

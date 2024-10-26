@@ -2,7 +2,7 @@ guard Movie: {
 	"id": string,
 	"title": string,
 	"year": number,
-	"summary": string,
+	"summary"?: string,
 	"poster_url": string,
 	"genres": string[],
 	"actors": string[],
@@ -12,7 +12,7 @@ guard Movie: {
 guard Show: {
 	"id": string,
 	"title": string,
-	"summary": string,
+	"summary"?: string,
 	"poster_url": string,
 	"genres": string[],
 	"actors": string[],
@@ -23,7 +23,7 @@ guard Episode: {
 	"id": string,
 	"title": string,
 	"air_date": number,
-	"summary": string,
+	"summary"?: string,
 	"show_id": string,
 	"season": number,
 	"episode": number

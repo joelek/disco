@@ -1052,7 +1052,7 @@ export type Title = {
 	type: TitleType,
 	title: string,
 	year: number | null,
-	description: string,
+	description?: string,
 	image_url: string,
 	genres: string[],
 	stars: {
@@ -1163,15 +1163,15 @@ export function getTitleLegacy2(id: string, cb: Callback<Title | null>): void {
 				}
 			}
 		}
-		if (title !== null && description !== null && image_url !== null) {
+		if (title !== null && image_url !== null) {
 			title = title.normalize("NFC");
-			description = description.normalize("NFC");
+			let description_normalized = description != null ? description.normalize("NFC") : undefined;
 			let titleobj: Title = {
 				id,
 				type,
 				title,
 				year,
-				description,
+				description: description_normalized,
 				image_url,
 				genres,
 				stars
@@ -1253,15 +1253,15 @@ export function getTitle(id: string, cb: Callback<Title | null>): void {
 				}
 			}
 		}
-		if (title !== null && description !== null && image_url !== null) {
+		if (title !== null && image_url !== null) {
 			title = title.normalize("NFC");
-			description = description.normalize("NFC");
+			let description_normalized = description != null ? description.normalize("NFC") : undefined;
 			let titleobj: Title = {
 				id,
 				type,
 				title,
 				year,
-				description,
+				description: description_normalized,
 				image_url,
 				genres,
 				stars
@@ -1337,15 +1337,15 @@ export function getTitleLegacy1(id: string, cb: Callback<Title | null>): void {
 				}
 			}
 		}
-		if (title !== null && description !== null && image_url !== null) {
+		if (title !== null && image_url !== null) {
 			title = title.normalize("NFC");
-			description = description.normalize("NFC");
+			let description_normalized = description != null ? description.normalize("NFC") : undefined;
 			let titleobj: Title = {
 				id,
 				type,
 				title,
 				year,
-				description,
+				description: description_normalized,
 				image_url,
 				genres,
 				stars
@@ -1413,7 +1413,7 @@ export function getCredits(id: string, cb: Callback<Credits>): void {
 export interface Episode {
 	id: string,
 	title: string,
-	description: string,
+	description?: string,
 	episode_number: number,
 	air_date_timestamp: number
 }
@@ -1488,13 +1488,13 @@ export function getSeasonLegacy(id: string, season: number, cb: Callback<Season 
 			if (element !== null) {
 				air_date_timestamp = Date.parse(element.getTrimmedText() + "Z");
 			}
-			if (id != null && title != null && description != null && episode_number != null && air_date_timestamp != null) {
+			if (id != null && title != null && episode_number != null && air_date_timestamp != null) {
 				title = title.normalize("NFC");
-				description = description.normalize("NFC");
+				let description_normalized = description != null ? description.normalize("NFC") : undefined;
 				episodes.push({
 					id,
 					title,
-					description,
+					description: description_normalized,
 					episode_number,
 					air_date_timestamp
 				});
@@ -1552,13 +1552,13 @@ export function getSeason(id: string, season: number, cb: Callback<Season | null
 				air_date_timestamp = Date.parse(element.getTrimmedText() + "Z");
 			}
 			console.log({id, title, episode_number, description, air_date_timestamp })
-			if (id != null && title != null && description != null && episode_number != null && air_date_timestamp != null) {
+			if (id != null && title != null && episode_number != null && air_date_timestamp != null) {
 				title = title.normalize("NFC");
-				description = description.normalize("NFC");
+				let description_normalized = description != null ? description.normalize("NFC") : undefined;
 				episodes.push({
 					id,
 					title,
-					description,
+					description: description_normalized,
 					episode_number,
 					air_date_timestamp
 				});

@@ -21,10 +21,11 @@ export const MovieContent: autoguard.serialization.MessageGuard<MovieContent> = 
 		"part": autoguard.guards.Number,
 		"imdb": autoguard.guards.String,
 		"poster_url": autoguard.guards.String,
-		"summary": autoguard.guards.String,
 		"genres": autoguard.guards.Array.of(autoguard.guards.String),
 		"actors": autoguard.guards.Array.of(autoguard.guards.String)
-	}, {})
+	}, {
+		"summary": autoguard.guards.String
+	})
 ));
 
 export type MovieContent = autoguard.guards.Group<autoguard.guards.Intersection<[
@@ -36,10 +37,11 @@ export type MovieContent = autoguard.guards.Group<autoguard.guards.Intersection<
 		"part": autoguard.guards.Number,
 		"imdb": autoguard.guards.String,
 		"poster_url": autoguard.guards.String,
-		"summary": autoguard.guards.String,
 		"genres": autoguard.guards.Array<autoguard.guards.String>,
 		"actors": autoguard.guards.Array<autoguard.guards.String>
-	}, {}>
+	}, {
+		"summary": autoguard.guards.String
+	}>
 ]>>;
 
 export const EpisodeContent: autoguard.serialization.MessageGuard<EpisodeContent> = autoguard.guards.Group.of(autoguard.guards.Intersection.of(
@@ -53,13 +55,13 @@ export const EpisodeContent: autoguard.serialization.MessageGuard<EpisodeContent
 		"imdb": autoguard.guards.String,
 		"imdb_show": autoguard.guards.String,
 		"year": autoguard.guards.Number,
-		"summary_show": autoguard.guards.String,
-		"summary": autoguard.guards.String,
 		"genres_show": autoguard.guards.Array.of(autoguard.guards.String),
 		"actors_show": autoguard.guards.Array.of(autoguard.guards.String)
 	}, {
 		"part": autoguard.guards.Number,
-		"poster_url_show": autoguard.guards.String
+		"poster_url_show": autoguard.guards.String,
+		"summary_show": autoguard.guards.String,
+		"summary": autoguard.guards.String
 	})
 ));
 
@@ -74,13 +76,13 @@ export type EpisodeContent = autoguard.guards.Group<autoguard.guards.Intersectio
 		"imdb": autoguard.guards.String,
 		"imdb_show": autoguard.guards.String,
 		"year": autoguard.guards.Number,
-		"summary_show": autoguard.guards.String,
-		"summary": autoguard.guards.String,
 		"genres_show": autoguard.guards.Array<autoguard.guards.String>,
 		"actors_show": autoguard.guards.Array<autoguard.guards.String>
 	}, {
 		"part": autoguard.guards.Number,
-		"poster_url_show": autoguard.guards.String
+		"poster_url_show": autoguard.guards.String,
+		"summary_show": autoguard.guards.String,
+		"summary": autoguard.guards.String
 	}>
 ]>>;
 

@@ -6,11 +6,11 @@ export const Movie: autoguard.serialization.MessageGuard<Movie> = autoguard.guar
 	"id": autoguard.guards.String,
 	"title": autoguard.guards.String,
 	"year": autoguard.guards.Number,
-	"summary": autoguard.guards.String,
 	"poster_url": autoguard.guards.String,
 	"genres": autoguard.guards.Array.of(autoguard.guards.String),
 	"actors": autoguard.guards.Array.of(autoguard.guards.String)
 }, {
+	"summary": autoguard.guards.String,
 	"actor_ids": autoguard.guards.Array.of(autoguard.guards.String)
 });
 
@@ -18,33 +18,33 @@ export type Movie = autoguard.guards.Object<{
 	"id": autoguard.guards.String,
 	"title": autoguard.guards.String,
 	"year": autoguard.guards.Number,
-	"summary": autoguard.guards.String,
 	"poster_url": autoguard.guards.String,
 	"genres": autoguard.guards.Array<autoguard.guards.String>,
 	"actors": autoguard.guards.Array<autoguard.guards.String>
 }, {
+	"summary": autoguard.guards.String,
 	"actor_ids": autoguard.guards.Array<autoguard.guards.String>
 }>;
 
 export const Show: autoguard.serialization.MessageGuard<Show> = autoguard.guards.Object.of({
 	"id": autoguard.guards.String,
 	"title": autoguard.guards.String,
-	"summary": autoguard.guards.String,
 	"poster_url": autoguard.guards.String,
 	"genres": autoguard.guards.Array.of(autoguard.guards.String),
 	"actors": autoguard.guards.Array.of(autoguard.guards.String)
 }, {
+	"summary": autoguard.guards.String,
 	"actor_ids": autoguard.guards.Array.of(autoguard.guards.String)
 });
 
 export type Show = autoguard.guards.Object<{
 	"id": autoguard.guards.String,
 	"title": autoguard.guards.String,
-	"summary": autoguard.guards.String,
 	"poster_url": autoguard.guards.String,
 	"genres": autoguard.guards.Array<autoguard.guards.String>,
 	"actors": autoguard.guards.Array<autoguard.guards.String>
 }, {
+	"summary": autoguard.guards.String,
 	"actor_ids": autoguard.guards.Array<autoguard.guards.String>
 }>;
 
@@ -52,21 +52,23 @@ export const Episode: autoguard.serialization.MessageGuard<Episode> = autoguard.
 	"id": autoguard.guards.String,
 	"title": autoguard.guards.String,
 	"air_date": autoguard.guards.Number,
-	"summary": autoguard.guards.String,
 	"show_id": autoguard.guards.String,
 	"season": autoguard.guards.Number,
 	"episode": autoguard.guards.Number
-}, {});
+}, {
+	"summary": autoguard.guards.String
+});
 
 export type Episode = autoguard.guards.Object<{
 	"id": autoguard.guards.String,
 	"title": autoguard.guards.String,
 	"air_date": autoguard.guards.Number,
-	"summary": autoguard.guards.String,
 	"show_id": autoguard.guards.String,
 	"season": autoguard.guards.Number,
 	"episode": autoguard.guards.Number
-}, {}>;
+}, {
+	"summary": autoguard.guards.String
+}>;
 
 export const Actor: autoguard.serialization.MessageGuard<Actor> = autoguard.guards.Object.of({
 	"id": autoguard.guards.String,
