@@ -52,13 +52,13 @@ export const EpisodeContent: autoguard.serialization.MessageGuard<EpisodeContent
 		"show": autoguard.guards.String,
 		"season": autoguard.guards.Number,
 		"episode": autoguard.guards.Number,
-		"imdb": autoguard.guards.String,
 		"imdb_show": autoguard.guards.String,
 		"year": autoguard.guards.Number,
 		"genres_show": autoguard.guards.Array.of(autoguard.guards.String),
 		"actors_show": autoguard.guards.Array.of(autoguard.guards.String)
 	}, {
 		"part": autoguard.guards.Number,
+		"imdb": autoguard.guards.String,
 		"poster_url_show": autoguard.guards.String,
 		"summary_show": autoguard.guards.String,
 		"summary": autoguard.guards.String
@@ -73,13 +73,13 @@ export type EpisodeContent = autoguard.guards.Group<autoguard.guards.Intersectio
 		"show": autoguard.guards.String,
 		"season": autoguard.guards.Number,
 		"episode": autoguard.guards.Number,
-		"imdb": autoguard.guards.String,
 		"imdb_show": autoguard.guards.String,
 		"year": autoguard.guards.Number,
 		"genres_show": autoguard.guards.Array<autoguard.guards.String>,
 		"actors_show": autoguard.guards.Array<autoguard.guards.String>
 	}, {
 		"part": autoguard.guards.Number,
+		"imdb": autoguard.guards.String,
 		"poster_url_show": autoguard.guards.String,
 		"summary_show": autoguard.guards.String,
 		"summary": autoguard.guards.String
