@@ -347,8 +347,10 @@ let encode_hardware = (
 				'-metadata', `season_number=${opt_content.season}`,
 				'-metadata', `episode_sort=${opt_content.episode}`,
 				'-metadata', `episode_id=${opt_content.title}`,
-				"-metadata", `comment=${opt_content.summary}`
 			];
+			if (opt_content.summary != null) {
+				md.push("-metadata", `comment=${opt_content.summary}`);
+			}
 			if (opt_content.part != null) {
 				md.push("-metadata", `track=${opt_content.part}`);
 			}
@@ -357,8 +359,10 @@ let encode_hardware = (
 				'-metadata', `title=${opt_content.title}`,
 				'-metadata', `date=${opt_content.year}`,
 				"-metadata", `track=${opt_content.part}`,
-				"-metadata", `comment=${opt_content.summary}`
 			];
+			if (opt_content.summary != null) {
+				md.push("-metadata", `comment=${opt_content.summary}`);
+			}
 		}
 	}
 	md.push("-metadata:s:v:0", "language=" + video_stream.tags.language);
