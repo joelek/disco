@@ -82,7 +82,7 @@ type ShowMetadata = {
 	type: "show",
 	imdb: string,
 	title: string,
-	summary: string,
+	summary?: string,
 	genres: string[],
 	actors: string[]
 };
@@ -92,11 +92,11 @@ type EpisodeMetadata = {
 	imdb: string,
 	title: string,
 	year: number,
-	summary: string,
+	summary?: string,
 	show: {
 		imdb: string,
 		title: string,
-		summary: string,
+		summary?: string,
 		genres: string[],
 		actors: string[]
 	},
@@ -109,7 +109,7 @@ type MovieMetadata = {
 	imdb: string,
 	title: string,
 	year: number,
-	summary: string,
+	summary?: string,
 	genres: string[],
 	actors: string[]
 };
