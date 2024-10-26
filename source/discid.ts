@@ -14,8 +14,8 @@ function compute_digest(path: string, cb: Callback<string>): void {
 		if (stat.isFile()) {
 			let buffer = Buffer.alloc(24);
 			buffer.writeBigUInt64BE(BigInt(stat.size), 0);
-			buffer.writeBigUInt64BE(BigInt(stat.ctimeMs), 8);
-			buffer.writeBigUInt64BE(BigInt(stat.mtimeMs), 16);
+			buffer.writeBigUInt64BE(BigInt(Math.floor(stat.ctimeMs)), 8);
+			buffer.writeBigUInt64BE(BigInt(Math.floor(stat.mtimeMs)), 16);
 			let hash = libcrypto.createHash("sha256");
 			hash.update(buffer);
 			let digest = hash.digest("hex");
